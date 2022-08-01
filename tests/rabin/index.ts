@@ -1,4 +1,4 @@
-import * as BN from "../../src/bn.js";
+import * as BN from "../../src/bn.js/index.js";
 /*  
 A Rabin Signature JavaScript module adapted
 from: https://github.com/scrypt-sv/rabin/blob/master/rabin.py
