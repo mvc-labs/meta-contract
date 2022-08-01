@@ -19,13 +19,7 @@ import {
   SigHashInfo,
   SigInfo,
 } from '../common/utils'
-import {
-  API_NET,
-  API_TARGET,
-  FungibleTokenUnspent,
-  Api,
-  ApiBase,
-} from '../api'
+import { API_NET, API_TARGET, FungibleTokenUnspent, Api, ApiBase } from '../api'
 import { TxComposer } from '../tx-composer'
 import { TokenFactory } from './contract-factory/token'
 import { TokenGenesisFactory } from './contract-factory/tokenGenesis'

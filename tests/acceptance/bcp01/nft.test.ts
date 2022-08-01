@@ -7,6 +7,7 @@ import { TxComposer } from '../../../src/tx-composer'
 import { dummyRabinKeypairs } from '../dummyRabin'
 import { MockSatotxSigner } from '../MockSatotxSigner'
 import { MockApi } from '../MockApi'
+import PrivateKey from 'bsv/lib/privatekey'
 Utils.isNull(SIGNER_NUM)
 const signerNum = SIGNER_NUM
 const signerVerifyNum = SIGNER_VERIFY_NUM
@@ -35,7 +36,7 @@ for (let i = 0; i < 4; i++) {
 }
 function signSigHashList(sigHashList: Utils.SigHashInfo[]) {
   let sigList = sigHashList.map(({ sighash, sighashType, address }) => {
-    let privateKey = wallets.find((v) => v.address.toString() == address).privateKey
+    let privateKey = wallets.find((v) => v.address.toString() == address)?.privateKey as any
     var sig = bsv.crypto.ECDSA.sign(Buffer.from(sighash, 'hex'), privateKey, 'little')
       .set({
         nhashtype: sighashType,
@@ -61,7 +62,7 @@ let api = new MockApi()
 async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
   let feeTx = new bsv.Transaction()
   let unitSatoshis = Math.ceil(satoshis / count)
-  let satoshisArray = []
+  let satoshisArray: number[] = []
 
   for (let i = 0; i < count; i++) {
     if (satoshis < unitSatoshis) {
@@ -79,7 +80,7 @@ async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
       })
     )
   }
-  let utxos = []
+  let utxos: any = []
   for (let i = 0; i < count; i++) {
     utxos.push({
       txId: feeTx.id,
@@ -139,7 +140,7 @@ describe('BCP01-NonFungibleToken Test', () => {
         mockData: {
           satotxSigners,
           api,
-        },
+        } as any,
       })
       api.cleanCacheds()
     })
@@ -220,7 +221,7 @@ describe('BCP01-NonFungibleToken Test', () => {
         mockData: {
           satotxSigners,
           api,
-        },
+        } as any,
       })
       api.cleanCacheds()
     })
@@ -286,7 +287,7 @@ describe('BCP01-NonFungibleToken Test', () => {
         mockData: {
           satotxSigners,
           api,
-        },
+        } as any,
       })
       api.cleanCacheds()
     })
@@ -377,7 +378,7 @@ describe('BCP01-NonFungibleToken Test', () => {
         mockData: {
           satotxSigners,
           api,
-        },
+        } as any,
       })
       api.cleanCacheds()
     })
@@ -442,7 +443,7 @@ describe('BCP01-NonFungibleToken Test', () => {
         mockData: {
           satotxSigners,
           api,
-        },
+        } as any,
       })
       api.cleanCacheds()
     })
@@ -618,7 +619,7 @@ describe('BCP01-NonFungibleToken Test', () => {
         mockData: {
           satotxSigners,
           api,
-        },
+        } as any,
       })
       api.cleanCacheds()
     })

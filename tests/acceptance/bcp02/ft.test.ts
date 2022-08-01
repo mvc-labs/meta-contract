@@ -1,8 +1,8 @@
 import { expect } from 'chai'
-import { SIGNER_NUM, SIGNER_VERIFY_NUM } from '../../src/bcp02/contract-proto/token.proto'
-import * as Utils from '../../src/common/utils'
-import { API_NET, BN, bsv, SensibleFT } from '../../src/index'
-import { TxComposer } from '../../src/tx-composer'
+import { SIGNER_NUM, SIGNER_VERIFY_NUM } from '../../../src/bcp02/contract-proto/token.proto'
+import * as Utils from '../../../src/common/utils'
+import { API_NET, BN, bsv, SensibleFT } from '../../../src/index'
+import { TxComposer } from '../../../src/tx-composer'
 import { dummyRabinKeypairs } from '../dummyRabin'
 import { MockSatotxSigner } from '../MockSatotxSigner'
 import { MockApi } from '../MockApi'
@@ -61,7 +61,7 @@ let api = new MockApi()
 async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
   let feeTx = new bsv.Transaction()
   let unitSatoshis = Math.ceil(satoshis / count)
-  let satoshisArray = []
+  let satoshisArray: number[] = []
 
   for (let i = 0; i < count; i++) {
     if (satoshis < unitSatoshis) {
@@ -96,7 +96,7 @@ async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
 async function genDummyFeeUtxosWithoutWif(satoshis: number, count: number = 1) {
   let feeTx = new bsv.Transaction()
   let unitSatoshis = Math.ceil(satoshis / count)
-  let satoshisArray = []
+  let satoshisArray: number[] = []
 
   for (let i = 0; i < count; i++) {
     if (satoshis < unitSatoshis) {

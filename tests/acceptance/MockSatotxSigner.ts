@@ -1,6 +1,6 @@
-import * as BN from "../src/bn.js/index.js";
-import * as bsv from "../src/bsv";
-import { SatotxSigner } from "../src/common/SatotxSigner";
+import * as BN from "../../src/bn.js/index.js";
+import * as bsv from "../../src/bsv";
+import { SatotxSigner } from "../../src/common/SatotxSigner";
 import * as rabin from "./rabin";
 
 export class MockSatotxSigner extends SatotxSigner {

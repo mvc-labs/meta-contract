@@ -1,7 +1,7 @@
 {
-  "name": "sensible-sdk",
+  "name": "meta-contract",
   "version": "7.4.0",
-  "description": "Sensible-SDK",
+  "description": "Meta Contract SDK",
   "main": "dist/index.js",
   "browser": "dist/sensible.browser.min.js",
   "engines": {
@@ -27,7 +27,7 @@
     "bitcoin-sv",
     "sensible"
   ],
-  "author": "sensiblecontract.org",
+  "author": "Showpay",
   "license": "MIT",
   "dependencies": {
     "bsv": "1.5.6",

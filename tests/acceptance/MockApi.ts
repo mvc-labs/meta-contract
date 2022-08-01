@@ -1,10 +1,10 @@
-import * as nftProto from '../src/bcp01/contract-proto/nft.proto'
-import * as nftSellProto from '../src/bcp01/contract-proto/nftSell.proto'
-import * as ftProto from '../src/bcp02/contract-proto/token.proto'
-import * as BN from '../src/bn.js/index.js'
-import * as bsv from '../src/bsv'
-import { getProtoType, PROTO_TYPE } from '../src/common/protoheader'
-import * as Utils from '../src/common/utils'
+import * as nftProto from '../../src/bcp01/contract-proto/nft.proto'
+import * as nftSellProto from '../../src/bcp01/contract-proto/nftSell.proto'
+import * as ftProto from '../../src/bcp02/contract-proto/token.proto'
+import * as BN from '../../src/bn.js/index.js'
+import * as bsv from '../../src/bsv'
+import { getProtoType, PROTO_TYPE } from '../../src/common/protoheader'
+import * as Utils from '../../src/common/utils'
 import {
   API_NET,
   AuthorizationOption,
@@ -14,7 +14,7 @@ import {
   NonFungibleTokenSummary,
   NonFungibleTokenUnspent,
   ApiBase,
-} from '../src/sensible-api/index'
+} from '../../src/api/index'
 import * as TestHelper from './testHelper'
 
 function getOutpoint(txid, index) {

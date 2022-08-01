@@ -1,7 +1,7 @@
-import { SIGNER_NUM } from '../../src/bcp01/contract-proto/nft.proto'
-import * as bsv from '../../src/bsv'
-import * as Utils from '../../src/common/utils'
-import { API_NET, API_TARGET, Wallet } from '../../src/index'
+import { SIGNER_NUM } from '../../../src/bcp01/contract-proto/nft.proto'
+import * as bsv from '../../../src/bsv'
+import * as Utils from '../../../src/common/utils'
+import { API_NET, API_TARGET, Wallet } from '../../../src/index'
 import { MockApi } from '../MockApi'
 Utils.isNull(SIGNER_NUM)
 

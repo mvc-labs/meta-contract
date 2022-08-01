@@ -423,11 +423,7 @@ export class SensibleNFT {
       senderPublicKey = senderPrivateKey.toPublicKey()
     }
 
-    let _res = await this.api.getNonFungibleTokenUnspentDetail(
-      codehash,
-      genesis,
-      tokenIndex
-    )
+    let _res = await this.api.getNonFungibleTokenUnspentDetail(codehash, genesis, tokenIndex)
     let nftUtxo: NftUtxo = {
       txId: _res.txId,
       outputIndex: _res.outputIndex,
@@ -2778,13 +2774,7 @@ export class SensibleNFT {
     cursor: number = 0,
     size: number = 20
   ) {
-    return await this.api.getNonFungibleTokenUnspents(
-      codehash,
-      genesis,
-      address,
-      cursor,
-      size
-    )
+    return await this.api.getNonFungibleTokenUnspents(codehash, genesis, address, cursor, size)
   }
 
   /**

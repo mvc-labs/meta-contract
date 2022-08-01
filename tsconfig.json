@@ -5,8 +5,12 @@
     "noImplicitAny": false,
     "outDir": "./dist",
     "sourceMap": true,
-    "declaration": true
+    "declaration": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*"],
   "exclude": ["src/index.browser.ts"]
 }
