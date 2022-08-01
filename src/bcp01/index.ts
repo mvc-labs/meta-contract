@@ -16,13 +16,7 @@ import {
   SigHashInfo,
   SigInfo,
 } from '../common/utils'
-import {
-  API_NET,
-  API_TARGET,
-  NonFungibleTokenUnspent,
-  SensibleApi,
-  SensibleApiBase,
-} from '../sensible-api'
+import { API_NET, API_TARGET, NonFungibleTokenUnspent, Api, ApiBase } from '../api'
 import { TxComposer } from '../tx-composer'
 import { NftFactory } from './contract-factory/nft'
 import { NftGenesisFactory } from './contract-factory/nftGenesis'
@@ -232,7 +226,7 @@ function parseSensibleID(sensibleID: string) {
   }
 }
 type MockData = {
-  sensibleApi: SensibleApiBase
+  api: ApiBase
   satotxSigners: SatotxSigner[]
 }
 
@@ -248,7 +242,7 @@ export class SensibleNFT {
   private feeb: number
   private network: API_NET
   private purse: Purse
-  public sensibleApi: SensibleApiBase
+  public api: ApiBase
   private zeroAddress: bsv.Address
   private debug: boolean
   private signerSelecteds: number[] = []
@@ -307,9 +301,9 @@ export class SensibleNFT {
     this.feeb = feeb
     this.network = network
     if (mockData) {
-      this.sensibleApi = mockData.sensibleApi
+      this.api = mockData.api
     } else {
-      this.sensibleApi = new SensibleApi(network, apiTarget, apiUrl)
+      this.api = new Api(network, apiTarget, apiUrl)
     }
 
     this.debug = debug
@@ -392,7 +386,7 @@ export class SensibleNFT {
     if (!paramUtxos) {
       if (!this.purse)
         throw new CodeError(ErrCode.EC_INVALID_ARGUMENT, 'Utxos or Purse must be provided.')
-      paramUtxos = await this.sensibleApi.getUnspents(this.purse.address.toString())
+      paramUtxos = await this.api.getUnspents(this.purse.address.toString())
       paramUtxos.forEach((v) => {
         utxoPrivateKeys.push(this.purse.privateKey)
       })
@@ -429,7 +423,7 @@ export class SensibleNFT {
       senderPublicKey = senderPrivateKey.toPublicKey()
     }
 
-    let _res = await this.sensibleApi.getNonFungibleTokenUnspentDetail(
+    let _res = await this.api.getNonFungibleTokenUnspentDetail(
       codehash,
       genesis,
       tokenIndex
@@ -463,11 +457,11 @@ export class SensibleNFT {
     if (!genesisUtxo) {
       throw new CodeError(ErrCode.EC_FIXED_TOKEN_SUPPLY, 'token supply is fixed')
     }
-    let txHex = await this.sensibleApi.getRawTxData(genesisUtxo.txId)
+    let txHex = await this.api.getRawTxData(genesisUtxo.txId)
     const tx = new bsv.Transaction(txHex)
     let preTxId = tx.inputs[0].prevTxId.toString('hex')
     let preOutputIndex = tx.inputs[0].outputIndex
-    let preTxHex = await this.sensibleApi.getRawTxData(preTxId)
+    let preTxHex = await this.api.getRawTxData(preTxId)
     genesisUtxo.satotxInfo = {
       txId: genesisUtxo.txId,
       outputIndex: genesisUtxo.outputIndex,
@@ -491,7 +485,7 @@ export class SensibleNFT {
   }
 
   private async _pretreatNftUtxoToTransferOn(nftUtxo: NftUtxo, codehash: string, genesis: string) {
-    let txHex = await this.sensibleApi.getRawTxData(nftUtxo.txId)
+    let txHex = await this.api.getRawTxData(nftUtxo.txId)
     const tx = new bsv.Transaction(txHex)
     let tokenScript = tx.outputs[nftUtxo.outputIndex].script
 
@@ -521,7 +515,7 @@ export class SensibleNFT {
     if (!input) throw new CodeError(ErrCode.EC_INNER_ERROR, 'invalid nftUtxo')
     let preTxId = input.prevTxId.toString('hex')
     let preOutputIndex = input.outputIndex
-    let preTxHex = await this.sensibleApi.getRawTxData(preTxId)
+    let preTxHex = await this.api.getRawTxData(preTxId)
     const preTx = new bsv.Transaction(preTxHex)
 
     nftUtxo.satotxInfo = {
@@ -599,7 +593,7 @@ export class SensibleNFT {
     let { codehash, genesis, sensibleId } = this.getCodehashAndGensisByTx(txComposer.tx)
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(txHex)
     }
     return {
       codehash,
@@ -797,7 +791,7 @@ export class SensibleNFT {
 
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(txHex)
     }
 
     return {
@@ -887,20 +881,20 @@ export class SensibleNFT {
     genesisOutputIndex: number
   ): Promise<NftUtxo> {
     let unspent: NonFungibleTokenUnspent
-    let firstGenesisTxHex = await this.sensibleApi.getRawTxData(genesisTxId)
+    let firstGenesisTxHex = await this.api.getRawTxData(genesisTxId)
     let firstGenesisTx = new bsv.Transaction(firstGenesisTxHex)
 
     let scriptBuffer = firstGenesisTx.outputs[genesisOutputIndex].script.toBuffer()
 
     let originGenesis = nftProto.getQueryGenesis(scriptBuffer)
-    let genesisUtxos = await this.sensibleApi.getNonFungibleTokenUnspents(
+    let genesisUtxos = await this.api.getNonFungibleTokenUnspents(
       codehash,
       originGenesis,
       this.zeroAddress.toString()
     )
     unspent = genesisUtxos.find((v) => v.txId == genesisTxId && v.outputIndex == genesisOutputIndex)
 
-    // let spent = await this.sensibleApi.getOutpointSpent(
+    // let spent = await this.api.getOutpointSpent(
     //   genesisTxId,
     //   genesisOutputIndex
     // );
@@ -919,7 +913,7 @@ export class SensibleNFT {
       }
       let newScriptBuf = nftProto.updateScript(scriptBuffer, _dataPartObj)
       let issueGenesis = nftProto.getQueryGenesis(newScriptBuf)
-      let issueUtxos = await this.sensibleApi.getNonFungibleTokenUnspents(
+      let issueUtxos = await this.api.getNonFungibleTokenUnspents(
         codehash,
         issueGenesis,
         this.zeroAddress.toString()
@@ -937,11 +931,11 @@ export class SensibleNFT {
   }
 
   async prepareNftUtxo2(nftUtxo: NftUtxo) {
-    let txHex = await this.sensibleApi.getRawTxData(nftUtxo.txId)
+    let txHex = await this.api.getRawTxData(nftUtxo.txId)
     const tx = new bsv.Transaction(txHex)
     let preTxId = tx.inputs[0].prevTxId.toString('hex')
     let preOutputIndex = tx.inputs[0].outputIndex
-    let preTxHex = await this.sensibleApi.getRawTxData(preTxId)
+    let preTxHex = await this.api.getRawTxData(preTxId)
     nftUtxo.satotxInfo = {
       txId: nftUtxo.txId,
       outputIndex: nftUtxo.outputIndex,
@@ -1222,7 +1216,7 @@ export class SensibleNFT {
 
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(txHex)
     }
     return { tx: txComposer.tx, txHex, txid: txComposer.tx.id }
   }
@@ -1559,8 +1553,8 @@ export class SensibleNFT {
     let nftSellTxHex = nftSellTxComposer.getRawHex()
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(nftSellTxHex)
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(nftSellTxHex)
+      await this.api.broadcast(txHex)
     }
     return {
       tx: txComposer.tx,
@@ -1805,7 +1799,7 @@ export class SensibleNFT {
 
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(txHex)
     }
     return {
       tx: txComposer.tx,
@@ -1999,7 +1993,7 @@ export class SensibleNFT {
     }
 
     if (!sellUtxo) {
-      sellUtxo = await this.sensibleApi.getNftSellUtxo(codehash, genesis, tokenIndex)
+      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
     }
     if (!sellUtxo) {
       throw new CodeError(
@@ -2025,8 +2019,8 @@ export class SensibleNFT {
     let unlockCheckTxHex = unlockCheckTxComposer.getRawHex()
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(unlockCheckTxHex)
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(unlockCheckTxHex)
+      await this.api.broadcast(txHex)
     }
     return {
       tx: txComposer.tx,
@@ -2080,7 +2074,7 @@ export class SensibleNFT {
     nftUtxo = await this._pretreatNftUtxoToTransferOn(nftUtxo, codehash, genesis)
 
     let nftAddress = nftPrivateKey.toAddress(this.network)
-    let nftSellTxHex = await this.sensibleApi.getRawTxData(sellUtxo.txId)
+    let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
     let nftSellTx = new bsv.Transaction(nftSellTxHex)
     let nftSellUtxo = {
       txId: sellUtxo.txId,
@@ -2417,7 +2411,7 @@ export class SensibleNFT {
     }
 
     if (!sellUtxo) {
-      sellUtxo = await this.sensibleApi.getNftSellUtxo(codehash, genesis, tokenIndex)
+      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
     }
 
     if (!sellUtxo) {
@@ -2444,8 +2438,8 @@ export class SensibleNFT {
     let unlockCheckTxHex = unlockCheckTxComposer.getRawHex()
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(unlockCheckTxHex)
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(unlockCheckTxHex)
+      await this.api.broadcast(txHex)
     }
     return {
       tx: txComposer.tx,
@@ -2497,7 +2491,7 @@ export class SensibleNFT {
     }
 
     let nftAddress = buyerPrivateKey.toAddress(this.network)
-    let nftSellTxHex = await this.sensibleApi.getRawTxData(sellUtxo.txId)
+    let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
     let nftSellTx = new bsv.Transaction(nftSellTxHex)
     let nftSellUtxo = {
       txId: sellUtxo.txId,
@@ -2767,7 +2761,7 @@ export class SensibleNFT {
    * @returns
    */
   async getSummary(address: string) {
-    return await this.sensibleApi.getNonFungibleTokenSummary(address)
+    return await this.api.getNonFungibleTokenSummary(address)
   }
 
   /**
@@ -2784,7 +2778,7 @@ export class SensibleNFT {
     cursor: number = 0,
     size: number = 20
   ) {
-    return await this.sensibleApi.getNonFungibleTokenUnspents(
+    return await this.api.getNonFungibleTokenUnspents(
       codehash,
       genesis,
       address,
@@ -3232,7 +3226,7 @@ export class SensibleNFT {
     )
 
     if (!sellUtxo) {
-      sellUtxo = await this.sensibleApi.getNftSellUtxo(codehash, genesis, tokenIndex)
+      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
     }
     if (!sellUtxo) {
       throw new CodeError(
@@ -3241,7 +3235,7 @@ export class SensibleNFT {
       )
     }
 
-    let nftSellTxHex = await this.sensibleApi.getRawTxData(sellUtxo.txId)
+    let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
     let nftSellTx = new bsv.Transaction(nftSellTxHex)
     let nftSellUtxo = {
       txId: sellUtxo.txId,
@@ -3435,7 +3429,7 @@ export class SensibleNFT {
     )
 
     if (!sellUtxo) {
-      sellUtxo = await this.sensibleApi.getNftSellUtxo(codehash, genesis, tokenIndex)
+      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
     }
     if (!sellUtxo) {
       throw new CodeError(
@@ -3444,7 +3438,7 @@ export class SensibleNFT {
       )
     }
 
-    let nftSellTxHex = await this.sensibleApi.getRawTxData(sellUtxo.txId)
+    let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
     let nftSellTx = new bsv.Transaction(nftSellTxHex)
     let nftSellUtxo = {
       txId: sellUtxo.txId,
@@ -3484,7 +3478,7 @@ export class SensibleNFT {
    * @param txHex
    */
   public async broadcast(txHex: string) {
-    return await this.sensibleApi.broadcast(txHex)
+    return await this.api.broadcast(txHex)
   }
 
   /**
@@ -3562,7 +3556,7 @@ export class SensibleNFT {
    */
   public async isSupportedToken(codehash: string, sensibleId: string) {
     let { genesisTxId } = parseSensibleID(sensibleId)
-    let txHex = await this.sensibleApi.getRawTxData(genesisTxId)
+    let txHex = await this.api.getRawTxData(genesisTxId)
     let tx = new bsv.Transaction(txHex)
     let dataPart = nftProto.parseDataPart(tx.outputs[0].script.toBuffer())
     if (dataPart.rabinPubKeyHashArrayHash != toHex(this.rabinPubKeyHashArrayHash)) {
@@ -3634,7 +3628,7 @@ export class SensibleNFT {
    */
   async getSupplyInfo(sensibleId: string) {
     let { genesisTxId, genesisOutputIndex } = parseSensibleID(sensibleId)
-    let txHex = await this.sensibleApi.getRawTxData(genesisTxId)
+    let txHex = await this.api.getRawTxData(genesisTxId)
     let tx = new bsv.Transaction(txHex)
     let output = tx.outputs[genesisOutputIndex]
 
@@ -3642,7 +3636,7 @@ export class SensibleNFT {
 
     let genesisUtxo = await this.getIssueUtxo(codehash, genesisTxId, genesisOutputIndex)
 
-    let genesisTxHex = await this.sensibleApi.getRawTxData(genesisUtxo.txId)
+    let genesisTxHex = await this.api.getRawTxData(genesisUtxo.txId)
     let genesisTx = new bsv.Transaction(genesisTxHex)
     let genesisOutput = genesisTx.outputs[genesisUtxo.outputIndex]
     let genesisInfo = SensibleNFT.parseTokenScript(genesisOutput.script.toBuffer())
@@ -3661,7 +3655,7 @@ export class SensibleNFT {
    * @returns
    */
   async getSellList(codehash: string, genesis: string, cursor: number = 0, size: number = 20) {
-    return await this.sensibleApi.getNftSellList(codehash, genesis, cursor, size)
+    return await this.api.getNftSellList(codehash, genesis, cursor, size)
   }
 
   /**
@@ -3672,6 +3666,6 @@ export class SensibleNFT {
    * @returns
    */
   async getSellListByAddress(address: string, cursor: number = 0, size: number = 20) {
-    return await this.sensibleApi.getNftSellListByAddress(address, cursor, size)
+    return await this.api.getNftSellListByAddress(address, cursor, size)
   }
 }

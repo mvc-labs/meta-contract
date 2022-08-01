@@ -13,7 +13,7 @@ import {
   NftSellUtxo,
   NonFungibleTokenSummary,
   NonFungibleTokenUnspent,
-  SensibleApiBase,
+  ApiBase,
 } from '../src/sensible-api/index'
 import * as TestHelper from './testHelper'
 
@@ -62,7 +62,7 @@ type Spent = {
   spentTxId: string
   spentInputIndex: number
 }
-export class MockSensibleApi implements SensibleApiBase {
+export class MockApi implements ApiBase {
   serverBase: string
   transactions: { [key: string]: bsv.Transaction } = {}
   spents: Spent[] = []

@@ -6,7 +6,7 @@ import { API_NET, BN, bsv, SensibleNFT } from '../../../src/index'
 import { TxComposer } from '../../../src/tx-composer'
 import { dummyRabinKeypairs } from '../dummyRabin'
 import { MockSatotxSigner } from '../MockSatotxSigner'
-import { MockSensibleApi } from '../MockSensibleApi'
+import { MockApi } from '../MockApi'
 Utils.isNull(SIGNER_NUM)
 const signerNum = SIGNER_NUM
 const signerVerifyNum = SIGNER_VERIFY_NUM
@@ -57,7 +57,7 @@ let [FeePayer, CoffeeShop, Alice, Bob] = wallets
 // Bob:        ${Bob.address.toString()}
 // `);
 
-let sensibleApi = new MockSensibleApi()
+let api = new MockApi()
 async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
   let feeTx = new bsv.Transaction()
   let unitSatoshis = Math.ceil(satoshis / count)
@@ -89,11 +89,11 @@ async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
       wif: FeePayer.privateKey.toWIF(),
     })
   }
-  await sensibleApi.broadcast(feeTx.serialize(true))
+  await api.broadcast(feeTx.serialize(true))
   return utxos
 }
 function cleanBsvUtxos() {
-  sensibleApi.cleanBsvUtxos()
+  api.cleanBsvUtxos()
 }
 async function expectNftOwner(
   nft: SensibleNFT,
@@ -138,10 +138,10 @@ describe('BCP01-NonFungibleToken Test', () => {
         debug: true,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     afterEach(() => {})
@@ -219,10 +219,10 @@ describe('BCP01-NonFungibleToken Test', () => {
         debug: true,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     afterEach(() => {})
@@ -235,7 +235,7 @@ describe('BCP01-NonFungibleToken Test', () => {
 
       nft.sign(tx, sigHashList, signSigHashList(sigHashList))
       let _res = nft.getCodehashAndGensisByTx(tx)
-      await sensibleApi.broadcast(tx.serialize(true))
+      await api.broadcast(tx.serialize(true))
       // Utils.dumpTx(_res.tx);
       genesis = _res.genesis
       codehash = _res.codehash
@@ -250,7 +250,7 @@ describe('BCP01-NonFungibleToken Test', () => {
         receiverAddress: CoffeeShop.address.toString(),
       })
       nft.sign(tx, sigHashList, signSigHashList(sigHashList))
-      await sensibleApi.broadcast(tx.serialize(true))
+      await api.broadcast(tx.serialize(true))
     })
     it('unsign transfer should be ok', async () => {
       let { tx, sigHashList } = await nft.unsignTransfer({
@@ -261,7 +261,7 @@ describe('BCP01-NonFungibleToken Test', () => {
         tokenIndex: '0',
       })
       nft.sign(tx, sigHashList, signSigHashList(sigHashList))
-      await sensibleApi.broadcast(tx.serialize(true))
+      await api.broadcast(tx.serialize(true))
 
       expectNftOwner(nft, codehash, genesis, Alice.address, '0')
       expectNftOwner(nft, codehash, genesis, CoffeeShop.address, '1600')
@@ -285,10 +285,10 @@ describe('BCP01-NonFungibleToken Test', () => {
         debug: true,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     beforeEach(async () => {})
@@ -376,10 +376,10 @@ describe('BCP01-NonFungibleToken Test', () => {
         debug: true,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     afterEach(() => {})
@@ -441,10 +441,10 @@ describe('BCP01-NonFungibleToken Test', () => {
         debug: true,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     afterEach(() => {})
@@ -617,10 +617,10 @@ describe('BCP01-NonFungibleToken Test', () => {
         debug: true,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     afterEach(() => {})

@@ -1,6 +1,6 @@
 import * as bsv from '../bsv'
 import { dumpTx } from '../common/utils'
-import { API_NET, API_TARGET, SensibleApi, SensibleApiBase } from '../sensible-api'
+import { API_NET, API_TARGET, Api, ApiBase } from '../api'
 import { TxComposer } from '../tx-composer'
 type RECEIVER = {
   amount: number
@@ -15,7 +15,7 @@ export class Wallet {
   privateKey: bsv.PrivateKey
   address: bsv.Address
   feeb: number
-  blockChainApi: SensibleApiBase
+  blockChainApi: ApiBase
   network: API_NET
 
   constructor(
@@ -31,7 +31,7 @@ export class Wallet {
       this.privateKey = bsv.PrivateKey.fromRandom(network)
     }
     this.address = this.privateKey.toAddress(network)
-    this.blockChainApi = new SensibleApi(network, apiTarget, apiUrl)
+    this.blockChainApi = new Api(network, apiTarget, apiUrl)
     this.feeb = feeb
     this.network = network
   }

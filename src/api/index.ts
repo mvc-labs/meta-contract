@@ -1,5 +1,6 @@
 import { MetaSV } from './MetaSV'
 import { Sensible } from './Sensible'
+import { MVC } from './MVC'
 
 export enum API_NET {
   MAIN = 'mainnet',
@@ -7,6 +8,7 @@ export enum API_NET {
 }
 
 export enum API_TARGET {
+  MVC = 'mvc',
   SENSIBLE = 'sensible',
   METASV = 'metasv',
   SHOW = 'show',
@@ -86,7 +88,7 @@ export type OutpointSpent = {
   spentTxId: string
   spentInputIndex: number
 }
-export interface SensibleApiBase {
+export interface ApiBase {
   authorize: (options: AuthorizationOption) => void
   getUnspents: (address: string) => Promise<SA_utxo[]>
   getRawTxData: (txid: string) => Promise<string>
@@ -137,17 +139,21 @@ export interface SensibleApiBase {
   getOutpointSpent(txId: string, index: number): Promise<OutpointSpent>
 }
 
-export class SensibleApi implements SensibleApiBase {
+export class Api implements ApiBase {
   private apiTarget: API_TARGET
-  private apiHandler: SensibleApiBase
-  constructor(apiNet: API_NET, apiTarget: API_TARGET = API_TARGET.SENSIBLE, serverBase?: string) {
+  private apiHandler: ApiBase
+  constructor(apiNet: API_NET, apiTarget: API_TARGET = API_TARGET.MVC, serverBase?: string) {
     switch (apiTarget) {
       case API_TARGET.METASV: {
         this.apiHandler = new MetaSV(apiNet, serverBase)
         break
       }
-      default: {
+      case API_TARGET.SENSIBLE: {
         this.apiHandler = new Sensible(apiTarget, apiNet, serverBase)
+        break
+      }
+      default: {
+        this.apiHandler = new MVC(apiNet, serverBase)
         break
       }
     }

@@ -23,9 +23,9 @@ import {
   API_NET,
   API_TARGET,
   FungibleTokenUnspent,
-  SensibleApi,
-  SensibleApiBase,
-} from '../sensible-api'
+  Api,
+  ApiBase,
+} from '../api'
 import { TxComposer } from '../tx-composer'
 import { TokenFactory } from './contract-factory/token'
 import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
@@ -200,7 +200,7 @@ function parseSensibleID(sensibleID: string) {
 }
 
 type MockData = {
-  sensibleApi: SensibleApiBase
+  api: ApiBase
   satotxSigners: SatotxSigner[]
 }
 
@@ -244,7 +244,7 @@ export class SensibleFT {
   private feeb: number
   private network: API_NET
   private purse: Purse
-  public sensibleApi: SensibleApiBase
+  public api: ApiBase
   private zeroAddress: bsv.Address
   private debug: boolean
   private transferPart2?: any
@@ -304,9 +304,9 @@ export class SensibleFT {
     this.feeb = feeb
     this.network = network
     if (mockData) {
-      this.sensibleApi = mockData.sensibleApi
+      this.api = mockData.api
     } else {
-      this.sensibleApi = new SensibleApi(network, apiTarget, apiUrl)
+      this.api = new Api(network, apiTarget, apiUrl)
     }
 
     this.debug = debug
@@ -390,7 +390,7 @@ export class SensibleFT {
     if (!paramUtxos) {
       if (!this.purse)
         throw new CodeError(ErrCode.EC_INVALID_ARGUMENT, 'Utxos or Purse must be provided.')
-      paramUtxos = await this.sensibleApi.getUnspents(this.purse.address.toString())
+      paramUtxos = await this.api.getUnspents(this.purse.address.toString())
       paramUtxos.forEach((v) => {
         utxoPrivateKeys.push(this.purse.privateKey)
       })
@@ -437,7 +437,7 @@ export class SensibleFT {
           'ftUtxos or senderPublicKey or senderPrivateKey must be provided.'
         )
 
-      paramFtUtxos = await this.sensibleApi.getFungibleTokenUnspents(
+      paramFtUtxos = await this.api.getFungibleTokenUnspents(
         codehash,
         genesis,
         senderPublicKey.toAddress(this.network).toString(),
@@ -553,7 +553,7 @@ export class SensibleFT {
 
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(txHex)
     }
 
     let { codehash, genesis, sensibleId } = this.getCodehashAndGensisByTx(txComposer.getTx())
@@ -785,7 +785,7 @@ export class SensibleFT {
 
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(txHex)
     }
     return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
   }
@@ -864,12 +864,12 @@ export class SensibleFT {
     genesisOutputIndex: number
   ): Promise<FtUtxo> {
     let unspent: FungibleTokenUnspent
-    let firstGenesisTxHex = await this.sensibleApi.getRawTxData(genesisTxId)
+    let firstGenesisTxHex = await this.api.getRawTxData(genesisTxId)
     let firstGenesisTx = new bsv.Transaction(firstGenesisTxHex)
 
     let scriptBuffer = firstGenesisTx.outputs[genesisOutputIndex].script.toBuffer()
     let originGenesis = ftProto.getQueryGenesis(scriptBuffer)
-    let genesisUtxos = await this.sensibleApi.getFungibleTokenUnspents(
+    let genesisUtxos = await this.api.getFungibleTokenUnspents(
       codehash,
       originGenesis,
       this.zeroAddress.toString()
@@ -885,7 +885,7 @@ export class SensibleFT {
       }
       let newScriptBuf = ftProto.updateScript(scriptBuffer, _dataPartObj)
       let issueGenesis = ftProto.getQueryGenesis(newScriptBuf)
-      let issueUtxos = await this.sensibleApi.getFungibleTokenUnspents(
+      let issueUtxos = await this.api.getFungibleTokenUnspents(
         codehash,
         issueGenesis,
         this.zeroAddress.toString()
@@ -923,11 +923,11 @@ export class SensibleFT {
       throw new CodeError(ErrCode.EC_FIXED_TOKEN_SUPPLY, 'token supply is fixed')
     }
 
-    let txHex = await this.sensibleApi.getRawTxData(genesisUtxo.txId)
+    let txHex = await this.api.getRawTxData(genesisUtxo.txId)
     const tx = new bsv.Transaction(txHex)
     let preTxId = tx.inputs[0].prevTxId.toString('hex')
     let preOutputIndex = tx.inputs[0].outputIndex
-    let preTxHex = await this.sensibleApi.getRawTxData(preTxId)
+    let preTxHex = await this.api.getRawTxData(preTxId)
     genesisUtxo.satotxInfo = {
       txId: genesisUtxo.txId,
       outputIndex: genesisUtxo.outputIndex,
@@ -1144,7 +1144,7 @@ export class SensibleFT {
       let ftUtxo = ftUtxos[i]
       if (!cachedHexs[ftUtxo.txId]) {
         cachedHexs[ftUtxo.txId] = {
-          waitingRes: this.sensibleApi.getRawTxData(ftUtxo.txId), //async request
+          waitingRes: this.api.getRawTxData(ftUtxo.txId), //async request
         }
       }
     }
@@ -1208,7 +1208,7 @@ export class SensibleFT {
 
       if (!cachedHexs[preTxId]) {
         cachedHexs[preTxId] = {
-          waitingRes: this.sensibleApi.getRawTxData(preTxId),
+          waitingRes: this.api.getRawTxData(preTxId),
         }
       }
     }
@@ -1365,8 +1365,8 @@ export class SensibleFT {
     let txHex = txComposer.getRawHex()
 
     if (!noBroadcast) {
-      await this.sensibleApi.broadcast(routeCheckTxHex)
-      await this.sensibleApi.broadcast(txHex)
+      await this.api.broadcast(routeCheckTxHex)
+      await this.api.broadcast(txHex)
     }
 
     return {
@@ -2112,7 +2112,7 @@ export class SensibleFT {
     genesis: string
     address: string
   }): Promise<string> {
-    let { balance, pendingBalance } = await this.sensibleApi.getFungibleTokenBalance(
+    let { balance, pendingBalance } = await this.api.getFungibleTokenBalance(
       codehash,
       genesis,
       address
@@ -2141,7 +2141,7 @@ export class SensibleFT {
     utxoCount: number
     decimal: number
   }> {
-    return await this.sensibleApi.getFungibleTokenBalance(codehash, genesis, address)
+    return await this.api.getFungibleTokenBalance(codehash, genesis, address)
   }
 
   /**
@@ -2150,7 +2150,7 @@ export class SensibleFT {
    * @returns
    */
   public async getSummary(address: string) {
-    return await this.sensibleApi.getFungibleTokenSummary(address)
+    return await this.api.getFungibleTokenSummary(address)
   }
 
   /**
@@ -2395,7 +2395,7 @@ export class SensibleFT {
    * @param txHex
    */
   public async broadcast(txHex: string) {
-    return await this.sensibleApi.broadcast(txHex)
+    return await this.api.broadcast(txHex)
   }
 
   private _calTransferEstimateFee({
@@ -2523,7 +2523,7 @@ export class SensibleFT {
     address: string,
     count: number = 20
   ): Promise<FungibleTokenUnspent[]> {
-    return await this.sensibleApi.getFungibleTokenUnspents(codehash, genesis, address, count)
+    return await this.api.getFungibleTokenUnspents(codehash, genesis, address, count)
   }
 
   /**
@@ -2543,7 +2543,7 @@ export class SensibleFT {
    */
   public async isSupportedToken(codehash: string, sensibleId: string) {
     let { genesisTxId } = parseSensibleID(sensibleId)
-    let txHex = await this.sensibleApi.getRawTxData(genesisTxId)
+    let txHex = await this.api.getRawTxData(genesisTxId)
     let tx = new bsv.Transaction(txHex)
     let dataPart = ftProto.parseDataPart(tx.outputs[0].script.toBuffer())
     if (dataPart.rabinPubKeyHashArrayHash != toHex(this.rabinPubKeyHashArrayHash)) {

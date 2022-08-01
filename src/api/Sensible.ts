@@ -9,7 +9,7 @@ import {
   FungibleTokenUnspent,
   NonFungibleTokenSummary,
   NonFungibleTokenUnspent,
-  SensibleApiBase,
+  ApiBase,
 } from './index'
 type ResData = {
   code: number
@@ -35,7 +35,7 @@ type SensibleQueryUtxo = {
   metaTxId?: string
   metaOutputIndex?: number
 }
-export class Sensible implements SensibleApiBase {
+export class Sensible implements ApiBase {
   serverBase: string
   constructor(apiTarget: API_TARGET, apiNet: API_NET, serverBase?: string) {
     if (apiTarget == API_TARGET.SENSIBLE) {

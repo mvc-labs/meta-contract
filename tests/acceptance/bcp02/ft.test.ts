@@ -5,7 +5,7 @@ import { API_NET, BN, bsv, SensibleFT } from '../../src/index'
 import { TxComposer } from '../../src/tx-composer'
 import { dummyRabinKeypairs } from '../dummyRabin'
 import { MockSatotxSigner } from '../MockSatotxSigner'
-import { MockSensibleApi } from '../MockSensibleApi'
+import { MockApi } from '../MockApi'
 const signerNum = SIGNER_NUM
 const signerVerifyNum = SIGNER_VERIFY_NUM
 Utils.isNull(SIGNER_NUM)
@@ -57,7 +57,7 @@ function signSigHashList(sigHashList: Utils.SigHashInfo[]) {
   return sigList
 }
 
-let sensibleApi = new MockSensibleApi()
+let api = new MockApi()
 async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
   let feeTx = new bsv.Transaction()
   let unitSatoshis = Math.ceil(satoshis / count)
@@ -89,7 +89,7 @@ async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
       wif: FeePayer.privateKey.toWIF(),
     })
   }
-  await sensibleApi.broadcast(feeTx.serialize(true))
+  await api.broadcast(feeTx.serialize(true))
   return utxos
 }
 
@@ -123,12 +123,12 @@ async function genDummyFeeUtxosWithoutWif(satoshis: number, count: number = 1) {
       address: FeePayer.address.toString(),
     })
   }
-  await sensibleApi.broadcast(feeTx.serialize(true))
+  await api.broadcast(feeTx.serialize(true))
   return utxos
 }
 
 function cleanBsvUtxos() {
-  sensibleApi.cleanBsvUtxos()
+  api.cleanBsvUtxos()
 }
 async function expectTokenBalance(
   ft: SensibleFT,
@@ -172,10 +172,10 @@ describe('BCP02-FungibleToken Test', () => {
         debug: true,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     it('genesis should be ok', async () => {
@@ -248,10 +248,10 @@ describe('BCP02-FungibleToken Test', () => {
         debug: false,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     it('unsgin genesis should be ok', async () => {
@@ -270,7 +270,7 @@ describe('BCP02-FungibleToken Test', () => {
       let sigList = signSigHashList(sigHashList)
       ft.sign(tx, sigHashList, sigList)
       let _res = ft.getCodehashAndGensisByTx(tx)
-      await sensibleApi.broadcast(tx.serialize(true))
+      await api.broadcast(tx.serialize(true))
       expectFeeb(tx, feeb)
       genesis = _res.genesis
       codehash = _res.codehash
@@ -297,7 +297,7 @@ describe('BCP02-FungibleToken Test', () => {
       })
       let sigList = signSigHashList(sigHashList)
       ft.sign(tx, sigHashList, sigList)
-      await sensibleApi.broadcast(tx.serialize(true))
+      await api.broadcast(tx.serialize(true))
       expectFeeb(tx, feeb)
     })
     it('unsgin transfer should be ok', async () => {
@@ -330,11 +330,11 @@ describe('BCP02-FungibleToken Test', () => {
 
       ft.sign(routeCheckTx, routeCheckSigHashList, signSigHashList(routeCheckSigHashList))
 
-      await sensibleApi.broadcast(routeCheckTx.serialize(true))
+      await api.broadcast(routeCheckTx.serialize(true))
       let { tx, sigHashList } = await ft.unsignTransfer(routeCheckTx, unsignTxRaw)
       ft.sign(tx, sigHashList, signSigHashList(sigHashList))
 
-      await sensibleApi.broadcast(tx.serialize(true))
+      await api.broadcast(tx.serialize(true))
       expectFeeb(tx, feeb)
       expectTokenBalance(ft, codehash, genesis, Alice.address, '400')
       expectTokenBalance(ft, codehash, genesis, CoffeeShop.address, '600')
@@ -356,11 +356,11 @@ describe('BCP02-FungibleToken Test', () => {
         utxos,
       })
       ft.sign(routeCheckTx, routeCheckSigHashList, signSigHashList(routeCheckSigHashList))
-      await sensibleApi.broadcast(routeCheckTx.serialize(true))
+      await api.broadcast(routeCheckTx.serialize(true))
 
       let { tx, sigHashList } = await ft.unsignMerge(routeCheckTx, unsignTxRaw)
       ft.sign(tx, sigHashList, signSigHashList(sigHashList))
-      await sensibleApi.broadcast(tx.serialize(true))
+      await api.broadcast(tx.serialize(true))
       expectFeeb(tx, feeb)
       expectTokenBalance(ft, codehash, genesis, CoffeeShop.address, '600')
     })
@@ -383,10 +383,10 @@ describe('BCP02-FungibleToken Test', () => {
         debug: false,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     it('genesis estimate fee should be ok', async () => {
@@ -551,10 +551,10 @@ describe('BCP02-FungibleToken Test', () => {
         debug: false,
         mockData: {
           satotxSigners,
-          sensibleApi,
+          api,
         },
       })
-      sensibleApi.cleanCacheds()
+      api.cleanCacheds()
     })
 
     it('3_to_100', async () => {

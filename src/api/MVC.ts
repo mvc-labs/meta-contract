@@ -10,7 +10,7 @@ import {
   NonFungibleTokenSummary,
   NonFungibleTokenUnspent,
   SA_utxo,
-  SensibleApiBase,
+  ApiBase,
 } from './index'
 type ResData = {
   code: number
@@ -36,16 +36,16 @@ type SensibleQueryUtxo = {
   metaTxId?: string
   metaOutputIndex?: number
 }
-export class MetaSV implements SensibleApiBase {
+export class MVC implements ApiBase {
   serverBase: string
   authorization: string
   privateKey: any
   publicKey: any
   constructor(apiNet: API_NET, serverBase?: string) {
     if (apiNet == API_NET.MAIN) {
-      this.serverBase = 'https://apiv2.metasv.com'
+      this.serverBase = 'https://api-mvc.metasv.com'
     } else {
-      throw new CodeError(ErrCode.EC_SENSIBLE_API_ERROR, 'metasv only support mainnet')
+      throw new CodeError(ErrCode.EC_SENSIBLE_API_ERROR, 'MetaSV-MVC only support mainnet')
     }
     if (serverBase) {
       this.serverBase = serverBase
@@ -74,7 +74,7 @@ export class MetaSV implements SensibleApiBase {
       headers = { authorization: this.authorization }
     } else if (this.privateKey) {
       const timestamp = Date.now()
-      const nonce = Math.random().toString().substr(2, 10)
+      const nonce = Math.random().toString().substring(2, 12)
       const message = path + '_' + timestamp + '_' + nonce
       const hash = bsv.crypto.Hash.sha256(Buffer.from(message))
       const sig = bsv.crypto.ECDSA.sign(hash, this.privateKey)

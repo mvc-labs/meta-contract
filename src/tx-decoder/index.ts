@@ -2,7 +2,7 @@ import { SensibleNFT } from '../bcp01'
 import { SensibleFT } from '../bcp02'
 import * as bsv from '../bsv'
 import * as proto from '../common/protoheader'
-import { API_NET } from '../sensible-api'
+import { API_NET } from '../api'
 export enum OutputType {
   SENSIBLE_NFT,
   SENSIBLE_FT,
