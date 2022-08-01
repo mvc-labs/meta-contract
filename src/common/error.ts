@@ -1,13 +1,13 @@
 export class CodeError extends Error {
-  code: number;
-  message: any;
+  code: number
+  message: any
   constructor(code: number, msg?: any) {
-    super(msg);
-    this.code = code;
+    super(msg)
+    this.code = code
     if (msg) {
-      this.message = msg;
+      this.message = msg
     } else {
-      this.message = "CodeError:" + code;
+      this.message = 'CodeError:' + code
     }
   }
 }
@@ -34,6 +34,6 @@ export enum ErrCode {
 export const ErrInfo = {
   InvalidArgument: {
     code: ErrCode.EC_INVALID_ARGUMENT,
-    message: "",
+    message: '',
   },
-};
+}

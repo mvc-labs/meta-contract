@@ -1,5 +1,5 @@
-import { CodeError, ErrCode } from "../common/error";
-import { Net } from "../net";
+import { CodeError, ErrCode } from '../common/error'
+import { Net } from '../net'
 import {
   API_NET,
   API_TARGET,
@@ -10,52 +10,49 @@ import {
   NonFungibleTokenSummary,
   NonFungibleTokenUnspent,
   SensibleApiBase,
-} from "./index";
+} from './index'
 type ResData = {
-  code: number;
-  data: any;
-  msg: string;
-};
+  code: number
+  data: any
+  msg: string
+}
 
 type SensibleQueryUtxo = {
-  address?: string;
-  codehash?: string;
-  genesis?: string;
-  height?: number;
-  idx?: number;
-  isNFT?: boolean;
-  satoshi?: number;
-  scriptPk?: string;
-  scriptType?: string;
-  tokenAmount?: number;
-  tokenDecimal?: number;
-  tokenIndex?: string;
-  txid?: string;
-  vout?: number;
-  metaTxId?: string;
-  metaOutputIndex?: number;
-};
+  address?: string
+  codehash?: string
+  genesis?: string
+  height?: number
+  idx?: number
+  isNFT?: boolean
+  satoshi?: number
+  scriptPk?: string
+  scriptType?: string
+  tokenAmount?: number
+  tokenDecimal?: number
+  tokenIndex?: string
+  txid?: string
+  vout?: number
+  metaTxId?: string
+  metaOutputIndex?: number
+}
 export class Sensible implements SensibleApiBase {
-  serverBase: string;
+  serverBase: string
   constructor(apiTarget: API_TARGET, apiNet: API_NET, serverBase?: string) {
     if (apiTarget == API_TARGET.SENSIBLE) {
       if (apiNet == API_NET.MAIN) {
-        this.serverBase = "https://api.sensiblequery.com";
+        this.serverBase = 'https://api.sensiblequery.com'
       } else {
-        this.serverBase = "https://api.sensiblequery.com/test";
+        this.serverBase = 'https://api.sensiblequery.com/test'
       }
     } else if (apiTarget == API_TARGET.SHOW) {
       if (apiNet == API_NET.MAIN) {
-        this.serverBase = "https://sensiblequery.show.sv";
+        this.serverBase = 'https://sensiblequery.show.sv'
       } else {
-        throw new CodeError(
-          ErrCode.EC_SENSIBLE_API_ERROR,
-          "show only support mainnet"
-        );
+        throw new CodeError(ErrCode.EC_SENSIBLE_API_ERROR, 'show only support mainnet')
       }
     }
     if (serverBase) {
-      this.serverBase = serverBase;
+      this.serverBase = serverBase
     }
   }
 
@@ -65,58 +62,52 @@ export class Sensible implements SensibleApiBase {
    */
   public async getUnspents(address: string): Promise<
     {
-      txId: string;
-      outputIndex: number;
-      satoshis: number;
-      address: string;
+      txId: string
+      outputIndex: number
+      satoshis: number
+      address: string
     }[]
   > {
-    let url = `${this.serverBase}/address/${address}/utxo?size=100`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/address/${address}/utxo?size=100`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
     let ret = data.map((v: SensibleQueryUtxo) => ({
       txId: v.txid,
       outputIndex: v.vout,
       satoshis: v.satoshi,
       address: address,
-    }));
-    return ret;
+    }))
+    return ret
   }
 
   /**
    * @param {string} hex
    */
-  public async broadcast(
-    txHex: string,
-    apiTarget: string = "sensible"
-  ): Promise<string> {
-    if (apiTarget == "metasv") {
-      let _res: any = await Net.httpPost(
-        "https://apiv2.metasv.com/tx/broadcast",
-        {
-          hex: txHex,
-        }
-      );
-      return _res.txid;
+  public async broadcast(txHex: string, apiTarget: string = 'sensible'): Promise<string> {
+    if (apiTarget == 'metasv') {
+      let _res: any = await Net.httpPost('https://apiv2.metasv.com/tx/broadcast', {
+        hex: txHex,
+      })
+      return _res.txid
     } else {
-      let url = `${this.serverBase}/pushtx`;
+      let url = `${this.serverBase}/pushtx`
       let _res = await Net.httpPost(url, {
         txHex,
-      });
-      const { code, data, msg } = _res as ResData;
+      })
+      const { code, data, msg } = _res as ResData
       if (code != 0) {
         throw new CodeError(
           ErrCode.EC_SENSIBLE_API_ERROR,
           `request api failed. [url]:${url} [msg]:${msg}`
-        );
+        )
       }
-      return data;
+      return data
     }
   }
 
@@ -124,19 +115,19 @@ export class Sensible implements SensibleApiBase {
    * @param {string} txid
    */
   public async getRawTxData(txid: string): Promise<string> {
-    let url = `${this.serverBase}/rawtx/${txid}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/rawtx/${txid}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
     if (!data) {
-      console.log("getRawfailed", url);
+      console.log('getRawfailed', url)
     }
-    return data;
+    return data
   }
 
   /**
@@ -148,23 +139,23 @@ export class Sensible implements SensibleApiBase {
     address: string,
     size: number = 20
   ): Promise<FungibleTokenUnspent[]> {
-    let url = `${this.serverBase}/ft/utxo/${codehash}/${genesis}/${address}?size=${size}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/ft/utxo/${codehash}/${genesis}/${address}?size=${size}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
-    if (!data) return [];
+    if (!data) return []
     let ret: FungibleTokenUnspent[] = data.map((v: SensibleQueryUtxo) => ({
       txId: v.txid,
       outputIndex: v.vout,
       tokenAddress: address,
       tokenAmount: v.tokenAmount,
-    }));
-    return ret;
+    }))
+    return ret
   }
 
   /**
@@ -175,14 +166,14 @@ export class Sensible implements SensibleApiBase {
     genesis: string,
     address: string
   ): Promise<FungibleTokenBalance> {
-    let url = `${this.serverBase}/ft/balance/${codehash}/${genesis}/${address}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/ft/balance/${codehash}/${genesis}/${address}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
 
     let ret: FungibleTokenBalance = {
@@ -190,9 +181,9 @@ export class Sensible implements SensibleApiBase {
       pendingBalance: data.pendingBalance.toString(),
       utxoCount: data.utxoCount,
       decimal: data.decimal,
-    };
+    }
 
-    return ret;
+    return ret
   }
 
   /**
@@ -205,17 +196,17 @@ export class Sensible implements SensibleApiBase {
     cursor: number = 0,
     size: number = 100
   ): Promise<NonFungibleTokenUnspent[]> {
-    let url = `${this.serverBase}/nft/utxo/${codehash}/${genesis}/${address}?cursor=${cursor}&size=${size}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/nft/utxo/${codehash}/${genesis}/${address}?cursor=${cursor}&size=${size}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
 
-    if (!data) return [];
+    if (!data) return []
     let ret: NonFungibleTokenUnspent[] = data.map((v: SensibleQueryUtxo) => ({
       txId: v.txid,
       outputIndex: v.vout,
@@ -223,8 +214,8 @@ export class Sensible implements SensibleApiBase {
       tokenIndex: v.tokenIndex,
       metaTxId: v.metaTxId,
       metaOutputIndex: v.metaOutputIndex,
-    }));
-    return ret;
+    }))
+    return ret
   }
 
   /**
@@ -235,16 +226,16 @@ export class Sensible implements SensibleApiBase {
     genesis: string,
     tokenIndex: string
   ) {
-    let url = `${this.serverBase}/nft/utxo-detail/${codehash}/${genesis}/${tokenIndex}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/nft/utxo-detail/${codehash}/${genesis}/${tokenIndex}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
-    if (!data) return null;
+    if (!data) return null
     let ret = [data].map((v) => ({
       txId: v.txid,
       outputIndex: v.vout,
@@ -252,26 +243,24 @@ export class Sensible implements SensibleApiBase {
       tokenIndex: v.tokenIndex,
       metaTxId: v.metaTxId,
       metaOutputIndex: v.metaOutputIndex,
-    }))[0];
-    return ret;
+    }))[0]
+    return ret
   }
 
   /**
    * 查询某人持有的FT Token列表。获得每个token的余额
    */
-  public async getFungibleTokenSummary(
-    address: string
-  ): Promise<FungibleTokenSummary[]> {
-    let url = `${this.serverBase}/ft/summary/${address}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+  public async getFungibleTokenSummary(address: string): Promise<FungibleTokenSummary[]> {
+    let url = `${this.serverBase}/ft/summary/${address}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
-    let ret: FungibleTokenSummary[] = [];
+    let ret: FungibleTokenSummary[] = []
     data.forEach((v) => {
       ret.push({
         codehash: v.codehash,
@@ -281,9 +270,9 @@ export class Sensible implements SensibleApiBase {
         balance: v.balance.toString(),
         symbol: v.symbol,
         decimal: v.decimal,
-      });
-    });
-    return ret;
+      })
+    })
+    return ret
   }
 
   /**
@@ -291,20 +280,18 @@ export class Sensible implements SensibleApiBase {
    * @param {String} address
    * @returns
    */
-  public async getNonFungibleTokenSummary(
-    address: string
-  ): Promise<NonFungibleTokenSummary[]> {
-    let url = `${this.serverBase}/nft/summary/${address}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+  public async getNonFungibleTokenSummary(address: string): Promise<NonFungibleTokenSummary[]> {
+    let url = `${this.serverBase}/nft/summary/${address}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
 
-    let ret: NonFungibleTokenSummary[] = [];
+    let ret: NonFungibleTokenSummary[] = []
     if (data) {
       data.forEach((v) => {
         ret.push({
@@ -316,44 +303,40 @@ export class Sensible implements SensibleApiBase {
           metaTxId: v.metaTxId,
           metaOutputIndex: v.metaOutputIndex,
           supply: v.supply,
-        });
-      });
+        })
+      })
     }
 
-    return ret;
+    return ret
   }
 
   public async getBalance(address: string) {
-    let url = `${this.serverBase}/address/${address}/balance`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/address/${address}/balance`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
     return {
       balance: data.satoshi,
       pendingBalance: data.pendingSatoshi,
-    };
+    }
   }
 
-  public async getNftSellUtxo(
-    codehash: string,
-    genesis: string,
-    tokenIndex: string
-  ) {
-    let url = `${this.serverBase}/nft/sell/utxo-detail/${codehash}/${genesis}/${tokenIndex}?isReadyOnly=true`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+  public async getNftSellUtxo(codehash: string, genesis: string, tokenIndex: string) {
+    let url = `${this.serverBase}/nft/sell/utxo-detail/${codehash}/${genesis}/${tokenIndex}?isReadyOnly=true`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
-    if (!data) return null;
+    if (!data) return null
     let ret = data
       .filter((v) => v.isReady == true)
       .map((v) => ({
@@ -364,8 +347,8 @@ export class Sensible implements SensibleApiBase {
         outputIndex: v.vout,
         sellerAddress: v.address,
         satoshisPrice: v.price,
-      }))[0];
-    return ret;
+      }))[0]
+    return ret
   }
 
   public async getNftSellList(
@@ -374,16 +357,16 @@ export class Sensible implements SensibleApiBase {
     cursor: number = 0,
     size: number = 20
   ) {
-    let url = `${this.serverBase}/nft/sell/utxo/${codehash}/${genesis}?cursor=${cursor}&size=${size}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/nft/sell/utxo/${codehash}/${genesis}?cursor=${cursor}&size=${size}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
-    if (!data) return null;
+    if (!data) return null
     let ret = data.map((v) => ({
       codehash,
       genesis,
@@ -392,25 +375,21 @@ export class Sensible implements SensibleApiBase {
       outputIndex: v.vout,
       sellerAddress: v.address,
       satoshisPrice: v.price,
-    }));
-    return ret;
+    }))
+    return ret
   }
 
-  public async getNftSellListByAddress(
-    address: string,
-    cursor: number = 0,
-    size: number = 20
-  ) {
-    let url = `${this.serverBase}/nft/sell/utxo-by-address/${address}?cursor=${cursor}&size=${size}`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+  public async getNftSellListByAddress(address: string, cursor: number = 0, size: number = 20) {
+    let url = `${this.serverBase}/nft/sell/utxo-by-address/${address}?cursor=${cursor}&size=${size}`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
       throw new CodeError(
         ErrCode.EC_SENSIBLE_API_ERROR,
         `request api failed. [url]:${url} [msg]:${msg}`
-      );
+      )
     }
-    if (!data) return null;
+    if (!data) return null
     let ret = data.map((v) => ({
       codehash: v.codehash,
       genesis: v.genesis,
@@ -419,21 +398,21 @@ export class Sensible implements SensibleApiBase {
       outputIndex: v.vout,
       sellerAddress: v.address,
       satoshisPrice: v.price,
-    }));
-    return ret;
+    }))
+    return ret
   }
 
   public async getOutpointSpent(txId: string, index: number) {
-    let url = `${this.serverBase}/tx/${txId}/out/${index}/spent`;
-    let _res = await Net.httpGet(url, {});
-    const { code, data, msg } = _res as ResData;
+    let url = `${this.serverBase}/tx/${txId}/out/${index}/spent`
+    let _res = await Net.httpGet(url, {})
+    const { code, data, msg } = _res as ResData
     if (code != 0) {
-      return null;
+      return null
     }
-    if (!data) return null;
+    if (!data) return null
     return {
       spentTxId: data.txid,
       spentInputIndex: data.idx,
-    };
+    }
   }
 }
