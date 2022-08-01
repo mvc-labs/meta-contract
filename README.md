@@ -1,30 +1,28 @@
-# Sensible-SDK
+# Meta-Contract SDK
 
-[![npm version](https://img.shields.io/npm/v/sensible-sdk.svg)](https://www.npmjs.com/package/sensible-sdk)
-
-This sdk helps you to interact with [sensible contracts][sensible]
+This sdk helps you to interact with [MVC meta contracts][mvc]
 
 Please read the [documentation][docs] for more.
 
 ## How to install
 
-npm install sensible-sdk --save
+npm install meta-contract --save
 
 ## How to use(FT)
 
 ### Init
 
 ```js
-const { SensibleFT } = require("sensible-sdk");
+const { FT } = require('meta-contract')
 
-const { signers, signerSelecteds } = await SensibleFT.selectSigners();
-const ft = new SensibleFT({
-  network: "testnet", //mainnet or testnet
-  purse: "", //the wif of a bsv address to offer transaction fees
+const { signers, signerSelecteds } = await FT.selectSigners()
+const ft = new FT({
+  network: 'testnet', //mainnet or testnet
+  purse: '', //the wif of a bsv address to offer transaction fees
   feeb: 0.5,
   signers,
   signerSelecteds,
-});
+})
 ```
 
 ### Genesis
@@ -35,10 +33,10 @@ You should save the returned values.(genesis、codehash、sensibleId)
 ```js
 let { txid, genesis, codehash, sensibleId } = await ft.genesis({
   genesisWif: CoffeeShop.wif,
-  tokenName: "COFFEE COIN",
-  tokenSymbol: "CC",
+  tokenName: 'COFFEE COIN',
+  tokenSymbol: 'CC',
   decimalNum: 3,
-});
+})
 ```
 
 ### Issue
@@ -52,9 +50,9 @@ let { txid } = await ft.issue({
   sensibleId: sensibleId,
   genesisWif: CoffeeShop.wif,
   receiverAddress: CoffeeShop.address,
-  tokenAmount: "1000000000000",
+  tokenAmount: '1000000000000',
   allowIncreaseIssues: false, //if true then you can issue again
-});
+})
 ```
 
 ### Transfer
@@ -67,16 +65,16 @@ let { txid } = await ft.transfer({
   receivers: [
     {
       address: Alice.address,
-      amount: "5000000",
+      amount: '5000000',
     },
     {
       address: Bob.address,
-      amount: "5000000",
+      amount: '5000000',
     },
   ],
   codehash: codehash,
   genesis: genesis,
-});
+})
 ```
 
 ### Query Balance
@@ -84,13 +82,11 @@ let { txid } = await ft.transfer({
 Query token's balance
 
 ```js
-let { balance, pendingBalance, utxoCount, decimal } = await ft.getBalanceDetail(
-  {
-    codehash,
-    genesis,
-    address: Alice.address,
-  }
-);
+let { balance, pendingBalance, utxoCount, decimal } = await ft.getBalanceDetail({
+  codehash,
+  genesis,
+  address: Alice.address,
+})
 ```
 
 ## How to use(NFT)
@@ -98,15 +94,15 @@ let { balance, pendingBalance, utxoCount, decimal } = await ft.getBalanceDetail(
 ### Init
 
 ```js
-const { SensibleNFT } = require("sensible-sdk");
-const { signers, signerSelecteds } = await SensibleNFT.selectSigners();
-const nft = new SensibleNFT({
-  network: "testnet", //mainnet or testnet
-  purse: "", //the wif of a bsv address to offer transaction fees
+const { NFT } = require('meta-contract')
+const { signers, signerSelecteds } = await NFT.selectSigners()
+const nft = new NFT({
+  network: 'testnet', //mainnet or testnet
+  purse: '', //the wif of a bsv address to offer transaction fees
   feeb: 0.5,
   signers,
   signerSelecteds,
-});
+})
 ```
 
 ### Genesis
@@ -117,8 +113,8 @@ You should save the returned values.(genesis、codehash、sensibleId)
 ```js
 let { txid, genesis, codehash, sensibleId } = await nft.genesis({
   genesisWif: CoffeeShop.wif,
-  totalSupply: "3",
-});
+  totalSupply: '3',
+})
 ```
 
 ### Issue
@@ -133,9 +129,9 @@ let { txid, tokenIndex } = await nft.issue({
   sensibleId,
   genesisWif: CoffeeShop.wif,
   receiverAddress: CoffeeShop.address,
-  metaTxId: "8424d5efb0c11f574d7f045959bdc233c17804312c9ca1e196cebdae2b2646ea",
+  metaTxId: '8424d5efb0c11f574d7f045959bdc233c17804312c9ca1e196cebdae2b2646ea',
   metaOutputIndex: 0,
-});
+})
 ```
 
 ### Transfer
@@ -148,8 +144,8 @@ let { txid } = await nft.transfer({
   receiverAddress: Alice.address,
   codehash: codehash,
   genesis: genesis,
-  tokenIndex: "1",
-});
+  tokenIndex: '1',
+})
 ```
 
 ### Sell
@@ -161,9 +157,9 @@ let { sellTx, tx } = await nft.sell({
   codehash,
   genesis,
   sellerWif: Alice.wif,
-  tokenIndex: "1",
+  tokenIndex: '1',
   satoshisPrice: 2000,
-});
+})
 ```
 
 ### Cancel Sell
@@ -174,9 +170,9 @@ Cancel Sell #1 NFT
 let { unlockCheckTx, tx } = await nft.cancelSell({
   codehash,
   genesis,
-  tokenIndex: "1",
+  tokenIndex: '1',
   sellerWif: Alice.wif,
-});
+})
 ```
 
 ### Buy
@@ -187,14 +183,14 @@ Buy #1 NFT
 let { unlockCheckTx, tx } = await nft.buy({
   codehash,
   genesis,
-  tokenIndex: "1",
+  tokenIndex: '1',
   buyerWif: Bob.wif,
-});
+})
 ```
 
 ## Example
 
-<a href="https://github.com/sensible-contract/sensible-sdk/tree/master/examples">Go to examples</a>
+<a href="http://gitlab2.showpay.top/front-end/meta-contract/-/tree/master/examples">Go to examples</a>
 
-[docs]: http://sensible-sdk.readthedocs.io/
-[sensible]: https://sensiblecontract.org/
+[docs]: ''
+[mvc]: ''
