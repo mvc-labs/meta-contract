@@ -4,7 +4,45 @@ type HttpConfig = {
   timeout?: number
   headers?: any
 }
+
+enum HttpMethod {
+  GET = 'GET',
+  POST = 'POST',
+}
+
+type RequestData = {
+  uri: string
+  method: HttpMethod
+  timeout: number
+  gzip: boolean
+  headers: any
+}
 export class ServerNet {
+  static handleCallback = (resolve: Function, reject: Function, reqData: RequestData) => {
+    require('request')(reqData, function (err: any, res: any, body: any) {
+      if (!err) {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          if (typeof body == 'string') {
+            try {
+              body = JSON.parse(body)
+            } catch (e) {}
+          }
+          resolve(body)
+        } else {
+          console.log('request failed.', reqData)
+          reject(
+            new Error(
+              `RequestError: statuCode:${res.statusCode} statusMessage:${res.statusMessage} body:${body}`
+            )
+          )
+        }
+      } else {
+        console.log('request failed.', reqData)
+        reject(err)
+      }
+    })
+  }
+
   static httpGet(url: string, params: any, cb?: Function, config?: any) {
     let str = ''
     let cnt = 0
@@ -18,50 +56,51 @@ export class ServerNet {
     }
     config = config || {}
     let headers = config.headers || {}
-    let timeout = config.timeout || Net.timeout
+    let timeout: number = config.timeout || Net.timeout
     let reqData = {
       uri: url,
-      method: 'GET',
+      method: HttpMethod.GET,
       timeout,
       gzip: true,
       headers,
     }
 
-    const handlerCallback = (resolve: Function, reject: Function) => {
-      require('request')(reqData, function (err: any, res: any, body: any) {
-        if (!err) {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            if (typeof body == 'string') {
-              try {
-                body = JSON.parse(body)
-              } catch (e) {}
-            }
-            resolve(body)
-          } else {
-            console.log('request failed.', reqData)
-            reject(
-              new Error(
-                `RequestError: statuCode:${res.statusCode} statusMessage:${res.statusMessage} body:${body}`
-              )
-            )
-          }
-        } else {
-          console.log('request failed.', reqData)
-          reject(err)
-        }
-      })
-    }
+    // const handlerCallback = (resolve: Function, reject: Function) => {
+    //   require('request')(reqData, function (err: any, res: any, body: any) {
+    //     if (!err) {
+    //       if (res.statusCode >= 200 && res.statusCode < 300) {
+    //         if (typeof body == 'string') {
+    //           try {
+    //             body = JSON.parse(body)
+    //           } catch (e) {}
+    //         }
+    //         resolve(body)
+    //       } else {
+    //         console.log('request failed.', reqData)
+    //         reject(
+    //           new Error(
+    //             `RequestError: statuCode:${res.statusCode} statusMessage:${res.statusMessage} body:${body}`
+    //           )
+    //         )
+    //       }
+    //     } else {
+    //       console.log('request failed.', reqData)
+    //       reject(err)
+    //     }
+    //   })
+    // }
 
     if (typeof cb === 'function') {
-      handlerCallback(
+      this.handleCallback(
         (result: any) => Utils.invokeCallback(cb, null, result),
-        (err: any) => Utils.invokeCallback(cb, err)
+        (err: any) => Utils.invokeCallback(cb, err),
+        reqData
       )
       return
     }
 
     return new Promise((resolve, reject) => {
-      handlerCallback(resolve, reject)
+      this.handleCallback(resolve, reject, reqData)
     })
   }
 
@@ -88,47 +127,48 @@ export class ServerNet {
 
     const reqData = {
       uri: url,
-      method: 'POST',
+      method: HttpMethod.POST,
       body: postData,
       headers: headers,
       timeout: timeout,
       gzip: true,
     }
-    const handlerCallback = (resolve, reject) => {
-      require('request')(reqData, function (err, res, body) {
-        if (!err) {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            if (typeof body == 'string') {
-              try {
-                body = JSON.parse(body)
-              } catch (e) {}
-            }
-            resolve(body)
-          } else {
-            console.log('request failed.', reqData)
-            reject(
-              new Error(
-                `RequestError: statuCode:${res.statusCode} statusMessage:${res.statusMessage} body:${body}`
-              )
-            )
-          }
-        } else {
-          console.log('request failed.', reqData)
-          reject(err)
-        }
-      })
-    }
+    // const handlerCallback = (resolve, reject) => {
+    //   require('request')(reqData, function (err, res, body) {
+    //     if (!err) {
+    //       if (res.statusCode >= 200 && res.statusCode < 300) {
+    //         if (typeof body == 'string') {
+    //           try {
+    //             body = JSON.parse(body)
+    //           } catch (e) {}
+    //         }
+    //         resolve(body)
+    //       } else {
+    //         console.log('request failed.', reqData)
+    //         reject(
+    //           new Error(
+    //             `RequestError: statuCode:${res.statusCode} statusMessage:${res.statusMessage} body:${body}`
+    //           )
+    //         )
+    //       }
+    //     } else {
+    //       console.log('request failed.', reqData)
+    //       reject(err)
+    //     }
+    //   })
+    // }
 
     if (typeof cb === 'function') {
-      handlerCallback(
+      this.handleCallback(
         (result: any) => Utils.invokeCallback(cb, null, result),
-        (err: any) => Utils.invokeCallback(cb, err)
+        (err: any) => Utils.invokeCallback(cb, err),
+        reqData
       )
       return
     }
 
     return new Promise((resolve, reject) => {
-      handlerCallback(resolve, reject)
+      this.handleCallback(resolve, reject, reqData)
     })
   }
 }

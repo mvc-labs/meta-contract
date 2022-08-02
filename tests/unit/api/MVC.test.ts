@@ -17,14 +17,10 @@ describe('MetaSV MVC API测试', () => {
     })
 
     const address = process.env.ADDRESS
-    console.log(address)
     const res = await MVCAPI.getBalance(address)
-    const expacted = {
-      balance: 0,
-      pendingBalance: 0,
-    }
+    console.log(res)
 
-    expect(res).toMatchObject(expacted)
+    expect(res.balance + res.pendingBalance).toBeGreaterThan(0)
   })
 
   it.todo('获取地址UTXOs')
