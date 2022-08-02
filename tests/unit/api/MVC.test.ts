@@ -18,7 +18,6 @@ describe('MetaSV MVC API测试', () => {
 
     const address = process.env.ADDRESS
     const res = await MVCAPI.getBalance(address)
-    console.log(res)
 
     expect(res.balance + res.pendingBalance).toBeGreaterThan(0)
   })

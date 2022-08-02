@@ -17,7 +17,7 @@
     "atest-ft": "mocha -r ts-node/register tests/acceptance/bcp02/ft.test.ts --timeout 5000000 --debugUri ",
     "atest-nft": "mocha -r ts-node/register tests/acceptance/bcp01/nft.test.ts --timeout 5000000 --debugUri ",
     "atest-wallet": "mocha -r ts-node/register tests/acceptance/others/wallet.test.ts --timeout 5000000 --debugUri ",
-    "utest": "jest"
+    "jw": "jest --watchAll"
   },
   "keywords": [
     "sCrypt",

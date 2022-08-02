@@ -153,8 +153,8 @@ export class Api implements ApiBase {
         break
       }
       default: {
-        this.apiHandler = new Sensible(apiTarget, apiNet, serverBase)
-        // this.apiHandler = new MVC(apiNet, serverBase)
+        // this.apiHandler = new Sensible(apiTarget, apiNet, serverBase)
+        this.apiHandler = new MVC(apiNet, serverBase)
         break
       }
     }

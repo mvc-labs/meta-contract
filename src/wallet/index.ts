@@ -22,7 +22,7 @@ export class Wallet {
     privwif: string,
     network: API_NET = API_NET.MAIN,
     feeb: number,
-    apiTarget: API_TARGET = API_TARGET.SENSIBLE,
+    apiTarget: API_TARGET = API_TARGET.MVC,
     apiUrl?: string
   ) {
     if (privwif) {
