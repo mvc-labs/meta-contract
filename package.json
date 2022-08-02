@@ -13,6 +13,7 @@
     "compile-bcp02": "node tools/compiler.js --bcp02",
     "compile-bcp02-dev": "node tools/compiler.js --bcp02  --debug",
     "build": "npx gulp",
+    "build:watch": "gulp dev",
     "atest": "mocha -r ts-node/register tests/acceptance/**/*.test.ts --timeout 600000",
     "atest-ft": "mocha -r ts-node/register tests/acceptance/bcp02/ft.test.ts --timeout 5000000 --debugUri ",
     "atest-nft": "mocha -r ts-node/register tests/acceptance/bcp01/nft.test.ts --timeout 5000000 --debugUri ",

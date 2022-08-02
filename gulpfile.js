@@ -55,4 +55,10 @@ gulp.task("browserify", function () {
     .pipe(gulp.dest("dist"));
 });
 
+function dev() {
+  gulp.watch(["src/**/*.ts", "src/**/*.d.ts"], gulp.series("tsc"));
+  gulp.watch(["src/**/*.js"], gulp.series("tsc"));
+}
+
 gulp.task("default", gulp.series("clean", "tsc", "copy_file", "browserify"));
+gulp.task("dev", gulp.series("clean", "tsc", "copy_file", "browserify", dev));
