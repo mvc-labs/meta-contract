@@ -1,4 +1,4 @@
-import { Bytes, Int, PubKey, Ripemd160, Sig, toHex } from 'scryptlib'
+import { Bytes, Int, PubKey, Ripemd160, Sig, toHex } from '../scryptlib'
 import * as BN from '../bn.js'
 import * as bsv from '../bsv'
 import * as $ from '../common/argumentCheck'
@@ -1245,8 +1245,8 @@ export class SensibleFT {
    * @param receivers token receivers.[{address:'xxx',amount:'1000'}]
    * @param senderWif the private key of the token sender,can be wif or other format
    * @param ftUtxos (Optional) specify token utxos
-   * @param ftChangeAddress (Optional) specify ft changeAddress 
-   * @param utxos (Optional) specify bsv utxos which should be no more than 3 
+   * @param ftChangeAddress (Optional) specify ft changeAddress
+   * @param utxos (Optional) specify bsv utxos which should be no more than 3
    * @param changeAddress (Optional) specify bsv changeAddress
    * @param middleChangeAddress (Optional) the middle bsv changeAddress
    * @param middlePrivateKey (Optional) the private key of the middle changeAddress

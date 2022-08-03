@@ -1,4 +1,4 @@
-import { toHex } from 'scryptlib'
+import { toHex } from '../scryptlib'
 import { TxContext } from 'scryptlib/dist/contract'
 import * as bsv from '../bsv'
 export class ContractAdapter {

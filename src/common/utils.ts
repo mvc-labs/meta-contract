@@ -1,4 +1,4 @@
-import { toHex } from 'scryptlib'
+import { toHex } from '../scryptlib'
 import * as bsv from '../bsv'
 import * as TokenUtil from './tokenUtil'
 
