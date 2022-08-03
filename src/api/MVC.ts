@@ -1,4 +1,4 @@
-import { bsv } from 'scryptlib'
+import * as bsv from '../bsv'
 import { CodeError, ErrCode } from '../common/error'
 import { Net } from '../net'
 import {

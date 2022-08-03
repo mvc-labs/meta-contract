@@ -205,7 +205,7 @@ export namespace crypto {
   }
 
   namespace ECDSA {
-    function sign(message: Buffer, key: PrivateKey, endian: string): Signature
+    function sign(message: Buffer, key: PrivateKey, endian?: string): Signature
     function verify(hashbuf: Buffer, sig: Signature, pubkey: PublicKey, endian?: 'little'): boolean
   }
 
