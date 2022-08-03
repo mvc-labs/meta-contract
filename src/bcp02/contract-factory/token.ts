@@ -1,5 +1,5 @@
 import * as BN from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import { ContractAdapter } from '../../common/ContractAdapter'
 import {
   dummyAddress,
@@ -180,7 +180,7 @@ export class TokenFactory {
 
   public static calLockingScriptSize() {
     let contract = this.getDummyInstance()
-    return (contract.lockingScript as bsv.Script).toBuffer().length
+    return (contract.lockingScript as mvc.Script).toBuffer().length
   }
 
   public static calUnlockingScriptSize(
@@ -211,9 +211,9 @@ export class TokenFactory {
       prevouts = Buffer.concat([prevouts, txidBuf, indexBuf])
     }
     const routeCheckInputIndex = 0
-    let routeCheckTx = new bsv.Transaction(dummyTx.serialize(true))
+    let routeCheckTx = new mvc.Transaction(dummyTx.serialize(true))
     routeCheckTx.addOutput(
-      new bsv.Transaction.Output({
+      new mvc.Transaction.Output({
         script: routeCheckContact.lockingScript,
         satoshis: 10000,
       })
@@ -240,6 +240,6 @@ export class TokenFactory {
       lockContractTx: new Bytes('00'),
       operation: ftProto.FT_OP_TYPE.TRANSFER,
     })
-    return (unlockedContract.toScript() as bsv.Script).toBuffer().length
+    return (unlockedContract.toScript() as mvc.Script).toBuffer().length
   }
 }

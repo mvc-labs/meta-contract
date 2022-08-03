@@ -1,16 +1,16 @@
 import { SIGNER_NUM } from '../bcp02/contract-proto/token.proto'
 import { BN } from '../bn.js'
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 import * as TokenUtil from './tokenUtil'
 const network = 'mainnet'
 export const dummyTxId = 'c776133a77886693ba2484fe12d6bdfb8f8bcb7a237e4a8a6d0f69c7d1879a08'
-export const dummyPrivateKey = bsv.PrivateKey.fromWIF(
+export const dummyPrivateKey = mvc.PrivateKey.fromWIF(
   'L5k7xi4diSR8aWoGKojSNTnc3YMEXEoNpJEaGzqWimdKry6CFrzz'
 )
 export const dummyAddress = dummyPrivateKey.toAddress(network)
 export const dummyPk = dummyPrivateKey.toPublicKey()
 export const dummyCodehash = dummyPk
-export const dummyTx = new bsv.Transaction(
+export const dummyTx = new mvc.Transaction(
   '010000000146a476c09fa48d0db861dc5c9e28dc11f9262a89d057a03d8896e93458b82e0f010000006a47304402200b70b1feb364ffe0245c78a2d163fca4bfd808976acbbb3579ba71807bd9b307022074bf5058166902632987e68a3fc6e0d6e36def18c7c184acd50dfedfa72830d9412103ac3f50a7670cd94792a61992d98aeaba4681de7777997f23fdc1ff32438f267efeffffff02e8030000000000001976a9145008595623e5364f71fea7a4ddfc20c069a028a088ace4f00c00000000001976a914200fcbd6341db16487f566b4718879409c31ed0088ac3b960a00'
 )
 export const dummySigBE =
@@ -27,7 +27,7 @@ let buf = Buffer.alloc(0)
 for (let i = 0; i < SIGNER_NUM; i++) {
   buf = Buffer.concat([
     buf,
-    bsv.crypto.Hash.sha256ripemd160(
+    mvc.crypto.Hash.sha256ripemd160(
       TokenUtil.toBufferLE(dummyRabinPubKey.toString('hex'), TokenUtil.RABIN_SIG_LEN)
     ),
   ])

@@ -29,7 +29,7 @@ Decode transaction output
 Parameters
 ----------
 
-* ``output`` - ``bsv.Transaction.Output``
+* ``output`` - ``mvc.Transaction.Output``
 * ``network`` - :ref:`API_NET<API_NET>`:
 
 -------
@@ -44,16 +44,16 @@ Example
 
 .. code-block:: javascript
 
-    const { bsv, TxDecoder, SensibleApi, API_NET } = sensible;
+    const { mvc, TxDecoder, SensibleApi, API_NET } = sensible;
     const sensibleApi = new SensibleApi(API_NET.MAIN);
     let rawtx = await sensibleApi.getRawTxData(
         "b69bfbd89d1db4c1408d0085a70a8aa3620e6378d66d5832ad537e907dbff0b2"
     );
-    const tx = new bsv.Transaction(rawtx);
+    const tx = new mvc.Transaction(rawtx);
     const data = TxDecoder.decodeOutput(tx.outputs[0], API_NET.MAIN);
     console.log(data);
 
-    > 
+    >
     {
         type: 1,
         satoshis: 4338,
@@ -93,7 +93,7 @@ Decode transaction
 Parameters
 ----------
 
-* ``tx`` - ``bsv.Transaction``
+* ``tx`` - ``mvc.Transaction``
 * ``network`` - :ref:`API_NET<API_NET>`: (Optional)
 
 -------
@@ -113,16 +113,16 @@ Example
 
 .. code-block:: javascript
 
-    const { bsv, TxDecoder, SensibleApi, API_NET } = sensible;
+    const { mvc, TxDecoder, SensibleApi, API_NET } = sensible;
     const sensibleApi = new SensibleApi(API_NET.MAIN);
     let rawtx = await sensibleApi.getRawTxData(
         "b69bfbd89d1db4c1408d0085a70a8aa3620e6378d66d5832ad537e907dbff0b2"
     );
-    const tx = new bsv.Transaction(rawtx);
+    const tx = new mvc.Transaction(rawtx);
     const data = TxDecoder.decodeTx(tx, API_NET.MAIN);
     console.log(data);
 
-    > 
+    >
     {
         txId: 'b69bfbd89d1db4c1408d0085a70a8aa3620e6378d66d5832ad537e907dbff0b2',
         inputs: [],

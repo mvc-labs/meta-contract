@@ -1,4 +1,4 @@
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import * as proto from '../../common/protoheader'
 import * as Utils from '../../common/utils'
 import { toHex } from '../../scryptlib'
@@ -92,7 +92,7 @@ export function getTokenIndex(script: Buffer): BN {
 }
 
 export function getNftID(script: Buffer) {
-  return bsv.crypto.Hash.sha256ripemd160(
+  return mvc.crypto.Hash.sha256ripemd160(
     script.slice(script.length - TOKEN_INDEX_OFFSET, script.length - proto.getHeaderLen())
   )
 }
@@ -125,7 +125,7 @@ export function getContractCode(script: Buffer) {
 }
 
 export function getContractCodeHash(script: Buffer) {
-  return bsv.crypto.Hash.sha256ripemd160(getContractCode(script))
+  return mvc.crypto.Hash.sha256ripemd160(getContractCode(script))
 }
 
 export function getMetaidOutpoint(script0: Buffer) {
@@ -279,7 +279,7 @@ export function getQueryCodehash(script: Buffer): string {
 
 export function getQueryGenesis(script: Buffer): string {
   return toHex(
-    bsv.crypto.Hash.sha256ripemd160(
+    mvc.crypto.Hash.sha256ripemd160(
       script.slice(script.length - GENESIS_HASH_OFFSET, script.length - proto.getHeaderLen())
     )
   )

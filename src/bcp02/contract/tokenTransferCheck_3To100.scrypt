@@ -7,7 +7,7 @@ contract TokenTransferCheck {
 
   static const int MAX_INPUT = 3;
   static const int MAX_OUTPUT = 100;
-    
+
   public function unlock(
     SigHashPreimage txPreimage,
     bytes tokenScript,
@@ -92,7 +92,7 @@ contract TokenTransferCheck {
         sumInputToken = sumInputToken + amount;
       }
     }
-    
+
     // check the outputs
     bytes outputs = b'';
     // max support loop num receiver, you can change this num, but will cause the contrac size increase. you can customize your output
@@ -120,7 +120,7 @@ contract TokenTransferCheck {
       outputs = outputs + opReturnOutput;
     }
 
-    // bsv change output
+    // mvc change output
     bytes changeOutput = TxUtil.genBsvOutput(changeSatoshis, changeAddress);
     outputs = outputs +  changeOutput;
 

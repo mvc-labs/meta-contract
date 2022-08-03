@@ -1,17 +1,17 @@
 import { SIGNER_NUM } from '../../../src/bcp01/contract-proto/nft.proto'
-import * as bsv from '../../../src/bsv'
+import * as mvc from '../../../src/mvc'
 import * as Utils from '../../../src/common/utils'
 import { API_NET, API_TARGET, Wallet } from '../../../src/index'
 import { MockApi } from '../MockApi'
 Utils.isNull(SIGNER_NUM)
 
 let wallets: {
-  privateKey: bsv.PrivateKey
-  publicKey: bsv.PublicKey
-  address: bsv.Address
+  privateKey: mvc.PrivateKey
+  publicKey: mvc.PublicKey
+  address: mvc.Address
 }[] = []
 for (let i = 0; i < 4; i++) {
-  let privateKey = new bsv.PrivateKey()
+  let privateKey = new mvc.PrivateKey()
   wallets.push({
     privateKey,
     publicKey: privateKey.publicKey,
@@ -28,7 +28,7 @@ let [FeePayer, CoffeeShop, Alice, Bob] = wallets
 
 let api = new MockApi()
 async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
-  let feeTx = new bsv.Transaction()
+  let feeTx = new mvc.Transaction()
   let unitSatoshis = Math.ceil(satoshis / count)
   let satoshisArray = []
 
@@ -42,8 +42,8 @@ async function genDummyFeeUtxos(satoshis: number, count: number = 1) {
   }
   for (let i = 0; i < count; i++) {
     feeTx.addOutput(
-      new bsv.Transaction.Output({
-        script: bsv.Script.buildPublicKeyHashOut(FeePayer.address),
+      new mvc.Transaction.Output({
+        script: mvc.Script.buildPublicKeyHashOut(FeePayer.address),
         satoshis: satoshisArray[i],
       })
     )

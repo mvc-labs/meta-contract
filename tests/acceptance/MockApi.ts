@@ -2,7 +2,7 @@ import * as nftProto from '../../src/bcp01/contract-proto/nft.proto'
 import * as nftSellProto from '../../src/bcp01/contract-proto/nftSell.proto'
 import * as ftProto from '../../src/bcp02/contract-proto/token.proto'
 import * as BN from '../../src/bn.js/index.js'
-import * as bsv from '../../src/bsv'
+import * as mvc from '../../src/mvc'
 import { getProtoType, PROTO_TYPE } from '../../src/common/protoheader'
 import * as Utils from '../../src/common/utils'
 import {
@@ -64,7 +64,7 @@ type Spent = {
 }
 export class MockApi implements ApiBase {
   serverBase: string
-  transactions: { [key: string]: bsv.Transaction } = {}
+  transactions: { [key: string]: mvc.Transaction } = {}
   spents: Spent[] = []
   utxoPacks: UtxoPack[] = []
   network: 'mainnet' | 'testnet'
@@ -108,7 +108,7 @@ export class MockApi implements ApiBase {
    * @param {string} hex
    */
   public async broadcast(txHex: string): Promise<string> {
-    let tx = new bsv.Transaction(txHex)
+    let tx = new mvc.Transaction(txHex)
     tx.inputs.forEach((input, index) => {
       let inputTxId = input.prevTxId.toString('hex')
       let outpoint = getOutpoint(inputTxId, input.outputIndex)
@@ -138,7 +138,7 @@ export class MockApi implements ApiBase {
     }
     tx.outputs.forEach((v, index) => {
       if (v.script.isPublicKeyHashOut()) {
-        let address = new bsv.Address(v.script.getAddressInfo() as bsv.Address)
+        let address = new mvc.Address(v.script.getAddressInfo() as mvc.Address)
         this.utxoPacks.push({
           outpoint: getOutpoint(tx.id, index),
           type: UtxoType.bsv,
@@ -158,7 +158,7 @@ export class MockApi implements ApiBase {
           let dataPart = ftProto.parseDataPart(scriptBuf)
           let genesis = ftProto.getQueryGenesis(scriptBuf)
           let codehash = ftProto.getQueryCodehash(scriptBuf)
-          let address = bsv.Address.fromPublicKeyHash(
+          let address = mvc.Address.fromPublicKeyHash(
             Buffer.from(dataPart.tokenAddress, 'hex'),
             this.network
           )
@@ -180,7 +180,7 @@ export class MockApi implements ApiBase {
           let dataPart = nftProto.parseDataPart(scriptBuf)
           let genesis = nftProto.getQueryGenesis(scriptBuf)
           let codehash = nftProto.getQueryCodehash(scriptBuf)
-          let address = bsv.Address.fromPublicKeyHash(
+          let address = mvc.Address.fromPublicKeyHash(
             Buffer.from(dataPart.nftAddress, 'hex'),
             this.network
           )
@@ -202,7 +202,7 @@ export class MockApi implements ApiBase {
           })
         } else if (protoType == PROTO_TYPE.NFT_SELL) {
           let dataPart = nftSellProto.parseDataPart(scriptBuf)
-          let address = bsv.Address.fromPublicKeyHash(
+          let address = mvc.Address.fromPublicKeyHash(
             Buffer.from(dataPart.sellerAddress, 'hex'),
             this.network
           )

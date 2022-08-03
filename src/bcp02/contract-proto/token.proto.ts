@@ -1,5 +1,5 @@
 import * as BN from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import * as proto from '../../common/protoheader'
 import * as Utils from '../../common/utils'
 import { toHex } from '../../scryptlib'
@@ -82,7 +82,7 @@ export function getTokenAmount(script: Buffer): BN {
 }
 
 export function getTokenID(script: Buffer) {
-  return bsv.crypto.Hash.sha256ripemd160(
+  return mvc.crypto.Hash.sha256ripemd160(
     script.slice(script.length - GENESIS_HASH_OFFSET, script.length - proto.getHeaderLen())
   )
 }
@@ -166,7 +166,7 @@ export function getContractCode(script: Buffer): Buffer {
 }
 
 export function getContractCodeHash(script: Buffer) {
-  return bsv.crypto.Hash.sha256ripemd160(getContractCode(script))
+  return mvc.crypto.Hash.sha256ripemd160(getContractCode(script))
 }
 
 export function getDataPart(script: Buffer): Buffer {

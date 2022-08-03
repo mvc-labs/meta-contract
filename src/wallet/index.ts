@@ -1,4 +1,4 @@
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 import { dumpTx } from '../common/utils'
 import { API_NET, API_TARGET, Api, ApiBase } from '../api'
 import { TxComposer } from '../tx-composer'
@@ -12,8 +12,8 @@ type BroadcastOptions = {
   dump?: boolean
 }
 export class Wallet {
-  privateKey: bsv.PrivateKey
-  address: bsv.Address
+  privateKey: mvc.PrivateKey
+  address: mvc.Address
   feeb: number
   blockChainApi: ApiBase
   network: API_NET
@@ -26,9 +26,9 @@ export class Wallet {
     apiUrl?: string
   ) {
     if (privwif) {
-      this.privateKey = new bsv.PrivateKey(privwif, network)
+      this.privateKey = new mvc.PrivateKey(privwif, network)
     } else {
-      this.privateKey = bsv.PrivateKey.fromRandom(network)
+      this.privateKey = mvc.PrivateKey.fromRandom(network)
     }
     this.address = this.privateKey.toAddress(network)
     this.blockChainApi = new Api(network, apiTarget, apiUrl)
@@ -58,14 +58,14 @@ export class Wallet {
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
     utxos.forEach((v) => {
       txComposer.appendP2PKHInput({
-        address: new bsv.Address(v.address, this.network),
+        address: new mvc.Address(v.address, this.network),
         txId: v.txId,
         outputIndex: v.outputIndex,
         satoshis: v.satoshis,
       })
     })
     txComposer.appendP2PKHOutput({
-      address: new bsv.Address(address, this.network),
+      address: new mvc.Address(address, this.network),
       satoshis: amount,
     })
     txComposer.appendChangeOutput(this.address, this.feeb)
@@ -81,7 +81,7 @@ export class Wallet {
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
     utxos.forEach((v) => {
       txComposer.appendP2PKHInput({
-        address: new bsv.Address(v.address, this.network),
+        address: new mvc.Address(v.address, this.network),
         txId: v.txId,
         outputIndex: v.outputIndex,
         satoshis: v.satoshis,
@@ -89,7 +89,7 @@ export class Wallet {
     })
     receivers.forEach((v) => {
       txComposer.appendP2PKHOutput({
-        address: new bsv.Address(v.address, this.network),
+        address: new mvc.Address(v.address, this.network),
         satoshis: v.amount,
       })
     })
@@ -106,7 +106,7 @@ export class Wallet {
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
     utxos.forEach((v) => {
       txComposer.appendP2PKHInput({
-        address: new bsv.Address(v.address, this.network),
+        address: new mvc.Address(v.address, this.network),
         txId: v.txId,
         outputIndex: v.outputIndex,
         satoshis: v.satoshis,
@@ -139,7 +139,7 @@ export class Wallet {
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
     utxos.forEach((v) => {
       txComposer.appendP2PKHInput({
-        address: new bsv.Address(v.address, this.network),
+        address: new mvc.Address(v.address, this.network),
         txId: v.txId,
         outputIndex: v.outputIndex,
         satoshis: v.satoshis,

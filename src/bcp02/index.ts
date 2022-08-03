@@ -1,6 +1,6 @@
 import { Bytes, Int, PubKey, Ripemd160, Sig, toHex } from '../scryptlib'
 import * as BN from '../bn.js'
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 import * as $ from '../common/argumentCheck'
 import { dummyTxId } from '../common/dummy'
 import { DustCalculator } from '../common/DustCalculator'
@@ -29,7 +29,7 @@ import {
 } from './contract-factory/tokenTransferCheck'
 import * as ftProto from './contract-proto/token.proto'
 import { ContractUtil } from './contractUtil'
-const Signature = bsv.crypto.Signature
+const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 const PLACE_HOLDER_UNSIGN_TXID = '4444444444444444444444444444444888888888888888888888888888888888'
 const PLACE_HOLDER_UNSIGN_TXID_REVERSE =
@@ -37,7 +37,7 @@ const PLACE_HOLDER_UNSIGN_TXID_REVERSE =
 const PLACE_HOLDER_UNSIGN_PREVOUTS =
   '4444444444444444444444444444444444444444444444444444444444444444'
 const PLACE_HOLDER_UNSIGN_CHECKTX = 'PLACE_HOLDER_UNSIGN_CHECKTX'
-const _ = bsv.deps._
+const _ = mvc.deps._
 export const defaultSignerConfigs: SignerConfig[] = [
   {
     satotxApiPrefix: 'https://s1.satoplay.cn,https://s1.satoplay.com',
@@ -72,7 +72,7 @@ type ParamUtxo = {
   outputIndex: number
   satoshis: number
   wif?: string
-  address?: string | bsv.Address
+  address?: string | mvc.Address
 }
 
 type ParamFtUtxo = {
@@ -84,8 +84,8 @@ type ParamFtUtxo = {
 }
 
 type Purse = {
-  privateKey: bsv.PrivateKey
-  address: bsv.Address
+  privateKey: mvc.PrivateKey
+  address: mvc.Address
 }
 
 function checkParamUtxoFormat(utxo) {
@@ -202,16 +202,16 @@ export type Utxo = {
   txId: string
   outputIndex: number
   satoshis: number
-  address: bsv.Address
+  address: mvc.Address
 }
 
 export type FtUtxo = {
   txId: string
   outputIndex: number
   satoshis?: number
-  lockingScript?: bsv.Script
+  lockingScript?: mvc.Script
 
-  tokenAddress?: bsv.Address
+  tokenAddress?: mvc.Address
   tokenAmount?: BN
 
   satotxInfo?: {
@@ -223,11 +223,11 @@ export type FtUtxo = {
     preTxHex?: string
   }
 
-  preTokenAddress?: bsv.Address
+  preTokenAddress?: mvc.Address
   preTokenAmount?: BN
-  preLockingScript?: bsv.Script
+  preLockingScript?: mvc.Script
 
-  publicKey?: bsv.PublicKey
+  publicKey?: mvc.PublicKey
 }
 
 /**
@@ -239,7 +239,7 @@ export class SensibleFT {
   private network: API_NET
   private purse: Purse
   public api: ApiBase
-  private zeroAddress: bsv.Address
+  private zeroAddress: mvc.Address
   private debug: boolean
   private transferPart2?: any
   private signerSelecteds: number[] = []
@@ -256,7 +256,7 @@ export class SensibleFT {
    * @param signerSelecteds (Optional) the indexs of the signers which is decided to verify
    * @param feeb (Optional) the fee rate. default is 0.5
    * @param network (Optional) mainnet/testnet default is mainnet
-   * @param purse (Optional) the private key to offer transacions fee. If not provided, bsv utoxs must be provided in genesis/issue/transfer.
+   * @param purse (Optional) the private key to offer transacions fee. If not provided, mvc utoxs must be provided in genesis/issue/transfer.
    * @param debug (Optional) specify if verify the tx when genesis/issue/transfer, default is false
    * @param apiTarget (Optional) SENSIBLE/METASV, default is SENSIBLE.
    * @param dustLimitFactor (Optional) specify the output dust rate, default is 0.25 .If the value is equal to 0, the final dust will be at least 1.
@@ -269,7 +269,7 @@ export class SensibleFT {
     network = API_NET.MAIN,
     purse,
     debug = false,
-    apiTarget = API_TARGET.SENSIBLE,
+    apiTarget = API_TARGET.MVC,
     apiUrl,
     mockData,
     dustLimitFactor = 300,
@@ -307,13 +307,13 @@ export class SensibleFT {
 
     this.dustCalculator = new DustCalculator(dustLimitFactor, dustAmount)
     if (network == API_NET.MAIN) {
-      this.zeroAddress = new bsv.Address('1111111111111111111114oLvT2')
+      this.zeroAddress = new mvc.Address('1111111111111111111114oLvT2')
     } else {
-      this.zeroAddress = new bsv.Address('mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8')
+      this.zeroAddress = new mvc.Address('mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8')
     }
 
     if (purse) {
-      const privateKey = bsv.PrivateKey.fromWIF(purse)
+      const privateKey = mvc.PrivateKey.fromWIF(purse)
       const address = privateKey.toAddress(this.network)
       this.purse = {
         privateKey,
@@ -338,7 +338,7 @@ export class SensibleFT {
 
     let rabinPubKeys = this.signers.map((v) => v.satotxPubKey)
     let rabinPubKeyHashArray = TokenUtil.getRabinPubKeyHashArray(rabinPubKeys)
-    this.rabinPubKeyHashArrayHash = bsv.crypto.Hash.sha256ripemd160(rabinPubKeyHashArray)
+    this.rabinPubKeyHashArrayHash = mvc.crypto.Hash.sha256ripemd160(rabinPubKeyHashArray)
     this.rabinPubKeyHashArray = new Bytes(toHex(rabinPubKeyHashArray))
     this.rabinPubKeyArray = rabinPubKeys.map((v) => new Int(v.toString(10)))
     this.transferCheckCodeHashArray = ContractUtil.transferCheckCodeHashArray
@@ -376,7 +376,7 @@ export class SensibleFT {
 
   private async _pretreatUtxos(
     paramUtxos: ParamUtxo[]
-  ): Promise<{ utxos: Utxo[]; utxoPrivateKeys: bsv.PrivateKey[] }> {
+  ): Promise<{ utxos: Utxo[]; utxoPrivateKeys: mvc.PrivateKey[] }> {
     let utxoPrivateKeys = []
     let utxos: Utxo[] = []
 
@@ -391,7 +391,7 @@ export class SensibleFT {
     } else {
       paramUtxos.forEach((v) => {
         if (v.wif) {
-          let privateKey = new bsv.PrivateKey(v.wif)
+          let privateKey = new mvc.PrivateKey(v.wif)
           utxoPrivateKeys.push(privateKey)
           v.address = privateKey.toAddress(this.network).toString() //Compatible with the old version, only wif is provided but no address is provided
         }
@@ -402,7 +402,7 @@ export class SensibleFT {
         txId: v.txId,
         outputIndex: v.outputIndex,
         satoshis: v.satoshis,
-        address: new bsv.Address(v.address, this.network),
+        address: new mvc.Address(v.address, this.network),
       })
     })
 
@@ -414,9 +414,9 @@ export class SensibleFT {
     paramFtUtxos: ParamFtUtxo[],
     codehash?: string,
     genesis?: string,
-    senderPrivateKey?: bsv.PrivateKey,
-    senderPublicKey?: bsv.PublicKey
-  ): Promise<{ ftUtxos: FtUtxo[]; ftUtxoPrivateKeys: bsv.PrivateKey[] }> {
+    senderPrivateKey?: mvc.PrivateKey,
+    senderPublicKey?: mvc.PublicKey
+  ): Promise<{ ftUtxos: FtUtxo[]; ftUtxoPrivateKeys: mvc.PrivateKey[] }> {
     let ftUtxos: FtUtxo[] = []
     let ftUtxoPrivateKeys = []
 
@@ -447,7 +447,7 @@ export class SensibleFT {
     } else {
       paramFtUtxos.forEach((v) => {
         if (v.wif) {
-          let privateKey = new bsv.PrivateKey(v.wif)
+          let privateKey = new mvc.PrivateKey(v.wif)
           ftUtxoPrivateKeys.push(privateKey)
           publicKeys.push(privateKey.toPublicKey())
         }
@@ -458,7 +458,7 @@ export class SensibleFT {
       ftUtxos.push({
         txId: v.txId,
         outputIndex: v.outputIndex,
-        tokenAddress: new bsv.Address(v.tokenAddress, this.network),
+        tokenAddress: new mvc.Address(v.tokenAddress, this.network),
         tokenAmount: new BN(v.tokenAmount.toString()),
         publicKey: publicKeys[index],
       })
@@ -474,8 +474,8 @@ export class SensibleFT {
    * @param tokenName token name, limited to 20 bytes
    * @param tokenSymbol the token symbol, limited to 10 bytes
    * @param decimalNum the decimal number, range 0-255
-   * @param utxos (Optional) specify bsv utxos
-   * @param changeAddress (Optional) specify bsv changeAddress
+   * @param utxos (Optional) specify mvc utxos
+   * @param changeAddress (Optional) specify mvc changeAddress
    * @param opreturnData (Optional) append an opReturn output
    * @param genesisWif the private key of the token genesiser
    * @param noBroadcast (Optional) whether not to broadcast the transaction, the default is false
@@ -495,16 +495,16 @@ export class SensibleFT {
     tokenSymbol: string
     decimalNum: number
     utxos?: ParamUtxo[]
-    changeAddress?: string | bsv.Address
+    changeAddress?: string | mvc.Address
     opreturnData?: any
-    genesisWif: string | bsv.PrivateKey
+    genesisWif: string | mvc.PrivateKey
     noBroadcast?: boolean
   }): Promise<{
     txHex: string
     txid: string
     genesis: string
     codehash: string
-    tx: bsv.Transaction
+    tx: mvc.Transaction
     sensibleId: string
   }> {
     //validate params
@@ -528,11 +528,11 @@ export class SensibleFT {
 
     let utxoInfo = await this._pretreatUtxos(utxos)
     if (changeAddress) {
-      changeAddress = new bsv.Address(changeAddress, this.network)
+      changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
       changeAddress = utxoInfo.utxos[0].address
     }
-    let genesisPrivateKey = new bsv.PrivateKey(genesisWif)
+    let genesisPrivateKey = new mvc.PrivateKey(genesisWif)
     let genesisPublicKey = genesisPrivateKey.toPublicKey()
     let { txComposer } = await this._genesis({
       tokenName,
@@ -540,7 +540,7 @@ export class SensibleFT {
       decimalNum,
       utxos: utxoInfo.utxos,
       utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
-      changeAddress: changeAddress as bsv.Address,
+      changeAddress: changeAddress as mvc.Address,
       opreturnData,
       genesisPublicKey,
     })
@@ -566,8 +566,8 @@ export class SensibleFT {
    * @param tokenName token name, limited to 20 bytes
    * @param tokenSymbol the token symbol, limited to 10 bytes
    * @param decimalNum the decimal number, range 0-255
-   * @param utxos (Optional) specify bsv utxos
-   * @param changeAddress (Optional) specify bsv changeAddress
+   * @param utxos (Optional) specify mvc utxos
+   * @param changeAddress (Optional) specify mvc changeAddress
    * @param opreturnData (Optional) append an opReturn output
    * @param genesisPublicKey the public key of the token genesiser
    * @param noBroadcast (Optional) whether not to broadcast the transaction, the default is false
@@ -587,11 +587,11 @@ export class SensibleFT {
     tokenSymbol: string
     decimalNum: number
     utxos?: ParamUtxo[]
-    changeAddress?: string | bsv.Address
+    changeAddress?: string | mvc.Address
     opreturnData?: any
-    genesisPublicKey: string | bsv.PublicKey
+    genesisPublicKey: string | mvc.PublicKey
   }): Promise<{
-    tx: bsv.Transaction
+    tx: mvc.Transaction
     sigHashList: SigHashInfo[]
   }> {
     //validate params
@@ -613,17 +613,17 @@ export class SensibleFT {
     $.checkArgument(genesisPublicKey, 'genesisPublicKey is required')
     let utxoInfo = await this._pretreatUtxos(utxos)
     if (changeAddress) {
-      changeAddress = new bsv.Address(changeAddress, this.network)
+      changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
       changeAddress = utxoInfo.utxos[0].address
     }
-    genesisPublicKey = new bsv.PublicKey(genesisPublicKey)
+    genesisPublicKey = new mvc.PublicKey(genesisPublicKey)
     let { txComposer } = await this._genesis({
       tokenName,
       tokenSymbol,
       decimalNum,
       utxos: utxoInfo.utxos,
-      changeAddress: changeAddress as bsv.Address,
+      changeAddress: changeAddress as mvc.Address,
       opreturnData,
       genesisPublicKey,
     })
@@ -645,10 +645,10 @@ export class SensibleFT {
     tokenSymbol: string
     decimalNum: number
     utxos?: Utxo[]
-    utxoPrivateKeys?: bsv.PrivateKey[]
-    changeAddress?: bsv.Address
+    utxoPrivateKeys?: mvc.PrivateKey[]
+    changeAddress?: mvc.Address
     opreturnData?: any
-    genesisPublicKey: bsv.PublicKey
+    genesisPublicKey: mvc.PublicKey
   }) {
     //create genesis contract
     let genesisContract = TokenGenesisFactory.createContract(genesisPublicKey)
@@ -714,8 +714,8 @@ export class SensibleFT {
    * @param receiverAddress the token receiver address
    * @param tokenAmount the token amount to issue
    * @param allowIncreaseIssues (Optional) if allow to increase issues.default is true
-   * @param utxos (Optional) specify bsv utxos
-   * @param changeAddress (Optional) specify bsv changeAddress
+   * @param utxos (Optional) specify mvc utxos
+   * @param changeAddress (Optional) specify mvc changeAddress
    * @param opreturnData (Optional) append an opReturn output
    * @param noBroadcast (Optional) whether not to broadcast the transaction, the default is false
    * @returns
@@ -737,14 +737,14 @@ export class SensibleFT {
     codehash: string
     sensibleId: string
     genesisWif: string
-    receiverAddress: string | bsv.Address
+    receiverAddress: string | mvc.Address
     tokenAmount: string | BN
     allowIncreaseIssues: boolean
     utxos?: ParamUtxo[]
-    changeAddress?: string | bsv.Address
+    changeAddress?: string | mvc.Address
     opreturnData?: any
     noBroadcast?: boolean
-  }): Promise<{ txHex: string; txid: string; tx: bsv.Transaction }> {
+  }): Promise<{ txHex: string; txid: string; tx: mvc.Transaction }> {
     checkParamGenesis(genesis)
     checkParamCodehash(codehash)
     $.checkArgument(sensibleId, 'sensibleId is required')
@@ -754,13 +754,13 @@ export class SensibleFT {
 
     let utxoInfo = await this._pretreatUtxos(utxos)
     if (changeAddress) {
-      changeAddress = new bsv.Address(changeAddress, this.network)
+      changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
       changeAddress = utxoInfo.utxos[0].address
     }
-    let genesisPrivateKey = new bsv.PrivateKey(genesisWif)
+    let genesisPrivateKey = new mvc.PrivateKey(genesisWif)
     let genesisPublicKey = genesisPrivateKey.toPublicKey()
-    receiverAddress = new bsv.Address(receiverAddress, this.network)
+    receiverAddress = new mvc.Address(receiverAddress, this.network)
     tokenAmount = new BN(tokenAmount.toString())
     let { txComposer } = await this._issue({
       genesis,
@@ -792,8 +792,8 @@ export class SensibleFT {
    * @param receiverAddress the token receiver address
    * @param tokenAmount the token amount to issue
    * @param allowIncreaseIssues (Optional) if allow to increase issues.default is true
-   * @param utxos (Optional) specify bsv utxos
-   * @param changeAddress (Optional) specify bsv changeAddress
+   * @param utxos (Optional) specify mvc utxos
+   * @param changeAddress (Optional) specify mvc changeAddress
    * @param opreturnData (Optional) append an opReturn output
    * @returns
    */
@@ -812,14 +812,14 @@ export class SensibleFT {
     genesis: string
     codehash: string
     sensibleId: string
-    genesisPublicKey: string | bsv.PublicKey
-    receiverAddress: string | bsv.Address
+    genesisPublicKey: string | mvc.PublicKey
+    receiverAddress: string | mvc.Address
     tokenAmount: string | BN
     allowIncreaseIssues?: boolean
     utxos?: ParamUtxo[]
-    changeAddress?: string | bsv.Address
+    changeAddress?: string | mvc.Address
     opreturnData?: any
-  }): Promise<{ tx: bsv.Transaction; sigHashList: SigHashInfo[] }> {
+  }): Promise<{ tx: mvc.Transaction; sigHashList: SigHashInfo[] }> {
     checkParamGenesis(genesis)
     checkParamCodehash(codehash)
     $.checkArgument(sensibleId, 'sensibleId is required')
@@ -828,12 +828,12 @@ export class SensibleFT {
     $.checkArgument(tokenAmount, 'tokenAmount is required')
     let utxoInfo = await this._pretreatUtxos(utxos)
     if (changeAddress) {
-      changeAddress = new bsv.Address(changeAddress, this.network)
+      changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
       changeAddress = utxoInfo.utxos[0].address
     }
-    let _genesisPublicKey = new bsv.PublicKey(genesisPublicKey)
-    receiverAddress = new bsv.Address(receiverAddress, this.network)
+    let _genesisPublicKey = new mvc.PublicKey(genesisPublicKey)
+    receiverAddress = new mvc.Address(receiverAddress, this.network)
     tokenAmount = new BN(tokenAmount.toString())
     let { txComposer } = await this._issue({
       genesis,
@@ -859,7 +859,7 @@ export class SensibleFT {
   ): Promise<FtUtxo> {
     let unspent: FungibleTokenUnspent
     let firstGenesisTxHex = await this.api.getRawTxData(genesisTxId)
-    let firstGenesisTx = new bsv.Transaction(firstGenesisTxHex)
+    let firstGenesisTx = new mvc.Transaction(firstGenesisTxHex)
 
     let scriptBuffer = firstGenesisTx.outputs[genesisOutputIndex].script.toBuffer()
     let originGenesis = ftProto.getQueryGenesis(scriptBuffer)
@@ -902,7 +902,7 @@ export class SensibleFT {
     genesisPublicKey,
   }: {
     sensibleId: string
-    genesisPublicKey: bsv.PublicKey
+    genesisPublicKey: mvc.PublicKey
   }) {
     let genesisContract = TokenGenesisFactory.createContract(genesisPublicKey)
 
@@ -918,7 +918,7 @@ export class SensibleFT {
     }
 
     let txHex = await this.api.getRawTxData(genesisUtxo.txId)
-    const tx = new bsv.Transaction(txHex)
+    const tx = new mvc.Transaction(txHex)
     let preTxId = tx.inputs[0].prevTxId.toString('hex')
     let preOutputIndex = tx.inputs[0].outputIndex
     let preTxHex = await this.api.getRawTxData(preTxId)
@@ -961,16 +961,16 @@ export class SensibleFT {
     genesis: string
     codehash: string
     sensibleId: string
-    receiverAddress: bsv.Address
+    receiverAddress: mvc.Address
     tokenAmount: BN
     allowIncreaseIssues: boolean
     utxos?: Utxo[]
-    utxoPrivateKeys?: bsv.PrivateKey[]
-    changeAddress?: bsv.Address
+    utxoPrivateKeys?: mvc.PrivateKey[]
+    changeAddress?: mvc.Address
     opreturnData?: any
     noBroadcast?: boolean
-    genesisPrivateKey?: bsv.PrivateKey
-    genesisPublicKey: bsv.PublicKey
+    genesisPrivateKey?: mvc.PrivateKey
+    genesisPublicKey: mvc.PublicKey
   }) {
     let { genesisContract, genesisTxId, genesisOutputIndex, genesisUtxo } =
       await this._prepareIssueUtxo({ sensibleId, genesisPublicKey })
@@ -1105,7 +1105,7 @@ export class SensibleFT {
         if (ret.success == false) throw ret
       }
 
-      txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as bsv.Script)
+      txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as mvc.Script)
     }
 
     if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
@@ -1159,7 +1159,7 @@ export class SensibleFT {
     let curDataPartObj: ftProto.FormatedDataPart
     for (let i = 0; i < ftUtxos.length; i++) {
       let ftUtxo = ftUtxos[i]
-      const tx = new bsv.Transaction(ftUtxo.satotxInfo.txHex)
+      const tx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
       if (!curDataPartObj) {
         let tokenScript = tx.outputs[ftUtxo.outputIndex].script
         curDataPartObj = ftProto.parseDataPart(tokenScript.toBuffer())
@@ -1172,7 +1172,7 @@ export class SensibleFT {
       }
       //Find a valid preTx
       let input = tx.inputs.find((input) => {
-        let script = new bsv.Script(input.script)
+        let script = new mvc.Script(input.script)
         if (script.chunks.length > 0) {
           const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
           if (lockingScriptBuf) {
@@ -1183,7 +1183,7 @@ export class SensibleFT {
             dataPartObj.sensibleID = curDataPartObj.sensibleID
             const newScriptBuf = ftProto.updateScript(lockingScriptBuf, dataPartObj)
 
-            let genesisHash = toHex(bsv.crypto.Hash.sha256ripemd160(newScriptBuf))
+            let genesisHash = toHex(mvc.crypto.Hash.sha256ripemd160(newScriptBuf))
             if (genesisHash == curDataPartObj.genesisHash) {
               return true
             }
@@ -1215,7 +1215,7 @@ export class SensibleFT {
     ftUtxos.forEach((v) => {
       v.satotxInfo.preTxHex = cachedHexs[v.satotxInfo.preTxId].hex
 
-      const preTx = new bsv.Transaction(v.satotxInfo.preTxHex)
+      const preTx = new mvc.Transaction(v.satotxInfo.preTxHex)
       let dataPartObj = ftProto.parseDataPart(
         preTx.outputs[v.satotxInfo.preOutputIndex].script.toBuffer()
       )
@@ -1223,7 +1223,7 @@ export class SensibleFT {
       if (dataPartObj.tokenAddress == '0000000000000000000000000000000000000000') {
         v.preTokenAddress = this.zeroAddress
       } else {
-        v.preTokenAddress = bsv.Address.fromPublicKeyHash(
+        v.preTokenAddress = mvc.Address.fromPublicKeyHash(
           Buffer.from(dataPartObj.tokenAddress, 'hex'),
           this.network
         )
@@ -1246,9 +1246,9 @@ export class SensibleFT {
    * @param senderWif the private key of the token sender,can be wif or other format
    * @param ftUtxos (Optional) specify token utxos
    * @param ftChangeAddress (Optional) specify ft changeAddress
-   * @param utxos (Optional) specify bsv utxos which should be no more than 3
-   * @param changeAddress (Optional) specify bsv changeAddress
-   * @param middleChangeAddress (Optional) the middle bsv changeAddress
+   * @param utxos (Optional) specify mvc utxos which should be no more than 3
+   * @param changeAddress (Optional) specify mvc changeAddress
+   * @param middleChangeAddress (Optional) the middle mvc changeAddress
    * @param middlePrivateKey (Optional) the private key of the middle changeAddress
    * @param isMerge (Optional) do not use this param.Please use function Merge.
    * @param opreturnData (Optional) append an opReturn output
@@ -1282,45 +1282,45 @@ export class SensibleFT {
 
     senderWif?: string
     ftUtxos?: ParamFtUtxo[]
-    ftChangeAddress?: string | bsv.Address
+    ftChangeAddress?: string | mvc.Address
 
     utxos?: ParamUtxo[]
-    changeAddress?: string | bsv.Address
+    changeAddress?: string | mvc.Address
 
-    middleChangeAddress?: string | bsv.Address
-    middlePrivateKey?: string | bsv.PrivateKey
+    middleChangeAddress?: string | mvc.Address
+    middlePrivateKey?: string | mvc.PrivateKey
 
     minUtxoSet?: boolean
     isMerge?: boolean
     opreturnData?: any
     noBroadcast?: boolean
   }): Promise<{
-    tx: bsv.Transaction
+    tx: mvc.Transaction
     txHex: string
     txid: string
-    routeCheckTx: bsv.Transaction
+    routeCheckTx: mvc.Transaction
     routeCheckTxHex: string
   }> {
     checkParamGenesis(genesis)
     checkParamCodehash(codehash)
     checkParamReceivers(receivers)
 
-    let senderPrivateKey: bsv.PrivateKey
-    let senderPublicKey: bsv.PublicKey
+    let senderPrivateKey: mvc.PrivateKey
+    let senderPublicKey: mvc.PublicKey
     if (senderWif) {
-      senderPrivateKey = new bsv.PrivateKey(senderWif)
+      senderPrivateKey = new mvc.PrivateKey(senderWif)
     }
 
     let utxoInfo = await this._pretreatUtxos(utxos)
     if (changeAddress) {
-      changeAddress = new bsv.Address(changeAddress, this.network)
+      changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
       changeAddress = utxoInfo.utxos[0].address
     }
 
     if (middleChangeAddress) {
-      middleChangeAddress = new bsv.Address(middleChangeAddress, this.network)
-      middlePrivateKey = new bsv.PrivateKey(middlePrivateKey)
+      middleChangeAddress = new mvc.Address(middleChangeAddress, this.network)
+      middlePrivateKey = new mvc.PrivateKey(middlePrivateKey)
     } else {
       middleChangeAddress = utxoInfo.utxos[0].address
       middlePrivateKey = utxoInfo.utxoPrivateKeys[0]
@@ -1334,7 +1334,7 @@ export class SensibleFT {
       senderPublicKey
     )
     if (ftChangeAddress) {
-      ftChangeAddress = new bsv.Address(ftChangeAddress, this.network)
+      ftChangeAddress = new mvc.Address(ftChangeAddress, this.network)
     } else {
       ftChangeAddress = ftUtxoInfo.ftUtxos[0].tokenAddress
     }
@@ -1380,9 +1380,9 @@ export class SensibleFT {
    * @param senderPublicKey the public key of the token sender
    * @param ftUtxos (Optional) specify token utxos
    * @param ftChangeAddress (Optional) specify ft changeAddress
-   * @param utxos (Optional) specify bsv utxos
-   * @param changeAddress (Optional) specify bsv changeAddress
-   * @param middleChangeAddress (Optional) the middle bsv changeAddress
+   * @param utxos (Optional) specify mvc utxos
+   * @param changeAddress (Optional) specify mvc changeAddress
+   * @param middleChangeAddress (Optional) the middle mvc changeAddress
    * @param isMerge (Optional) specify if this is a merge
    * @param opreturnData (Optional) append an opReturn output
    * @returns
@@ -1407,17 +1407,17 @@ export class SensibleFT {
     genesis: string
     receivers?: TokenReceiver[]
 
-    senderPublicKey?: string | bsv.PublicKey
+    senderPublicKey?: string | mvc.PublicKey
     ftUtxos?: ParamFtUtxo[]
-    ftChangeAddress?: string | bsv.Address
+    ftChangeAddress?: string | mvc.Address
     utxos?: ParamUtxo[]
-    changeAddress?: string | bsv.Address
+    changeAddress?: string | mvc.Address
     isMerge?: boolean
     opreturnData?: any
-    middleChangeAddress?: string | bsv.Address
+    middleChangeAddress?: string | mvc.Address
     minUtxoSet?: boolean
   }): Promise<{
-    routeCheckTx: bsv.Transaction
+    routeCheckTx: mvc.Transaction
     routeCheckSigHashList: SigHashInfo[]
     unsignTxRaw: string
   }> {
@@ -1426,18 +1426,18 @@ export class SensibleFT {
     checkParamReceivers(receivers)
 
     if (senderPublicKey) {
-      senderPublicKey = new bsv.PublicKey(senderPublicKey)
+      senderPublicKey = new mvc.PublicKey(senderPublicKey)
     }
 
     let utxoInfo = await this._pretreatUtxos(utxos)
     if (changeAddress) {
-      changeAddress = new bsv.Address(changeAddress, this.network)
+      changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
       changeAddress = utxoInfo.utxos[0].address
     }
 
     if (middleChangeAddress) {
-      middleChangeAddress = new bsv.Address(middleChangeAddress, this.network)
+      middleChangeAddress = new mvc.Address(middleChangeAddress, this.network)
     } else {
       middleChangeAddress = utxoInfo.utxos[0].address
     }
@@ -1447,10 +1447,10 @@ export class SensibleFT {
       codehash,
       genesis,
       null,
-      senderPublicKey as bsv.PublicKey
+      senderPublicKey as mvc.PublicKey
     )
     if (ftChangeAddress) {
-      ftChangeAddress = new bsv.Address(ftChangeAddress, this.network)
+      ftChangeAddress = new mvc.Address(ftChangeAddress, this.network)
     } else {
       ftChangeAddress = ftUtxoInfo.ftUtxos[0].tokenAddress
     }
@@ -1499,10 +1499,10 @@ export class SensibleFT {
   }
 
   public async unsignTransfer(
-    routeCheckTx: bsv.Transaction,
+    routeCheckTx: mvc.Transaction,
     unsignTxRaw: string
   ): Promise<{
-    tx: bsv.Transaction
+    tx: mvc.Transaction
     sigHashList: SigHashInfo[]
   }> {
     let routeCheckTxBuf = routeCheckTx.toBuffer()
@@ -1546,7 +1546,7 @@ export class SensibleFT {
     genesis: string
     receivers?: TokenReceiver[]
     ftUtxos: FtUtxo[]
-    ftChangeAddress: bsv.Address
+    ftChangeAddress: mvc.Address
     isMerge?: boolean
     minUtxoSet: boolean
   }) {
@@ -1564,7 +1564,7 @@ export class SensibleFT {
     }
 
     let tokenOutputArray = receivers.map((v) => ({
-      address: new bsv.Address(v.address, this.network),
+      address: new mvc.Address(v.address, this.network),
       tokenAmount: new BN(v.amount.toString()),
     }))
 
@@ -1657,15 +1657,15 @@ export class SensibleFT {
     receivers?: TokenReceiver[]
 
     ftUtxos: FtUtxo[]
-    ftPrivateKeys: bsv.PrivateKey[]
-    ftChangeAddress: bsv.Address
+    ftPrivateKeys: mvc.PrivateKey[]
+    ftChangeAddress: mvc.Address
 
     utxos: Utxo[]
-    utxoPrivateKeys: bsv.PrivateKey[]
-    changeAddress: bsv.Address
+    utxoPrivateKeys: mvc.PrivateKey[]
+    changeAddress: mvc.Address
 
-    middlePrivateKey?: bsv.PrivateKey
-    middleChangeAddress: bsv.Address
+    middlePrivateKey?: mvc.PrivateKey
+    middleChangeAddress: mvc.Address
 
     isMerge?: boolean
     opreturnData?: any
@@ -1712,7 +1712,7 @@ export class SensibleFT {
 
     ftUtxos = tokenInputArray
     const defaultFtUtxo = tokenInputArray[0]
-    const ftUtxoTx = new bsv.Transaction(defaultFtUtxo.satotxInfo.txHex)
+    const ftUtxoTx = new mvc.Transaction(defaultFtUtxo.satotxInfo.txHex)
     const tokenLockingScript = ftUtxoTx.outputs[defaultFtUtxo.outputIndex].script
 
     //create routeCheck contract
@@ -1794,7 +1794,7 @@ export class SensibleFT {
     const txComposer = new TxComposer()
     let prevouts = new Prevouts()
 
-    let inputTokenScript: bsv.Script
+    let inputTokenScript: mvc.Script
     let inputTokenAmountArray = Buffer.alloc(0)
     let inputTokenAddressArray = Buffer.alloc(0)
 
@@ -1856,7 +1856,7 @@ export class SensibleFT {
         outputTokenAmount
       )
       let outputIndex = txComposer.appendOutput({
-        lockingScript: bsv.Script.fromBuffer(lockingScriptBuf),
+        lockingScript: mvc.Script.fromBuffer(lockingScriptBuf),
         satoshis: this.getDustThreshold(lockingScriptBuf.length),
       })
       recervierArray = Buffer.concat([recervierArray, address.hashBuffer])
@@ -1945,7 +1945,7 @@ export class SensibleFT {
           if (ret.success == false) throw ret
         }
 
-        txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as bsv.Script)
+        txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
       })
 
       let unlockingContract = tokenTransferCheckContract.unlock({
@@ -1980,7 +1980,7 @@ export class SensibleFT {
 
       txComposer
         .getInput(transferCheckInputIndex)
-        .setScript(unlockingContract.toScript() as bsv.Script)
+        .setScript(unlockingContract.toScript() as mvc.Script)
     }
 
     if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
@@ -1999,8 +1999,8 @@ export class SensibleFT {
    * @param genesis the genesis of token.
    * @param codehash the codehash of token.
    * @param ownerWif the private key of the token owner,can be wif or other format
-   * @param utxos (Optional) specify bsv utxos which should be no more than 3
-   * @param changeAddress (Optional) specify bsv changeAddress
+   * @param utxos (Optional) specify mvc utxos which should be no more than 3
+   * @param changeAddress (Optional) specify mvc changeAddress
    * @param opreturnData (Optional) append an opReturn output
    * @param noBroadcast (Optional) whether not to broadcast the transaction, the default is false
    * @returns
@@ -2018,7 +2018,7 @@ export class SensibleFT {
     genesis: string
     ownerWif: string
     utxos?: ParamUtxo[]
-    changeAddress?: string | bsv.Address
+    changeAddress?: string | mvc.Address
     noBroadcast?: boolean
     opreturnData?: any
   }) {
@@ -2043,8 +2043,8 @@ export class SensibleFT {
    * @param ownerPublicKey the public key of the token owner,can be string or other valid format
    * @param ftUtxos (Optional) specify token utxos
    * @param ftChangeAddress (Optional) specify token changeAddress
-   * @param utxos (Optional) specify bsv utxos
-   * @param changeAddress (Optional) specify bsv changeAddress
+   * @param utxos (Optional) specify mvc utxos
+   * @param changeAddress (Optional) specify mvc changeAddress
    * @param opreturnData (Optional) append an opReturn output
    * @returns
    */
@@ -2060,11 +2060,11 @@ export class SensibleFT {
   }: {
     codehash: string
     genesis: string
-    ownerPublicKey: string | bsv.PublicKey
+    ownerPublicKey: string | mvc.PublicKey
     ftUtxos?: ParamFtUtxo[]
-    ftChangeAddress?: string | bsv.Address
+    ftChangeAddress?: string | mvc.Address
     utxos?: ParamUtxo[]
-    changeAddress?: string | bsv.Address
+    changeAddress?: string | mvc.Address
     opreturnData?: any
   }) {
     return await this.unsignPreTransfer({
@@ -2082,10 +2082,10 @@ export class SensibleFT {
   }
 
   public async unsignMerge(
-    routeCheckTx: bsv.Transaction,
+    routeCheckTx: mvc.Transaction,
     unsignTxRaw: string
   ): Promise<{
-    tx: bsv.Transaction
+    tx: mvc.Transaction
     sigHashList: SigHashInfo[]
   }> {
     return await this.unsignTransfer(routeCheckTx, unsignTxRaw)
@@ -2168,7 +2168,7 @@ export class SensibleFT {
     }
     stx.addOutput(sizeOfTokenGenesis)
     if (opreturnData) {
-      stx.addOpReturnOutput(bsv.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
     }
     stx.addP2PKHOutput()
     return stx.getFee()
@@ -2191,12 +2191,12 @@ export class SensibleFT {
     utxoMaxCount = 10,
   }: {
     sensibleId: string
-    genesisPublicKey: string | bsv.PublicKey
+    genesisPublicKey: string | mvc.PublicKey
     opreturnData?: any
     allowIncreaseIssues: boolean
     utxoMaxCount?: number
   }) {
-    genesisPublicKey = new bsv.PublicKey(genesisPublicKey)
+    genesisPublicKey = new mvc.PublicKey(genesisPublicKey)
     let { genesisUtxo } = await this._prepareIssueUtxo({
       sensibleId,
       genesisPublicKey,
@@ -2234,7 +2234,7 @@ export class SensibleFT {
 
     stx.addOutput(TokenFactory.getLockingScriptSize())
     if (opreturnData) {
-      stx.addOpReturnOutput(bsv.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
     }
     stx.addP2PKHOutput()
 
@@ -2264,10 +2264,10 @@ export class SensibleFT {
     receivers?: TokenReceiver[]
 
     senderWif?: string
-    senderPrivateKey?: string | bsv.PrivateKey
-    senderPublicKey?: string | bsv.PublicKey
+    senderPrivateKey?: string | mvc.PrivateKey
+    senderPublicKey?: string | mvc.PublicKey
     ftUtxos?: ParamFtUtxo[]
-    ftChangeAddress?: string | bsv.Address
+    ftChangeAddress?: string | mvc.Address
     isMerge?: boolean
     opreturnData?: any
     utxoMaxCount?: number
@@ -2282,13 +2282,13 @@ export class SensibleFT {
     }
 
     if (senderWif) {
-      senderPrivateKey = bsv.PrivateKey.fromWIF(senderWif)
+      senderPrivateKey = mvc.PrivateKey.fromWIF(senderWif)
       senderPublicKey = senderPrivateKey.toPublicKey()
     } else if (senderPrivateKey) {
-      senderPrivateKey = new bsv.PrivateKey(senderPrivateKey)
+      senderPrivateKey = new mvc.PrivateKey(senderPrivateKey)
       senderPublicKey = senderPrivateKey.toPublicKey()
     } else if (senderPublicKey) {
-      senderPublicKey = new bsv.PublicKey(senderPublicKey)
+      senderPublicKey = new mvc.PublicKey(senderPublicKey)
     }
 
     let utxos: Utxo[] = []
@@ -2305,11 +2305,11 @@ export class SensibleFT {
       ftUtxos,
       codehash,
       genesis,
-      senderPrivateKey as bsv.PrivateKey,
-      senderPublicKey as bsv.PublicKey
+      senderPrivateKey as mvc.PrivateKey,
+      senderPublicKey as mvc.PublicKey
     )
     if (ftChangeAddress) {
-      ftChangeAddress = new bsv.Address(ftChangeAddress, this.network)
+      ftChangeAddress = new mvc.Address(ftChangeAddress, this.network)
     } else {
       ftChangeAddress = ftUtxoInfo.ftUtxos[0].tokenAddress
     }
@@ -2353,9 +2353,9 @@ export class SensibleFT {
     codehash: string
     genesis: string
     ownerWif?: string
-    ownerPublicKey?: string | bsv.PublicKey
+    ownerPublicKey?: string | mvc.PublicKey
     ftUtxos?: ParamFtUtxo[]
-    ftChangeAddress?: string | bsv.Address
+    ftChangeAddress?: string | mvc.Address
     opreturnData?: any
     utxoMaxCount?: number
     minUtxoSet?: boolean
@@ -2380,7 +2380,7 @@ export class SensibleFT {
    * @param sigHashList
    * @param sigList
    */
-  public sign(tx: bsv.Transaction, sigHashList: SigHashInfo[], sigList: SigInfo[]) {
+  public sign(tx: mvc.Transaction, sigHashList: SigHashInfo[], sigList: SigInfo[]) {
     Utils.sign(tx, sigHashList, sigList)
   }
 
@@ -2401,7 +2401,7 @@ export class SensibleFT {
   }: {
     p2pkhInputNum: number
     tokenInputArray: FtUtxo[]
-    tokenOutputArray: { address: bsv.Address; tokenAmount: BN }[]
+    tokenOutputArray: { address: mvc.Address; tokenAmount: BN }[]
     tokenTransferType: TOKEN_TRANSFER_TYPE
     opreturnData: any
   }) {
@@ -2448,7 +2448,7 @@ export class SensibleFT {
       stx.addOutput(tokenLockingSize)
     }
     if (opreturnData) {
-      stx.addOpReturnOutput(bsv.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
     }
     stx.addP2PKHOutput()
     return stx1.getFee() + stx.getFee()
@@ -2499,7 +2499,7 @@ export class SensibleFT {
    * Print tx
    * @param tx
    */
-  public dumpTx(tx: bsv.Transaction) {
+  public dumpTx(tx: mvc.Transaction) {
     Utils.dumpTx(tx, this.network)
   }
 
@@ -2538,7 +2538,7 @@ export class SensibleFT {
   public async isSupportedToken(codehash: string, sensibleId: string) {
     let { genesisTxId } = parseSensibleID(sensibleId)
     let txHex = await this.api.getRawTxData(genesisTxId)
-    let tx = new bsv.Transaction(txHex)
+    let tx = new mvc.Transaction(txHex)
     let dataPart = ftProto.parseDataPart(tx.outputs[0].script.toBuffer())
     if (dataPart.rabinPubKeyHashArrayHash != toHex(this.rabinPubKeyHashArrayHash)) {
       return false
@@ -2555,7 +2555,7 @@ export class SensibleFT {
    * @param genesisOutputIndex (Optional) outputIndex - default value is 0.
    * @returns
    */
-  public getCodehashAndGensisByTx(genesisTx: bsv.Transaction, genesisOutputIndex: number = 0) {
+  public getCodehashAndGensisByTx(genesisTx: mvc.Transaction, genesisOutputIndex: number = 0) {
     //calculate genesis/codehash
     let genesis: string, codehash: string, sensibleId: string
     let genesisTxId = genesisTx.id
@@ -2628,7 +2628,7 @@ export class SensibleFT {
       return null
     }
     const dataPart = ftProto.parseDataPart(scriptBuf)
-    const tokenAddress = bsv.Address.fromPublicKeyHash(
+    const tokenAddress = mvc.Address.fromPublicKeyHash(
       Buffer.from(dataPart.tokenAddress, 'hex'),
       network
     ).toString()

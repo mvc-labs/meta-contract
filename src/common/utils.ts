@@ -1,5 +1,5 @@
 import { toHex } from '../scryptlib'
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 import * as TokenUtil from './tokenUtil'
 
 export function getDustThreshold(lockingScriptSize: number) {
@@ -54,7 +54,7 @@ export type SigHashInfo = {
 
 export type SigInfo = {
   sig: string
-  publicKey: string | bsv.PublicKey
+  publicKey: string | mvc.PublicKey
 }
 export const PLACE_HOLDER_SIG =
   '41682c2074686973206973206120706c61636520686f6c64657220616e642077696c6c206265207265706c6163656420696e207468652066696e616c207369676e61747572652e00'
@@ -70,15 +70,15 @@ export function numberToBuffer(n: number) {
   return Buffer.from(str, 'hex')
 }
 
-export function sign(tx: bsv.Transaction, sigHashList: SigHashInfo[], sigList: SigInfo[]) {
+export function sign(tx: mvc.Transaction, sigHashList: SigHashInfo[], sigList: SigInfo[]) {
   sigHashList.forEach(({ inputIndex, contractType, sighashType }, index) => {
     let input = tx.inputs[inputIndex]
     let { publicKey, sig } = sigList[index]
-    publicKey = new bsv.PublicKey(publicKey)
-    let _sig = bsv.crypto.Signature.fromString(sig)
+    publicKey = new mvc.PublicKey(publicKey)
+    let _sig = mvc.crypto.Signature.fromString(sig)
     _sig.nhashtype = sighashType
     if (contractType == CONTRACT_TYPE.P2PKH) {
-      const signature = new bsv.Transaction.Signature({
+      const signature = new mvc.Transaction.Signature({
         publicKey,
         prevTxId: input.prevTxId,
         outputIndex: input.outputIndex,
@@ -87,7 +87,7 @@ export function sign(tx: bsv.Transaction, sigHashList: SigHashInfo[], sigList: S
         sigtype: sighashType,
       })
       input.setScript(
-        bsv.Script.buildPublicKeyHashIn(
+        mvc.Script.buildPublicKeyHashIn(
           signature.publicKey,
           signature.signature.toDER(),
           signature.sigtype
@@ -114,7 +114,7 @@ export function sign(tx: bsv.Transaction, sigHashList: SigHashInfo[], sigList: S
       ]).toString('hex')
 
       input.setScript(
-        new bsv.Script(
+        new mvc.Script(
           input.script.toHex().replace(oldSigHex, newSigHex).replace(oldPubKeyHex, newPubKeyHex)
         )
       )
@@ -125,7 +125,7 @@ export function sign(tx: bsv.Transaction, sigHashList: SigHashInfo[], sigList: S
 function satoshisToBSV(satoshis) {
   return (satoshis / 100000000).toFixed(8)
 }
-export function dumpTx(tx: bsv.Transaction, network = 'mainnet') {
+export function dumpTx(tx: mvc.Transaction, network = 'mainnet') {
   const version = tx.version
   const size = tx.toBuffer().length
   const inputAmount = tx.inputs.reduce((pre, cur) => cur.output.satoshis + pre, 0)

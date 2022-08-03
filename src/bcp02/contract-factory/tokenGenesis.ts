@@ -1,5 +1,5 @@
 import * as BN from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import { ContractAdapter } from '../../common/ContractAdapter'
 import {
   dummyAddress,
@@ -30,11 +30,11 @@ import { TokenFactory } from './token'
 const genesisTokenIDTxid = '0000000000000000000000000000000000000000000000000000000000000000'
 export class TokenGenesis extends ContractAdapter {
   private constuctParams: {
-    pubKey: bsv.PublicKey
+    pubKey: mvc.PublicKey
   }
   private _formatedDataPart: ftProto.FormatedDataPart
 
-  constructor(constuctParams: { pubKey: bsv.PublicKey }) {
+  constructor(constuctParams: { pubKey: mvc.PublicKey }) {
     let desc = require('../contract-desc/tokenGenesis_desc.json')
     let ClassObj = buildContractClass(desc)
     let contract = new ClassObj(new PubKey(toHex(constuctParams.pubKey)))
@@ -63,7 +63,7 @@ export class TokenGenesis extends ContractAdapter {
     return this._formatedDataPart
   }
 
-  public setFormatedDataPartFromLockingScript(script: bsv.Script) {
+  public setFormatedDataPartFromLockingScript(script: mvc.Script) {
     let dataPart = ftProto.parseDataPart(script.toBuffer())
     this.setFormatedDataPart(dataPart)
   }
@@ -137,7 +137,7 @@ export class TokenGenesisFactory {
    * @param {number} decimalNum the token amount decimal number
    * @returns
    */
-  public static createContract(issuerPubKey: bsv.PublicKey) {
+  public static createContract(issuerPubKey: mvc.PublicKey) {
     return new TokenGenesis({ pubKey: issuerPubKey })
   }
 
@@ -155,7 +155,7 @@ export class TokenGenesisFactory {
   public static calUnlockingScriptSize(opreturnData) {
     let opreturnScriptHex = ''
     if (opreturnData) {
-      let script = bsv.Script.buildSafeDataOut(opreturnData)
+      let script = mvc.Script.buildSafeDataOut(opreturnData)
       opreturnScriptHex = script.toHex()
     }
     let contract = this.getDummyInstance()
@@ -190,6 +190,6 @@ export class TokenGenesisFactory {
       changeSatoshis: 1000,
       opReturnScript: new Bytes(opreturnScriptHex),
     })
-    return (unlockResult.toScript() as bsv.Script).toBuffer().length
+    return (unlockResult.toScript() as mvc.Script).toBuffer().length
   }
 }

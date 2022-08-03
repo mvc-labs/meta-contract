@@ -1,5 +1,5 @@
 import { BN } from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import { ContractAdapter } from '../../common/ContractAdapter'
 import { dummyAddress, dummyCodehash, dummyPk, dummyTx } from '../../common/dummy'
 import { PROTO_TYPE } from '../../common/protoheader'
@@ -82,7 +82,7 @@ export class NftSell extends ContractAdapter {
     return this._formatedDataPart
   }
 
-  public setFormatedDataPartFromLockingScript(script: bsv.Script) {
+  public setFormatedDataPartFromLockingScript(script: mvc.Script) {
     let dataPart = nftSellProto.parseDataPart(script.toBuffer())
     this.setFormatedDataPart(dataPart)
   }
@@ -177,6 +177,6 @@ export class NftSellFactory {
       nftOutputSatoshis: 1000,
       op,
     })
-    return (unlockResult.toScript() as bsv.Script).toBuffer().length
+    return (unlockResult.toScript() as mvc.Script).toBuffer().length
   }
 }

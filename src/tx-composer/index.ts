@@ -1,17 +1,17 @@
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 import { CONTRACT_TYPE, dumpTx, SigHashInfo } from '../common/utils'
 import { getPreimage, signTx, toHex } from '../scryptlib'
-const Signature = bsv.crypto.Signature
+const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 const P2PKH_UNLOCK_SIZE = 1 + 1 + 71 + 1 + 33
 const P2PKH_DUST_AMOUNT = 1
 const MIN_FEE_AMOUNT = 56
 export class TxComposer {
-  tx: bsv.Transaction
+  tx: mvc.Transaction
   sigHashList: SigHashInfo[] = []
   changeOutputIndex: number = -1
-  constructor(tx?: bsv.Transaction) {
-    this.tx = tx || new bsv.Transaction()
+  constructor(tx?: mvc.Transaction) {
+    this.tx = tx || new mvc.Transaction()
   }
 
   toObject() {
@@ -25,12 +25,12 @@ export class TxComposer {
 
   static fromObject(composerObj: any) {
     let txObj = composerObj.tx
-    let tx = new bsv.Transaction()
+    let tx = new mvc.Transaction()
     txObj.inputs.forEach((v) => {
-      tx.addInput(new bsv.Transaction.Input(v))
+      tx.addInput(new mvc.Transaction.Input(v))
     })
     txObj.outputs.forEach((v) => {
-      tx.addOutput(new bsv.Transaction.Output(v))
+      tx.addOutput(new mvc.Transaction.Output(v))
     })
     tx.nLockTime = txObj.nLockTime
     tx.version = txObj.version
@@ -61,20 +61,20 @@ export class TxComposer {
   }
 
   appendP2PKHInput(utxo: {
-    address: bsv.Address
+    address: mvc.Address
     satoshis: number
     txId: string
     outputIndex: number
   }) {
     this.tx.addInput(
-      new bsv.Transaction.Input.PublicKeyHash({
-        output: new bsv.Transaction.Output({
-          script: bsv.Script.buildPublicKeyHashOut(utxo.address),
+      new mvc.Transaction.Input.PublicKeyHash({
+        output: new mvc.Transaction.Output({
+          script: mvc.Script.buildPublicKeyHashOut(utxo.address),
           satoshis: utxo.satoshis,
         }),
         prevTxId: utxo.txId,
         outputIndex: utxo.outputIndex,
-        script: bsv.Script.empty(),
+        script: mvc.Script.empty(),
       })
     )
     const inputIndex = this.tx.inputs.length - 1
@@ -84,28 +84,28 @@ export class TxComposer {
   appendInput(input: {
     txId: string
     outputIndex: number
-    lockingScript?: bsv.Script
+    lockingScript?: mvc.Script
     satoshis?: number
   }) {
     this.tx.addInput(
-      new bsv.Transaction.Input({
-        output: new bsv.Transaction.Output({
+      new mvc.Transaction.Input({
+        output: new mvc.Transaction.Output({
           script: input.lockingScript,
           satoshis: input.satoshis,
         }),
         prevTxId: input.txId,
         outputIndex: input.outputIndex,
-        script: bsv.Script.empty(),
+        script: mvc.Script.empty(),
       })
     )
     const inputIndex = this.tx.inputs.length - 1
     return inputIndex
   }
 
-  appendP2PKHOutput(output: { address: bsv.Address; satoshis: number }) {
+  appendP2PKHOutput(output: { address: mvc.Address; satoshis: number }) {
     this.tx.addOutput(
-      new bsv.Transaction.Output({
-        script: new bsv.Script(output.address),
+      new mvc.Transaction.Output({
+        script: new mvc.Script(output.address),
         satoshis: output.satoshis,
       })
     )
@@ -113,9 +113,9 @@ export class TxComposer {
     return outputIndex
   }
 
-  appendOutput(output: { lockingScript: bsv.Script; satoshis: number }) {
+  appendOutput(output: { lockingScript: mvc.Script; satoshis: number }) {
     this.tx.addOutput(
-      new bsv.Transaction.Output({
+      new mvc.Transaction.Output({
         script: output.lockingScript,
         satoshis: output.satoshis,
       })
@@ -126,8 +126,8 @@ export class TxComposer {
 
   appendOpReturnOutput(opreturnData: any) {
     this.tx.addOutput(
-      new bsv.Transaction.Output({
-        script: bsv.Script.buildSafeDataOut(opreturnData),
+      new mvc.Transaction.Output({
+        script: mvc.Script.buildSafeDataOut(opreturnData),
         satoshis: 0,
       })
     )
@@ -141,7 +141,7 @@ export class TxComposer {
       this.changeOutputIndex = 0
     }
   }
-  appendChangeOutput(changeAddress: bsv.Address, feeb = 0.05, extraSize = 0) {
+  appendChangeOutput(changeAddress: mvc.Address, feeb = 0.05, extraSize = 0) {
     //Calculate the fee and determine whether to change
     //If there is change, it will be output in the last item
     const unlockSize =
@@ -150,7 +150,7 @@ export class TxComposer {
       (this.tx.toBuffer().length +
         unlockSize +
         extraSize +
-        bsv.Transaction.CHANGE_OUTPUT_MAX_SIZE) *
+        mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) *
         feeb
     )
 
@@ -166,14 +166,14 @@ export class TxComposer {
     return this.changeOutputIndex
   }
 
-  unlockP2PKHInput(privateKey: bsv.PrivateKey, inputIndex: number, sigtype = sighashType) {
+  unlockP2PKHInput(privateKey: mvc.PrivateKey, inputIndex: number, sigtype = sighashType) {
     const tx = this.tx
-    const sig = new bsv.Transaction.Signature({
+    const sig = new mvc.Transaction.Signature({
       publicKey: privateKey.publicKey,
       prevTxId: tx.inputs[inputIndex].prevTxId,
       outputIndex: tx.inputs[inputIndex].outputIndex,
       inputIndex,
-      signature: bsv.Transaction.Sighash.sign(
+      signature: mvc.Transaction.Sighash.sign(
         tx,
         privateKey,
         sigtype,
@@ -185,11 +185,11 @@ export class TxComposer {
     })
 
     tx.inputs[inputIndex].setScript(
-      bsv.Script.buildPublicKeyHashIn(sig.publicKey, sig.signature.toDER(), sig.sigtype)
+      mvc.Script.buildPublicKeyHashIn(sig.publicKey, sig.signature.toDER(), sig.sigtype)
     )
   }
 
-  getTxFormatSig(privateKey: bsv.PrivateKey, inputIndex: number, sigtype = sighashType) {
+  getTxFormatSig(privateKey: mvc.PrivateKey, inputIndex: number, sigtype = sighashType) {
     let sig: Buffer = signTx(
       this.tx,
       privateKey,
@@ -228,7 +228,7 @@ export class TxComposer {
   getSigHashLit() {
     this.sigHashList.forEach((v) => {
       v.sighash = toHex(
-        bsv.Transaction.Sighash.sighash(
+        mvc.Transaction.Sighash.sighash(
           this.tx,
           v.sighashType,
           v.inputIndex,
@@ -267,7 +267,7 @@ export class TxComposer {
       indexBuf.writeUInt32LE(input.outputIndex)
       prevouts = Buffer.concat([prevouts, Buffer.from(input.prevTxId).reverse(), indexBuf])
     })
-    return bsv.crypto.Hash.sha256sha256(prevouts).toString('hex')
+    return mvc.crypto.Hash.sha256sha256(prevouts).toString('hex')
   }
 
   dumpTx(network?: string) {

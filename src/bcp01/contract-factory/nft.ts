@@ -1,5 +1,5 @@
 import * as BN from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import { ContractAdapter } from '../../common/ContractAdapter'
 import {
   dummyAddress,
@@ -242,7 +242,7 @@ export class NftFactory {
 
   public static calLockingScriptSize() {
     let contract = this.getDummyInstance()
-    return (contract.lockingScript as bsv.Script).toBuffer().length
+    return (contract.lockingScript as mvc.Script).toBuffer().length
   }
 
   public static calUnlockingScriptSize(
@@ -253,7 +253,7 @@ export class NftFactory {
   ): number {
     let opreturnScriptHex = ''
     if (opreturnData) {
-      let script = bsv.Script.buildSafeDataOut(opreturnData)
+      let script = mvc.Script.buildSafeDataOut(opreturnData)
       opreturnScriptHex = script.toHex()
     }
 
@@ -282,18 +282,18 @@ export class NftFactory {
     let unlockCheckContact = NftUnlockContractCheckFactory.getDummyInstance(
       NFT_UNLOCK_CONTRACT_TYPE.OUT_6
     )
-    let checkScriptTx = new bsv.Transaction(dummyTx.serialize(true))
+    let checkScriptTx = new mvc.Transaction(dummyTx.serialize(true))
     checkScriptTx.addOutput(
-      new bsv.Transaction.Output({
+      new mvc.Transaction.Output({
         script: unlockCheckContact.lockingScript,
         satoshis: 10000,
       })
     )
 
     let sellContract = NftSellFactory.getDummyInstance()
-    let sellTx = new bsv.Transaction(dummyTx.serialize(true))
+    let sellTx = new mvc.Transaction(dummyTx.serialize(true))
     sellTx.addOutput(
-      new bsv.Transaction.Output({
+      new mvc.Transaction.Output({
         script: sellContract.lockingScript,
         satoshis: 10000,
       })
@@ -326,6 +326,6 @@ export class NftFactory {
       lockContractTxOutIndex: 0,
       operation,
     })
-    return (unlockedContract.toScript() as bsv.Script).toBuffer().length
+    return (unlockedContract.toScript() as mvc.Script).toBuffer().length
   }
 }

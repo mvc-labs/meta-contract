@@ -1,5 +1,3 @@
-import { MetaSV } from './MetaSV'
-import { Sensible } from './Sensible'
 import { MVC } from './MVC'
 
 export enum API_NET {
@@ -9,9 +7,6 @@ export enum API_NET {
 
 export enum API_TARGET {
   MVC = 'mvc',
-  SENSIBLE = 'sensible',
-  METASV = 'metasv',
-  SHOW = 'show',
 }
 
 export type NonFungibleTokenUnspent = {
@@ -144,12 +139,8 @@ export class Api implements ApiBase {
   private apiHandler: ApiBase
   constructor(apiNet: API_NET, apiTarget: API_TARGET = API_TARGET.MVC, serverBase?: string) {
     switch (apiTarget) {
-      case API_TARGET.METASV: {
-        this.apiHandler = new MetaSV(apiNet, serverBase)
-        break
-      }
-      case API_TARGET.SENSIBLE: {
-        this.apiHandler = new Sensible(apiTarget, apiNet, serverBase)
+      case API_TARGET.MVC: {
+        this.apiHandler = new MVC(apiNet, serverBase)
         break
       }
       default: {

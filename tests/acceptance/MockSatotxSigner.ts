@@ -1,5 +1,5 @@
 import * as BN from "../../src/bn.js/index.js";
-import * as bsv from "../../src/bsv";
+import * as mvc from "../../src/mvc";
 import { SatotxSigner } from "../../src/common/SatotxSigner";
 import * as rabin from "./rabin";
 
@@ -44,13 +44,13 @@ export class MockSatotxSigner extends SatotxSigner {
     padding: string;
     payload: string;
   }> {
-    let tx = new bsv.Transaction(txHex);
+    let tx = new mvc.Transaction(txHex);
     let buf1 = Buffer.from(txId, "hex").reverse();
     let buf2 = Buffer.alloc(4);
     buf2.writeInt32LE(index);
     let buf3 = Buffer.alloc(8);
     buf3.writeInt32LE(tx.outputs[index].satoshis);
-    let buf4 = bsv.crypto.Hash.sha256ripemd160(
+    let buf4 = mvc.crypto.Hash.sha256ripemd160(
       tx.outputs[index].script.toBuffer()
     );
     let buf5 = Buffer.from(byTxId, "hex").reverse();
@@ -105,8 +105,8 @@ export class MockSatotxSigner extends SatotxSigner {
     byTxPayload: string;
     byTxScript: string;
   }> {
-    let tx = new bsv.Transaction(txHex);
-    let byTx = new bsv.Transaction(byTxHex);
+    let tx = new mvc.Transaction(txHex);
+    let byTx = new mvc.Transaction(byTxHex);
     let payload = "";
     let result1, result2;
     {
@@ -115,7 +115,7 @@ export class MockSatotxSigner extends SatotxSigner {
       buf2.writeInt32LE(index);
       let buf3 = Buffer.alloc(8);
       buf3.writeInt32LE(tx.outputs[index].satoshis);
-      let buf4 = bsv.crypto.Hash.sha256ripemd160(
+      let buf4 = mvc.crypto.Hash.sha256ripemd160(
         tx.outputs[index].script.toBuffer()
       );
       let buf5 = Buffer.from(byTxId, "hex").reverse();
@@ -144,7 +144,7 @@ export class MockSatotxSigner extends SatotxSigner {
       buf2.writeInt32LE(byTxIndex);
       let buf3 = Buffer.alloc(8);
       buf3.writeInt32LE(byTx.outputs[byTxIndex].satoshis);
-      let buf4 = bsv.crypto.Hash.sha256ripemd160(
+      let buf4 = mvc.crypto.Hash.sha256ripemd160(
         byTx.outputs[byTxIndex].script.toBuffer()
       );
       let payloadMsg = Buffer.concat([buf1, buf2, buf3, buf4]);

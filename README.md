@@ -18,7 +18,7 @@ const { FT } = require('meta-contract')
 const { signers, signerSelecteds } = await FT.selectSigners()
 const ft = new FT({
   network: 'testnet', //mainnet or testnet
-  purse: '', //the wif of a bsv address to offer transaction fees
+  purse: '', //the wif of a mvc address to offer transaction fees
   feeb: 0.5,
   signers,
   signerSelecteds,
@@ -98,7 +98,7 @@ const { NFT } = require('meta-contract')
 const { signers, signerSelecteds } = await NFT.selectSigners()
 const nft = new NFT({
   network: 'testnet', //mainnet or testnet
-  purse: '', //the wif of a bsv address to offer transaction fees
+  purse: '', //the wif of a mvc address to offer transaction fees
   feeb: 0.5,
   signers,
   signerSelecteds,

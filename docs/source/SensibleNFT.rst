@@ -26,7 +26,7 @@ Parameters
     * ``signerSelecteds`` - ``number[]``:  (Optional) the indexs of the signers which is decided to verify
     * ``feeb`` - ``number``: (Optional) the fee rate. default is 0.5
     * ``network`` - :ref:`API_NET<API_NET>`: (Optional) mainnet/testnet default is mainnet
-    * ``purse`` - ``string``: (Optional) the private key to offer transacions fee. If not provided, bsv utoxs must be provided in genesis/issue/transfer.
+    * ``purse`` - ``string``: (Optional) the private key to offer transacions fee. If not provided, mvc utoxs must be provided in genesis/issue/transfer.
     * ``apiTarget`` - :ref:`API_TARGET<API_TARGET>`: (Optional) SENSIBLE/METASV, default is SENSIBLE.
     * ``dustLimitFactor`` - ``number``: (Optional)  specify the output dust rate, default is 0.25 .If the value is equal to 0, the final dust will be at least 1.
     * ``dustAmount`` - ``number``: (Optional) specify the output dust.
@@ -44,12 +44,12 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const SensibleNFT = sensible.SensibleNFT;
     const { signers, signerSelecteds } = await SensibleNFT.selectSigners();
     const nft = new SensibleNFT({
         network: "mainnet", //mainnet or testnet
-        purse: "", //the wif of a bsv address to offer transaction fees
+        purse: "", //the wif of a mvc address to offer transaction fees
         feeb: 0.5,
         signers,
         signerSelecteds,
@@ -97,10 +97,10 @@ Parameters
 ----------
 
 * ``options`` - ``Object``:
-    * ``genesisWif`` - ``string|bsv.PrivateKey``: the private key of the token genesiser 
+    * ``genesisWif`` - ``string|mvc.PrivateKey``: the private key of the token genesiser
     * ``totalSupply`` - ``number``: total supply, 8 bytes unsign int
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
 
@@ -111,12 +111,12 @@ Returns
 
 ``Promise`` returns ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.(With input data)
+- ``tx`` - ``mvc.Transaction``: the transaction object.(With input data)
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
 - ``genesis`` - ``string``: genesis of the new token.
-- ``codehash`` - ``string``: codehash of the new token. 
-- ``sensibleId`` - ``string``: sensibleId of the new token. 
+- ``codehash`` - ``string``: codehash of the new token.
+- ``sensibleId`` - ``string``: sensibleId of the new token.
 
 You should save the returned values.(genesis、codehash、sensibleId)
 Minting NFT need those values.
@@ -133,16 +133,16 @@ Example
         address:"1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3"
     };
 
-    // use purse to offer the bsv fee
+    // use purse to offer the mvc fee
     let { txid, genesis, codehash, sensibleId } = await nft.genesis({
         genesisWif: CoffeeShop.wif,
         totalSupply: "3",
       });
 
 
-    // or specify bsv utxos (wif must be provided)
+    // or specify mvc utxos (wif must be provided)
     let bsvUtxos = nft.sensibleApi.getUnspents(CoffeeShop.address);
-    bsvUtxos.forEach(v=>{ 
+    bsvUtxos.forEach(v=>{
         v.wif = CoffeeShop.wif;
     })
     let { txid, genesis, codehash, sensibleId } = await nft.genesis({
@@ -167,7 +167,7 @@ Mint NFT.
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of NFT.
     * ``codehash`` - ``string``: the codehash of NFT.
     * ``sensibleId`` - ``string``: the sensibleId of NFT.
@@ -175,8 +175,8 @@ Parameters
     * ``receiverAddress`` - ``string``: the NFT receiver address
     * ``metaTxId`` - ``string``: (Optional) the txid of meta info outpoint.To describe NFT status, metaId is recommended
     * ``metaOutputIndex`` - ``number``: (Optional) the index of meta info outpoint.
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify bsv utxos
-    * ``changeAddress`` - ``string``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify mvc utxos
+    * ``changeAddress`` - ``string``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
 
@@ -187,7 +187,7 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.(With input data)
+- ``tx`` - ``mvc.Transaction``: the transaction object.(With input data)
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
 - ``tokenIndex`` - ``string``: the index of NFT.
@@ -206,7 +206,7 @@ Example
         address:"1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3"
     };
 
-    // use purse to offer the bsv fee
+    // use purse to offer the mvc fee
     let { txid,tokenIndex } = await nft.issue({
         codehash,
         genesis,
@@ -217,9 +217,9 @@ Example
     });
 
 
-    // or specify bsv utxos (wif must be provided)
+    // or specify mvc utxos (wif must be provided)
     let bsvUtxos = nft.sensibleApi.getUnspents(CoffeeShop.address);
-    bsvUtxos.forEach(v=>{ 
+    bsvUtxos.forEach(v=>{
         v.wif = CoffeeShop.wif;
     })
     let { txid, tokenIndex } = await nft.issue({
@@ -249,14 +249,14 @@ Transfer NFT.
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of NFT.
     * ``codehash`` - ``string``: the codehash of NFT.
     * ``receiverAddress`` - ``string``: the NFT receiver address
-    * ``senderPrivateKey(senderWif)`` - ``string|bsv.PrivateKey``: the private key of the NFT sender
+    * ``senderPrivateKey(senderWif)`` - ``string|mvc.PrivateKey``: the private key of the NFT sender
     * ``tokenIndex`` - ``string``: the tokenIndex of NFT.
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos which should be no more than 3 
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos which should be no more than 3
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
 
@@ -266,7 +266,7 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
 
@@ -284,7 +284,7 @@ Example
         address:"1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3"
     };
 
-    // use purse to offer the bsv fee
+    // use purse to offer the mvc fee
     let { txid } = await nft.transfer({
         codehash,
         genesis,
@@ -294,9 +294,9 @@ Example
       });
 
 
-    // or specify nft utxos and bsv utxos (wif must be provided)
+    // or specify nft utxos and mvc utxos (wif must be provided)
     let bsvUtxos = nft.sensibleApi.getUnspents(CoffeeShop.address);
-    bsvUtxos.forEach(v=>{ 
+    bsvUtxos.forEach(v=>{
         v.wif = CoffeeShop.wif;
     })
 
@@ -308,7 +308,7 @@ Example
         tokenIndex: "0",
         utxos: bsvUtxos
       });
-      
+
 
 ------------------------------------------------------------------------------
 
@@ -329,21 +329,21 @@ sell
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of NFT.
     * ``codehash`` - ``string``: the codehash of NFT.
-    * ``tokenIndex`` - ``string``: the tokenIndex of NFT. 
+    * ``tokenIndex`` - ``string``: the tokenIndex of NFT.
     * ``sellerPrivateKey`` - ``string``: the private key of the NFT seller
     * ``satoshisPrice`` - ``number``: the satoshis price to sell.
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>` : (Optional)  specify bsv utxos which should be no more than 3 
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>` : (Optional)  specify mvc utxos which should be no more than 3
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
-    * ``middleChangeAddress`` - ``string|bsv.Address``: (Optional) the middle bsv changeAddress
-    * ``middlePrivateKey`` - ``string|bsv.PrivateKey``: (Optional) the private key of the middle changeAddress
+    * ``middleChangeAddress`` - ``string|mvc.Address``: (Optional) the middle mvc changeAddress
+    * ``middlePrivateKey`` - ``string|mvc.PrivateKey``: (Optional) the private key of the middle changeAddress
 
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 The best practice is to determine the number of utxos in the address and merge them in advance.
 
@@ -353,13 +353,13 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
-- ``sellTx`` - ``bsv.Transaction``: the sell transaction object.
+- ``sellTx`` - ``mvc.Transaction``: the sell transaction object.
 - ``sellTxHex`` - ``string``: raw hex of the sell transaction.
 - ``sellTxId`` - ``string``: id of the sell transaction.
-- 
+-
 -------
 Example
 -------
@@ -388,24 +388,24 @@ sell2
 
 | *Not recommended. Generally, use sell.*
 | Create the sale-contract transaction.
-| After this operation is completed, you have to transfer the NFT to sellAddress 
+| After this operation is completed, you have to transfer the NFT to sellAddress
 
 ----------
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of NFT.
     * ``codehash`` - ``string``: the codehash of NFT.
-    * ``tokenIndex`` - ``string``: the tokenIndex of NFT. 
+    * ``tokenIndex`` - ``string``: the tokenIndex of NFT.
     * ``sellerPrivateKey`` - ``string``: the private key of the NFT seller
     * ``satoshisPrice`` - ``number``: the satoshis price to sell.
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos which should be no more than 3 
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos which should be no more than 3
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 The best practice is to determine the number of utxos in the address and merge them in advance.
 
@@ -415,7 +415,7 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the sell transaction object.
+- ``tx`` - ``mvc.Transaction``: the sell transaction object.
 - ``txHex`` - ``string``: raw hex of the sell transaction.
 - ``txid`` - ``string``: id of the sell transaction.
 - ``sellAddress`` - ``string``: the sell address.
@@ -454,22 +454,22 @@ cancelSell
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of NFT.
     * ``codehash`` - ``string``: the codehash of NFT.
-    * ``tokenIndex`` - ``string``: the tokenIndex of NFT. 
+    * ``tokenIndex`` - ``string``: the tokenIndex of NFT.
     * ``sellerPrivateKey`` - ``string``: the private key of the NFT seller
     * ``satoshisPrice`` - ``number``: the satoshis price to sell.
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos which should be no more than 3 
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos which should be no more than 3
     * ``sellUtxo`` - :ref:`SellUtxo<SellUtxo>`: (Optional)  specify the sell utxo
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
-    * ``middleChangeAddress`` - ``string|bsv.Address``: (Optional) the middle bsv changeAddress
-    * ``middlePrivateKey`` - ``string|bsv.PrivateKey``: (Optional) the private key of the middle changeAddress
+    * ``middleChangeAddress`` - ``string|mvc.Address``: (Optional) the middle mvc changeAddress
+    * ``middlePrivateKey`` - ``string|mvc.PrivateKey``: (Optional) the private key of the middle changeAddress
 
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 The best practice is to determine the number of utxos in the address and merge them in advance.
 
@@ -479,13 +479,13 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
-- ``unlockCheckTx`` - ``bsv.Transaction``: the unlockCheck contract transaction object.
+- ``unlockCheckTx`` - ``mvc.Transaction``: the unlockCheck contract transaction object.
 - ``unlockCheckTxHex`` - ``string``: raw hex of the unlockCheck contract transaction.
 - ``unlockCheckTxId`` - ``string``: id of the unlockCheck contract transaction.
-- 
+-
 -------
 Example
 -------
@@ -519,21 +519,21 @@ buy
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of NFT.
     * ``codehash`` - ``string``: the codehash of NFT.
-    * ``tokenIndex`` - ``string``: the tokenIndex of NFT. 
-    * ``buyerPrivateKey(buyerWif)`` - ``string|bsv.PrivateKey``: the private key of the NFT seller
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos which should be no more than 3 
+    * ``tokenIndex`` - ``string``: the tokenIndex of NFT.
+    * ``buyerPrivateKey(buyerWif)`` - ``string|mvc.PrivateKey``: the private key of the NFT seller
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos which should be no more than 3
     * ``sellUtxo`` - :ref:`SellUtxo<SellUtxo>`: (Optional)  specify the sellUtxo
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
-    * ``middleChangeAddress`` - ``string|bsv.Address``: (Optional) the middle bsv changeAddress
-    * ``middlePrivateKey`` - ``string|bsv.PrivateKey``: (Optional) the private key of the middle changeAddress
+    * ``middleChangeAddress`` - ``string|mvc.Address``: (Optional) the middle mvc changeAddress
+    * ``middlePrivateKey`` - ``string|mvc.PrivateKey``: (Optional) the private key of the middle changeAddress
 
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 The best practice is to determine the number of utxos in the address and merge them in advance.
 
@@ -543,10 +543,10 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
-- ``unlockCheckTx`` - ``bsv.Transaction``: the unlockCheck contract transaction object.
+- ``unlockCheckTx`` - ``mvc.Transaction``: the unlockCheck contract transaction object.
 - ``unlockCheckTxHex`` - ``string``: raw hex of the unlockCheck contract transaction.
 - ``unlockCheckTxId`` - ``string``: id of the unlockCheck contract transaction.
 
@@ -583,23 +583,23 @@ Parameters
 
 * ``options`` - ``Object``:
     * ``totalSupply`` - ``string``: total supply, 8 bytes unsign int
-    * ``genesisPublicKey`` - ``string|bsv.PublicKey``: the public key of the token genesiser
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``genesisPublicKey`` - ``string|mvc.PublicKey``: the public key of the token genesiser
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
-    
+
 -------
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
-- ``tx`` - ``bsv.Transaction``: unsigned transaction object.
+- ``tx`` - ``mvc.Transaction``: unsigned transaction object.
 - ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info list
 
 sigHashList contains all the input that needs to be signed.
 
-The signature method can refer to :ref:`signSigHashList<signSigHashList>` 
+The signature method can refer to :ref:`signSigHashList<signSigHashList>`
 
 -------
 Example
@@ -642,16 +642,16 @@ Create an unsigned transaction for issue
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``sensibleId`` - ``string``: the sensibleId of token.
-    * ``genesisPublicKey`` - ``string|bsv.PublicKey``: the private key of the token genesiser
+    * ``genesisPublicKey`` - ``string|mvc.PublicKey``: the private key of the token genesiser
     * ``receiverAddress`` - ``string``: the token receiver address
     * ``metaTxId`` - ``string``: (Optional) the txid of meta info outpoint.To describe NFT status, metaId is recommended
     * ``metaOutputIndex`` - ``number``: (Optional) the index of meta info outpoint..
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify bsv utxos
-    * ``changeAddress`` - ``string``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify mvc utxos
+    * ``changeAddress`` - ``string``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
 
 
@@ -659,14 +659,14 @@ Parameters
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info
 
 sigHashList contains all the input that needs to be signed.
 
-The signature method can refer to :ref:`signSigHashList<signSigHashList>` 
+The signature method can refer to :ref:`signSigHashList<signSigHashList>`
 
 -------
 Example
@@ -716,24 +716,24 @@ Parameters
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``tokenIndex`` - ``string``: the tokenIndex of NFT.
-    * ``senderPublicKey`` - ``string|bsv.PublicKey``: the public key of the NFT sender
-    * ``receiverAddress`` - ``string|bsv.Address``: the NFT receiver address
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify bsv utxos
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``senderPublicKey`` - ``string|mvc.PublicKey``: the public key of the NFT sender
+    * ``receiverAddress`` - ``string|mvc.Address``: the NFT receiver address
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify mvc utxos
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
 
 -------
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info
 
 sigHashList contains all the input that needs to be signed.
 
-The signature method can refer to :ref:`signSigHashList<signSigHashList>` 
+The signature method can refer to :ref:`signSigHashList<signSigHashList>`
 
 -------
 Example
@@ -776,13 +776,13 @@ getGenesisEstimateFee
 
 Estimate the cost of genesis
 
-The cost mainly depends on the number of bsv utxo inputs.
+The cost mainly depends on the number of mvc utxo inputs.
 
 ----------
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``opreturnData`` - ``Array``: (Optional) append an opReturn output
     * ``utxoMaxCount`` - ``Number``: (Optional) Maximum number of BSV UTXOs supported, the default is 10.
 
@@ -796,7 +796,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     let estimateFee = await nft.getGenesisEstimateFee({
         utxoMaxCount: 1,
     });
@@ -818,9 +818,9 @@ Estimate the cost of issue
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``sensibleId`` - ``string``: the sensibleId of token.
-    * ``genesisPublicKey`` - ``string|bsv.PublicKey``: the public key of token genesiser.
+    * ``genesisPublicKey`` - ``string|mvc.PublicKey``: the public key of token genesiser.
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 10.
 
@@ -871,8 +871,8 @@ Parameters
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``tokenIndex`` - ``string``:  the tokenIndex of NFT.
-    * ``senderPrivateKey(senderWif)`` - ``string|bsv.PrivateKey``: (Optional) the private key of the token sender,can be wif or other format
-    * ``senderPublicKey`` - ``string|bsv.PublicKey``: (Optional) the public key of the token sender
+    * ``senderPrivateKey(senderWif)`` - ``string|mvc.PrivateKey``: (Optional) the private key of the token sender,can be wif or other format
+    * ``senderPublicKey`` - ``string|mvc.PublicKey``: (Optional) the public key of the token sender
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 10.
 
@@ -888,7 +888,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     //get genesis/codehash from genesis.
     const {...,genesis,codehash} = nft.genesis(options);
 
@@ -924,8 +924,8 @@ Parameters
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``tokenIndex`` - ``string``:  the tokenIndex of NFT.
-    * ``senderPrivateKey(senderWif)`` - ``string|bsv.PrivateKey``: (Optional) the private key of the token sender,can be wif or other format
-    * ``senderPublicKey`` - ``string|bsv.PublicKey``: (Optional)  the public key of the token sender
+    * ``senderPrivateKey(senderWif)`` - ``string|mvc.PrivateKey``: (Optional) the private key of the token sender,can be wif or other format
+    * ``senderPublicKey`` - ``string|mvc.PublicKey``: (Optional)  the public key of the token sender
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 3.
 
@@ -942,7 +942,7 @@ Example
 
 .. code-block:: javascript
 
-    const nft = new sensible.SensibleNFT({})    
+    const nft = new sensible.SensibleNFT({})
 
     let estimateFee = await nft.getSellEstimateFee({
         codehash,
@@ -985,7 +985,7 @@ Example
 
 .. code-block:: javascript
 
-    const nft = new sensible.SensibleNFT({})    
+    const nft = new sensible.SensibleNFT({})
 
     let estimateFee = await nft.getSell2EstimateFee({
         codehash,
@@ -1012,8 +1012,8 @@ Parameters
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``tokenIndex`` - ``string``:  the tokenIndex of NFT.
-    * ``senderPrivateKey(senderWif)`` - ``string|bsv.PrivateKey``: (Optional) the private key of the token sender,can be wif or other format
-    * ``senderPublicKey`` - ``string|bsv.PublicKey``: (Optional) the public key of the token sender
+    * ``senderPrivateKey(senderWif)`` - ``string|mvc.PrivateKey``: (Optional) the private key of the token sender,can be wif or other format
+    * ``senderPublicKey`` - ``string|mvc.PublicKey``: (Optional) the public key of the token sender
     * ``sellUtxo`` - :ref:`SellUtxo<SellUtxo>`: SellUtxo
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 3.
@@ -1031,7 +1031,7 @@ Example
 
 .. code-block:: javascript
 
-    const nft = new sensible.SensibleNFT({})    
+    const nft = new sensible.SensibleNFT({})
 
     let estimateFee = await nft.getSellEstimateFee({
         codehash,
@@ -1101,7 +1101,7 @@ Parameters
 ----------
 
 1. ``options`` - ``Object``:
-    * ``tx`` - ``bsv.Transaction``: the genesis of token.
+    * ``tx`` - ``mvc.Transaction``: the genesis of token.
     * ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: the codehash of token.
     * ``sigList`` - :ref:`SigInfo[]<SigInfo>` :  token receivers.[{address:'xxx',amount:'1000'}]
 
@@ -1117,7 +1117,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const nft = new sensible.SensibleNFT(..);
     let { tx, sigHashList } = await nft.unsignGenesis({
         tokenName: "CoffeeCoin",
@@ -1133,7 +1133,7 @@ Example
 
     await sensibleApi.broadcast(tx.serialize(true));
 
-    
+
 
 
 ------------------------------------------------------------------------------
@@ -1166,7 +1166,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const {...,txHex} = nft.genesis({...,noBroadcast:true});
 
     let txid = await nft.broadcast(txHex);
@@ -1189,7 +1189,7 @@ Dump transaction.
 Parameters
 ----------
 
-* ``tx`` - ``bsv.Transaction``: the transaction to dump
+* ``tx`` - ``mvc.Transaction``: the transaction to dump
 
 
 -------
@@ -1203,7 +1203,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const {...,tx} = nft.genesis(options);
 
     nft.dumpTx(tx);
@@ -1266,10 +1266,10 @@ Example
 .. code-block:: javascript
 
     const nft = new SensibleNFT({});
-    
+
     let summarys = await nft.getSummary("1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3");
     console.log(summarys)
-    > 
+    >
     [
        {
             codehash: '0d0fc08db6e27dc0263b594d6b203f55fb5282e2',
@@ -1319,10 +1319,10 @@ Example
 .. code-block:: javascript
 
     const nft = new SensibleNFT({});
-    
+
     let summarys = await nft.getSummaryDetail("0d0fc08db6e27dc0263b594d6b203f55fb5282e2","8b3a2aac0aa3ed60745898ffaba10891ec09b97b","1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3",0,10);
     console.log(summarys)
-    > 
+    >
     [
         {
             txId: '987a56b4018643b70f088f0c84f62d8fe2208f7d192780704ab86c89b24a362b',
@@ -1357,7 +1357,7 @@ Parameters
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
 - ``totalSupply`` - ``string``: the totalSupply of NFT.
 - ``circulation`` - ``string``: the circulation of NFT.
@@ -1492,7 +1492,7 @@ Get codehash and genesis from genesis tx.
 Parameters
 ----------
 
-* ``genesisTx`` - ``bsv.Transaction``: the genesis transaction.
+* ``genesisTx`` - ``mvc.Transaction``: the genesis transaction.
 * ``genesisOutputIndex`` - ``number``: (Optional) the outputIndex of the TokenGenesis contract. Default is 0.
 
 
@@ -1513,7 +1513,7 @@ Example
 .. code-block:: javascript
 
     const {tx} = nft.genesis(options);
-    
+
     const {genesis,codehash,sensibleId} = nft.getCodehashAndGensisByTx(tx);
 
 ------------------------------------------------------------------------------
@@ -1530,7 +1530,7 @@ selectSigners
 
     SensibleNFT.selectSigners(signerConfigs)
 
-select available signers 
+select available signers
 
 3/5 signers are required to provide transaction correlation.
 
@@ -1563,7 +1563,7 @@ Example
     const { signers, signerSelecteds } = await SensibleNFT.selectSigners();
     const nft = new SensibleNFT({
         network: "testnet", //mainnet or testnet
-        purse: "", //the wif of a bsv address to offer transaction fees
+        purse: "", //the wif of a mvc address to offer transaction fees
         feeb: 0.5,
         signers,
         signerSelecteds,
@@ -1599,7 +1599,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     let isSupported = sensible.SensibleNFT.isSupportedToken("0d0fc08db6e27dc0263b594d6b203f55fb5282e2");
     console.log(isSupported);
 
@@ -1631,8 +1631,8 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``codehash`` - ``string``: the codehash of token 
-- ``genesis`` - ``string``: the genesis of token. 
+- ``codehash`` - ``string``: the codehash of token
+- ``genesis`` - ``string``: the genesis of token.
 - ``sensibleId`` - ``string`` the sensibleId of token.
 - ``metaidOutpoint`` - :ref:`MetaidOutpoint<MetaidOutpoint>`: NFT State.
 - ``genesisFlag`` - ``number``: is the NftGenesis contract or not.
@@ -1651,7 +1651,7 @@ Example
 
 .. code-block:: javascript
 
-    const tx = new bsv.Transaction(rawHex);
+    const tx = new mvc.Transaction(rawHex);
     const scriptBuf = tx.outputs[0].scriptBuf
     let { tokenAmount } = await nft.parseTokenScript(scriptBuf);
     console.log(tokenAmount.toString('hex'));

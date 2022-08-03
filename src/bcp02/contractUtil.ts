@@ -1,5 +1,5 @@
 import { Bytes, toHex } from 'scryptlib'
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 import { TokenFactory } from './contract-factory/token'
 import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
 import {
@@ -71,6 +71,6 @@ export class ContractUtil {
     let tokenContract = TokenFactory.getDummyInstance()
     tokenContract.setDataPart('')
     let scriptBuf = tokenContract.lockingScript.toBuffer()
-    this.tokenCodeHash = toHex(bsv.crypto.Hash.sha256ripemd160(scriptBuf))
+    this.tokenCodeHash = toHex(mvc.crypto.Hash.sha256ripemd160(scriptBuf))
   }
 }

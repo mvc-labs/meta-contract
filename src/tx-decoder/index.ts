@@ -1,6 +1,6 @@
-import { SensibleNFT } from '../bcp01'
-import { SensibleFT } from '../bcp02'
-import * as bsv from '../bsv'
+// import { SensibleNFT } from '../bcp01'
+// import { SensibleFT } from '../bcp02'
+import * as mvc from '../mvc'
 import * as proto from '../common/protoheader'
 import { API_NET } from '../api'
 export enum OutputType {
@@ -19,28 +19,28 @@ type DecodedOutput = {
 }
 
 export class TxDecoder {
-  static decodeOutput(output: bsv.Transaction.Output, network: API_NET): DecodedOutput {
+  static decodeOutput(output: mvc.Transaction.Output, network: API_NET): DecodedOutput {
     let scriptBuf = output.script.toBuffer()
     if (proto.hasProtoFlag(scriptBuf)) {
       let protoType = proto.getProtoType(scriptBuf)
-      if (protoType == proto.PROTO_TYPE.NFT) {
-        return {
-          type: OutputType.SENSIBLE_NFT,
-          satoshis: output.satoshis,
-          data: SensibleNFT.parseTokenScript(scriptBuf, network),
-        }
-      } else if (protoType == proto.PROTO_TYPE.FT) {
-        return {
-          type: OutputType.SENSIBLE_FT,
-          satoshis: output.satoshis,
-          data: SensibleFT.parseTokenScript(scriptBuf, network),
-        }
-      } else {
+      // if (protoType == proto.PROTO_TYPE.NFT) {
+      //   return {
+      //     type: OutputType.SENSIBLE_NFT,
+      //     satoshis: output.satoshis,
+      //     data: SensibleNFT.parseTokenScript(scriptBuf, network),
+      //   }
+      // } else if (protoType == proto.PROTO_TYPE.FT) {
+      //   return {
+      //     type: OutputType.SENSIBLE_FT,
+      //     satoshis: output.satoshis,
+      //     data: SensibleFT.parseTokenScript(scriptBuf, network),
+      //   }
+      // } else {
         return {
           type: OutputType.UNKNOWN,
           satoshis: output.satoshis,
         }
-      }
+      // }
     } else if (output.script.isPublicKeyHashOut()) {
       return {
         type: OutputType.P2PKH,
@@ -60,7 +60,7 @@ export class TxDecoder {
     }
   }
 
-  static decodeTx(tx: bsv.Transaction, network: API_NET = API_NET.MAIN) {
+  static decodeTx(tx: mvc.Transaction, network: API_NET = API_NET.MAIN) {
     let inputs: DecodedOutput[] = []
     tx.inputs.forEach((v) => {
       if (v.output) {

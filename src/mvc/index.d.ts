@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
-// Type definitions for bsv 1.5.5
+// Type definitions for mvc 1.5.5
 // Project: https://github.com/moneybutton/bsv
 // Forked From: https://github.com/bitpay/bitcore-lib
 // Definitions by: Lautaro Dragan <https://github.com/lautarodragan>

@@ -1,5 +1,5 @@
 import * as BN from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import { ContractAdapter } from '../../common/ContractAdapter'
 import {
   dummyAddress,
@@ -230,7 +230,7 @@ export class TokenTransferCheckFactory {
   ): number {
     let opreturnScriptHex = ''
     if (opreturnData) {
-      let script = bsv.Script.buildSafeDataOut(opreturnData)
+      let script = mvc.Script.buildSafeDataOut(opreturnData)
       opreturnScriptHex = script.toHex()
     }
 
@@ -307,6 +307,6 @@ export class TokenTransferCheckFactory {
       changeAddress: new Ripemd160(toHex(dummyAddress.hashBuffer)),
       opReturnScript: new Bytes(opreturnScriptHex),
     })
-    return (unlockedContract.toScript() as bsv.Script).toBuffer().length
+    return (unlockedContract.toScript() as mvc.Script).toBuffer().length
   }
 }

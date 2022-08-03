@@ -33,7 +33,7 @@ ParamUtxo
         outputIndex: number;
         satoshis: number;
         wif?: string;
-        address?: string | bsv.Address;
+        address?: string | mvc.Address;
     };
 
 
@@ -84,7 +84,7 @@ SigInfo
 
     type SigInfo = {
         sig: string;
-        publicKey: string | bsv.PublicKey;
+        publicKey: string | mvc.PublicKey;
     };
 
 .. _FungibleTokenUnspent:
@@ -192,7 +192,7 @@ signSigHashList
     function signSigHashList(sigHashList: SigHashInfo[]) {
         let sigList = sigHashList.map(({ sighash, sighashType, address }) => {
             let privateKey = wallets.find((v) => v.address.toString() == address).privateKey;
-            var sig = bsv.crypto.ECDSA.sign(
+            var sig = mvc.crypto.ECDSA.sign(
                 Buffer.from(sighash, "hex"),
                 privateKey,
                 "little"

@@ -1,4 +1,4 @@
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 import BN = require('../bn.js')
 
 export const RABIN_SIG_LEN = 384
@@ -38,7 +38,7 @@ export let getTxIdBuf = function (txid: string) {
 }
 
 export let getScriptHashBuf = function (scriptBuf: Buffer) {
-  const buf = Buffer.from(bsv.crypto.Hash.sha256ripemd160(scriptBuf))
+  const buf = Buffer.from(mvc.crypto.Hash.sha256ripemd160(scriptBuf))
   return buf
 }
 
@@ -102,7 +102,7 @@ export let getRabinPubKeyHashArray = function (rabinPubKeys: BN[]) {
   for (let i = 0; i < rabinPubKeys.length; i++) {
     buf = Buffer.concat([
       buf,
-      bsv.crypto.Hash.sha256ripemd160(
+      mvc.crypto.Hash.sha256ripemd160(
         this.toBufferLE(rabinPubKeys[i].toString(16), this.RABIN_SIG_LEN)
       ),
     ])

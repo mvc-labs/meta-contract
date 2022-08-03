@@ -23,8 +23,8 @@ contract NftGenesis {
    * @param genesisSatoshis {int} the nft genesis contract output satoshis
    * @param nftScript {bytes} the nft contract output script
    * @param nftSatoshis {int} the nft contract output satoshis
-   * @param changeAddress {Ripemd160} the bsv change address
-   * @param changeSatoshis {int} the bsv change satoshis
+   * @param changeAddress {Ripemd160} the mvc change address
+   * @param changeSatoshis {int} the mvc change satoshis
    * @param opReturnScript {bytes} the op_false op_return script, optional
   */
   public function unlock(
@@ -65,7 +65,7 @@ contract NftGenesis {
     if (sensibleID == NftProto.NULL_SENSIBLE_ID) {
       isFirst = true;
       sensibleID = Util.outpoint(txPreimage);
-    } 
+    }
     require(NftProto.checkProtoHeader(genesisScript, genesisScriptLen));
     // check opreturn
     require(NftProto.checkDataLen(genesisScript, genesisScriptLen));

@@ -1,4 +1,4 @@
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 import { CodeError, ErrCode } from '../common/error'
 import { Net } from '../net'
 import {
@@ -63,7 +63,7 @@ export class MVC implements ApiBase {
       }
     } else {
       //https://github.com/metasv/metasv-client-signature
-      this.privateKey = new bsv.PrivateKey(privateKey)
+      this.privateKey = new mvc.PrivateKey(privateKey)
       this.publicKey = this.privateKey.toPublicKey()
     }
   }
@@ -76,8 +76,8 @@ export class MVC implements ApiBase {
       const timestamp = Date.now()
       const nonce = Math.random().toString().substring(2, 12)
       const message = path + '_' + timestamp + '_' + nonce
-      const hash = bsv.crypto.Hash.sha256(Buffer.from(message))
-      const sig = bsv.crypto.ECDSA.sign(hash, this.privateKey)
+      const hash = mvc.crypto.Hash.sha256(Buffer.from(message))
+      const sig = mvc.crypto.ECDSA.sign(hash, this.privateKey)
       const sigEncoded = sig.toBuffer().toString('base64')
 
       headers = {

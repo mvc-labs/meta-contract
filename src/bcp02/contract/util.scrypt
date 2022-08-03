@@ -60,8 +60,8 @@ library Util {
 	}
 
 	// serialize state size in fixed length
-	static function encodeStateSize(bytes state): bytes {
-		return num2bin(len(state), Util.StateLen - 1 /* varint prefix byte */);
+	static function encodeStateSize(bytes states): bytes {
+		return num2bin(len(states), Util.StateLen - 1 /* varint prefix byte */);
 	}
 
 	// get the byte at the given index
@@ -206,7 +206,7 @@ library Util {
     static function writeVarMinimalPushdata(bytes b): bytes {
 		int n = len(b);
 		bytes header = b'';
-		// Reference: https://github.com/moneybutton/bsv/blob/bsv-legacy/lib/script/script.js#L1083
+		// Reference: https://github.com/moneybutton/mvc/blob/mvc-legacy/lib/script/script.js#L1083
 		if (n == 0) {
 		} else if (n == 1) {
 			int rawInt = Util.fromLEUnsigned(b);

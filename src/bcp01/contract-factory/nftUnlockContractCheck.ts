@@ -1,5 +1,5 @@
 import * as BN from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import { ContractAdapter } from '../../common/ContractAdapter'
 import {
   dummyAddress,
@@ -200,7 +200,7 @@ export class NftUnlockContractCheckFactory {
 
   public static calLockingScriptSize(unlockType: NFT_UNLOCK_CONTRACT_TYPE): number {
     let contract = this.getDummyInstance(unlockType)
-    return (contract.lockingScript as bsv.Script).toBuffer().length
+    return (contract.lockingScript as mvc.Script).toBuffer().length
   }
 
   public static calUnlockingScriptSize(
@@ -249,6 +249,6 @@ export class NftUnlockContractCheckFactory {
       nftOutputSatoshis: 1000,
       otherOutputArray,
     })
-    return (unlockedContract.toScript() as bsv.Script).toBuffer().length
+    return (unlockedContract.toScript() as mvc.Script).toBuffer().length
   }
 }

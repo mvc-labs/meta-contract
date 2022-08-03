@@ -31,7 +31,7 @@ contract Nft {
    * @param receiverAddress {bytes} the receiverAddress, only transfer need
    * @param nftOutputSatoshis {int} the nft output contract satoshis, only transfer need
    * @param opReturnScript {bytes} op_false op_return script, optional, only transfer need
-   * @param changeAddress {Ripemd160} change bsv address, only transfer need
+   * @param changeAddress {Ripemd160} change mvc address, only transfer need
    * @param checkInputIndex {int} nftUnlockContractCheck contract input index, only unlockFromContract need
    * @param checkScriptTx {bytes} nftUnlockContractCheck contract raw tx, only unlockFromContract need
    * @param checkScriptTxOutIndex {int} the output index of nftUnlockContractCheck contract in checkScriptTx, only unlockFromContract need

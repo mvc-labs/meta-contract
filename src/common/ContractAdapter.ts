@@ -1,6 +1,6 @@
 import { toHex } from '../scryptlib'
 import { TxContext } from 'scryptlib/dist/contract'
-import * as bsv from '../bsv'
+import * as mvc from '../mvc'
 export class ContractAdapter {
   _contract: any
   constructor(contract: any) {
@@ -8,7 +8,7 @@ export class ContractAdapter {
   }
 
   get lockingScript() {
-    return this._contract.lockingScript as bsv.Script
+    return this._contract.lockingScript as mvc.Script
   }
 
   get txContext(): TxContext {
@@ -16,11 +16,11 @@ export class ContractAdapter {
   }
 
   get dataPart() {
-    return this._contract.dataPart as bsv.Script
+    return this._contract.dataPart as mvc.Script
   }
 
   get codePart() {
-    return this._contract.codePart as bsv.Script
+    return this._contract.codePart as mvc.Script
   }
 
   setTxContext(txContext: TxContext) {
@@ -34,11 +34,11 @@ export class ContractAdapter {
   //取OP_RETURN之前的hash
   getCodeHash() {
     let codePart = this.codePart.toBuffer()
-    return toHex(bsv.crypto.Hash.sha256ripemd160(codePart))
+    return toHex(mvc.crypto.Hash.sha256ripemd160(codePart))
   }
 
   //取整体的hash
   getScriptHash() {
-    return toHex(bsv.crypto.Hash.sha256ripemd160(this.lockingScript.toBuffer()))
+    return toHex(mvc.crypto.Hash.sha256ripemd160(this.lockingScript.toBuffer()))
   }
 }

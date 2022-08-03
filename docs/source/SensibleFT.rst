@@ -26,7 +26,7 @@ Parameters
     * ``signerSelecteds`` - ``number[]``:  (Optional) the indexs of the signers which is decided to verify
     * ``feeb`` - ``number``: (Optional) the fee rate. default is 0.5
     * ``network`` - :ref:`API_NET<API_NET>`: (Optional) mainnet/testnet default is mainnet
-    * ``purse`` - ``string``: (Optional) the private key to offer transacions fee. If not provided, bsv utoxs must be provided in genesis/issue/transfer.
+    * ``purse`` - ``string``: (Optional) the private key to offer transacions fee. If not provided, mvc utoxs must be provided in genesis/issue/transfer.
     * ``apiTarget`` - :ref:`API_TARGET<API_TARGET>`: (Optional) SENSIBLE/METASV, default is SENSIBLE.
     * ``dustLimitFactor`` - ``number``: (Optional)  specify the output dust rate, default is 0.25 .If the value is equal to 0, the final dust will be at least 1.
     * ``dustAmount`` - ``number``: (Optional) specify the output dust.
@@ -44,12 +44,12 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const SensibleFT = sensible.SensibleFT;
     const { signers, signerSelecteds } = await SensibleFT.selectSigners();
     const ft = new SensibleFT({
         network: "mainnet", //mainnet or testnet
-        purse: "", //the wif of a bsv address to offer transaction fees
+        purse: "", //the wif of a mvc address to offer transaction fees
         feeb: 0.5,
         signers,
         signerSelecteds,
@@ -99,9 +99,9 @@ Parameters
 * ``options`` - ``Object``:
     * ``tokenName`` - ``string``: token name, limited to 20 bytes
     * ``tokenSymbol`` - ``string``: the token symbol, limited to 10 bytes
-    * ``decimalNum`` - ``number``: the decimal number, range 0-255 
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``decimalNum`` - ``number``: the decimal number, range 0-255
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``genesisWif`` - ``string``: the private key of the token genesiser
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
@@ -113,12 +113,12 @@ Returns
 
 ``Promise`` returns ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.(With input data)
+- ``tx`` - ``mvc.Transaction``: the transaction object.(With input data)
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
 - ``genesis`` - ``string``: genesis of the new token.
-- ``codehash`` - ``string``: codehash of the new token. 
-- ``sensibleId`` - ``string``: sensibleId of the new token. 
+- ``codehash`` - ``string``: codehash of the new token.
+- ``sensibleId`` - ``string``: sensibleId of the new token.
 
 You should save the returned values.(genesis、codehash、sensibleId)
 Issuing the token need those values.
@@ -135,7 +135,7 @@ Example
         address:"1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3"
     };
 
-    // use purse to offer the bsv fee
+    // use purse to offer the mvc fee
     let { txid, genesis, codehash, sensibleId } = await ft.genesis({
         genesisWif: CoffeeShop.wif,
         tokenName: "COFFEE COIN",
@@ -144,9 +144,9 @@ Example
     });
 
 
-    // or specify bsv utxos (wif must be provided)
+    // or specify mvc utxos (wif must be provided)
     let bsvUtxos = ft.sensibleApi.getUnspents(CoffeeShop.address);
-    bsvUtxos.forEach(v=>{ 
+    bsvUtxos.forEach(v=>{
         v.wif = CoffeeShop.wif;
     })
     let { txid, genesis, codehash, sensibleId } = await ft.genesis({
@@ -173,7 +173,7 @@ Issue tokens.
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``sensibleId`` - ``string``: the sensibleId of token.
@@ -181,8 +181,8 @@ Parameters
     * ``receiverAddress`` - ``string``: the token receiver address
     * ``tokenAmount`` - ``string``: the token amount to issue
     * ``allowIncreaseIssues`` - ``boolean``: (Optional) if allow to increase issues. default is true
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify bsv utxos
-    * ``changeAddress`` - ``string``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify mvc utxos
+    * ``changeAddress`` - ``string``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
 
@@ -193,7 +193,7 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.(With input data)
+- ``tx`` - ``mvc.Transaction``: the transaction object.(With input data)
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
 
@@ -211,7 +211,7 @@ Example
         address:"1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3"
     };
 
-    // use purse to offer the bsv fee
+    // use purse to offer the mvc fee
     let { txid } = await ft.issue({
         genesis: genesis,
         codehash: codehash,
@@ -219,13 +219,13 @@ Example
         genesisWif: CoffeeShop.wif,
         receiverAddress: CoffeeShop.address,
         tokenAmount: "1000000000000",
-        allowIncreaseIssues: false, 
+        allowIncreaseIssues: false,
     });
 
 
-    // or specify bsv utxos (wif must be provided)
+    // or specify mvc utxos (wif must be provided)
     let bsvUtxos = ft.sensibleApi.getUnspents(CoffeeShop.address);
-    bsvUtxos.forEach(v=>{ 
+    bsvUtxos.forEach(v=>{
         v.wif = CoffeeShop.wif;
     })
     let { txid } = await ft.issue({
@@ -235,7 +235,7 @@ Example
         genesisWif: CoffeeShop.wif,
         receiverAddress: CoffeeShop.address,
         tokenAmount: "1000000000000",
-        allowIncreaseIssues: false, 
+        allowIncreaseIssues: false,
         utxos:bsvUtxos
     });
 
@@ -256,22 +256,22 @@ Transfer tokens.
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``receivers`` - :ref:`TokenReceiver[]<TokenReceiver>`: token receivers
     * ``senderWif`` - ``string``: the private key of the token sender
     * ``ftUtxos`` - :ref:`ParamFtUtxo[]<ParamFtUtxo>`: (Optional) specify token utxos
-    * ``ftChangeAddress`` - ``string|bsv.Address``: (Optional) specify ft changeAddress 
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos which should be no more than 3 
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
-    * ``middleChangeAddress`` - ``string|bsv.Address``: (Optional) the middle bsv changeAddress
-    * ``middlePrivateKey`` - ``string|bsv.PrivateKey``: (Optional) the private key of the middle changeAddress
+    * ``ftChangeAddress`` - ``string|mvc.Address``: (Optional) specify ft changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos which should be no more than 3
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
+    * ``middleChangeAddress`` - ``string|mvc.Address``: (Optional) the middle mvc changeAddress
+    * ``middlePrivateKey`` - ``string|mvc.PrivateKey``: (Optional) the private key of the middle changeAddress
     * ``isMerge`` - ``boolean``: (Optional) do not use this param. Please use function Merge.
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 The best practice is to determine the number of utxos in the address and merge them in advance.
 
@@ -281,10 +281,10 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
-- ``routeCheckTx`` - ``bsv.Transaction``: the amount-check transaction object.
+- ``routeCheckTx`` - ``mvc.Transaction``: the amount-check transaction object.
 - ``routeCheckTxHex`` - ``string``: raw hex of the amount-check transaction.
 
 -------
@@ -301,7 +301,7 @@ Example
         address:"1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3"
     };
 
-    // use purse to offer the bsv fee
+    // use purse to offer the mvc fee
     let { txid } = await ft.transfer({
         senderWif: CoffeeShop.wif,
         receivers: [
@@ -319,9 +319,9 @@ Example
     });
 
 
-    // or specify ft utxos and bsv utxos (wif must be provided)
+    // or specify ft utxos and mvc utxos (wif must be provided)
     let bsvUtxos = ft.sensibleApi.getUnspents(CoffeeShop.address);
-    bsvUtxos.forEach(v=>{ 
+    bsvUtxos.forEach(v=>{
         v.wif = CoffeeShop.wif;
     })
     let ftUtxos = ft.sensibleApi.getFungibleTokenUnspents(codehash,genesis,CoffeeShop.address,100);
@@ -367,16 +367,16 @@ It will take up to 20 utxos as input and merge them into one output and transfer
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``ownerWif`` - ``string``: the private key of the token owner
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify bsv utxos
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify mvc utxos
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``noBroadcast`` - ``boolean``: (Optional) whether not to broadcast the transaction, the default is false
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 The best practice is to determine the number of utxos in the address and merge them in advance.
 
@@ -386,10 +386,10 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.(With input data)
+- ``tx`` - ``mvc.Transaction``: the transaction object.(With input data)
 - ``txHex`` - ``string``: raw hex of the transaction.
 - ``txid`` - ``string``: id of the transaction.
-- ``routeCheckTx`` - ``bsv.Transaction``: the amount-check transaction object.(With input data)
+- ``routeCheckTx`` - ``mvc.Transaction``: the amount-check transaction object.(With input data)
 - ``routeCheckTxHex`` - ``string``: raw hex of the amount-check transaction.
 
 -------
@@ -430,24 +430,24 @@ Parameters
 * ``options`` - ``Object``:
     * ``tokenName`` - ``string``: token name, limited to 20 bytes
     * ``tokenSymbol`` - ``string``: the token symbol, limited to 10 bytes
-    * ``decimalNum`` - ``number``: the decimal number, range 0-255 
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify bsv utxos
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``decimalNum`` - ``number``: the decimal number, range 0-255
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional)  specify mvc utxos
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
-    * ``genesisPublicKey`` - ``string|bsv.PublicKey``: the public key of the token genesiser
+    * ``genesisPublicKey`` - ``string|mvc.PublicKey``: the public key of the token genesiser
 
 -------
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
-- ``tx`` - ``bsv.Transaction``: unsigned transaction object.
+- ``tx`` - ``mvc.Transaction``: unsigned transaction object.
 - ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info list
 
 sigHashList contains all the input that needs to be signed.
 
-The signature method can refer to :ref:`signSigHashList<signSigHashList>` 
+The signature method can refer to :ref:`signSigHashList<signSigHashList>`
 
 -------
 Example
@@ -463,7 +463,7 @@ Example
         address:"1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3"
     };
 
-    // use purse to offer the bsv fee
+    // use purse to offer the mvc fee
     let { tx, sigHashList } = await ft.unsignGenesis({
         tokenName: "CoffeeCoin",
         tokenSymbol: "CC",
@@ -498,16 +498,16 @@ Create an unsigned transaction for issue
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``sensibleId`` - ``string``: the sensibleId of token.
-    * ``genesisPublicKey`` - ``string|bsv.PublicKey``: the private key of the token genesiser
+    * ``genesisPublicKey`` - ``string|mvc.PublicKey``: the private key of the token genesiser
     * ``receiverAddress`` - ``string``: the token receiver address
     * ``tokenAmount`` - ``string``: the token amount to issue
     * ``allowIncreaseIssues`` - ``boolean``: (Optional) if allow to increase issues. default is true
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify bsv utxos
-    * ``changeAddress`` - ``string``: (Optional) specify bsv changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify mvc utxos
+    * ``changeAddress`` - ``string``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
 
 
@@ -515,14 +515,14 @@ Parameters
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info
 
 sigHashList contains all the input that needs to be signed.
 
-The signature method can refer to :ref:`signSigHashList<signSigHashList>` 
+The signature method can refer to :ref:`signSigHashList<signSigHashList>`
 
 -------
 Example
@@ -539,7 +539,7 @@ Example
         publicKey:"",
     };
 
-    // use purse to offer the bsv fee
+    // use purse to offer the mvc fee
     let { txid ,sigHashList} = await ft.unsignIssue({
         genesis: genesis,
         codehash: codehash,
@@ -547,7 +547,7 @@ Example
         genesisPublicKey: CoffeeShop.publicKey,
         receiverAddress: CoffeeShop.address,
         tokenAmount: "1000000000000",
-        allowIncreaseIssues: false, 
+        allowIncreaseIssues: false,
     });
 
     let sigList = signSigHashList(sigHashList);
@@ -567,7 +567,7 @@ unsignPreTransfer
 
 Create unsigned transactions for transfer
 
-The unsigned transfer token needs to be completed in two steps. 
+The unsigned transfer token needs to be completed in two steps.
 
 ----------
 Parameters
@@ -577,17 +577,17 @@ Parameters
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``receivers`` - :ref:`TokenReceiver[]<TokenReceiver>`:  token receivers.[{address:'xxx',amount:'1000'}]
-    * ``senderPublicKey`` - ``string|bsv.PublicKey``: the private key of the token sender,can be wif or other format
+    * ``senderPublicKey`` - ``string|mvc.PublicKey``: the private key of the token sender,can be wif or other format
     * ``ftUtxos`` - :ref:`ParamFtUtxo[]<ParamFtUtxo>`: (Optional) specify token utxos
-    * ``ftChangeAddress`` - ``string|bsv.Address``: (Optional) specify ft changeAddress 
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify bsv utxos
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
-    * ``middleChangeAddress`` - ``string|bsv.Address``: (Optional) the middle bsv changeAddress
-    * ``middlePrivateKey`` - ``string|bsv.PrivateKey``: (Optional) the private key of the middle changeAddress
+    * ``ftChangeAddress`` - ``string|mvc.Address``: (Optional) specify ft changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify mvc utxos
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
+    * ``middleChangeAddress`` - ``string|mvc.Address``: (Optional) the middle mvc changeAddress
+    * ``middlePrivateKey`` - ``string|mvc.PrivateKey``: (Optional) the private key of the middle changeAddress
     * ``isMerge`` - ``boolean``: (Optional) do not use this param. Please use function Merge.
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 The best practice is to determine the number of utxos in the address and merge them in advance.
 
@@ -595,15 +595,15 @@ The best practice is to determine the number of utxos in the address and merge t
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
 - ``unsignTxRaw`` - ``string``: raw hex of the transaction.
-- ``routeCheckTx`` - ``bsv.Transaction``: the amount-check transaction object.(With input data)
+- ``routeCheckTx`` - ``mvc.Transaction``: the amount-check transaction object.(With input data)
 - ``routeCheckSigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info
 
 routeCheckSigHashList contains all the input that needs to be signed.
 
-The signature method can refer to :ref:`signSigHashList<signSigHashList>` 
+The signature method can refer to :ref:`signSigHashList<signSigHashList>`
 
 Notice! UnsignTxRaw is an incomplete transaction and not able to be signed before routeCheckTx is completed.
 
@@ -670,16 +670,16 @@ Parameters
 ----------
 
 * ``options`` - ``Object``: the options used for deployment.
-    * ``routeCheckTx`` - ``bsv.Transaction``: the genesis of token.
+    * ``routeCheckTx`` - ``mvc.Transaction``: the genesis of token.
     * ``unsignTxRaw`` - ``string``: the codehash of token.
 
 -------
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info
 
 The tx is still unsigned.
@@ -703,23 +703,23 @@ unsignPreMerge
 
 Create unsigned transactions for merge
 
-The unsigned merge token needs to be completed in two steps. 
+The unsigned merge token needs to be completed in two steps.
 
 ----------
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``ownerPublicKey`` - ``string``: the private key of the token owner
     * ``ftUtxos`` - :ref:`ParamFtUtxo[]<ParamFtUtxo>`: (Optional) specify token utxos
-    * ``ftChangeAddress`` - ``string`` (Optional) specify ft changeAddress 
-    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify bsv utxos
-    * ``changeAddress`` - ``string|bsv.Address``: (Optional) specify bsv changeAddress
+    * ``ftChangeAddress`` - ``string`` (Optional) specify ft changeAddress
+    * ``utxos`` - :ref:`ParamUtxo[]<ParamUtxo>`: (Optional) specify mvc utxos
+    * ``changeAddress`` - ``string|mvc.Address``: (Optional) specify mvc changeAddress
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 The best practice is to determine the number of utxos in the address and merge them in advance.
 
@@ -727,22 +727,22 @@ The best practice is to determine the number of utxos in the address and merge t
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
 - ``unsignTxRaw`` - ``string``: raw hex of the transaction.
-- ``routeCheckTx`` - ``bsv.Transaction``: the amount-check transaction object.(With input data)
+- ``routeCheckTx`` - ``mvc.Transaction``: the amount-check transaction object.(With input data)
 - ``routeCheckSigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info
 
 routeCheckSigHashList contains all the input that needs to be signed.
 
-The signature method can refer to :ref:`signSigHashList<signSigHashList>` 
-    
+The signature method can refer to :ref:`signSigHashList<signSigHashList>`
+
 -------
 Example
 -------
 
 .. code-block:: javascript
-    
+
     //get genesis/codehash/sensibleId from genesis.
     const {...,genesis,codehash,sensibleId} = ft.genesis(options);
 
@@ -789,16 +789,16 @@ Parameters
 ----------
 
 * ``options`` - ``Object``: the options used for deployment.
-    * ``routeCheckTx`` - ``bsv.Transaction``: the genesis of token.
+    * ``routeCheckTx`` - ``mvc.Transaction``: the genesis of token.
     * ``unsignTxRaw`` - ``string``: the codehash of token.
 
 -------
 Returns
 -------
 
-``Promise`` returns ``Object``: 
+``Promise`` returns ``Object``:
 
-- ``tx`` - ``bsv.Transaction``: the transaction object.
+- ``tx`` - ``mvc.Transaction``: the transaction object.
 - ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: sighash info
 
 -------
@@ -820,13 +820,13 @@ getGenesisEstimateFee
 
 Estimate the cost of genesis
 
-The cost mainly depends on the number of bsv utxo inputs.
+The cost mainly depends on the number of mvc utxo inputs.
 
 ----------
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 10.
 
@@ -840,7 +840,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     let estimateFee = await ft.getGenesisEstimateFee({
         utxoMaxCount: 1,
     });
@@ -862,9 +862,9 @@ Estimate the cost of issue
 Parameters
 ----------
 
-* ``options`` - ``Object``: 
+* ``options`` - ``Object``:
     * ``sensibleId`` - ``string``: the sensibleId of token.
-    * ``genesisPublicKey`` - ``string|bsv.PublicKey``: the public key of token genesiser.
+    * ``genesisPublicKey`` - ``string|mvc.PublicKey``: the public key of token genesiser.
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``allowIncreaseIssues`` - ``boolean``:  (Optional) if allow increase issues , the default is true.
     * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 10.
@@ -918,15 +918,15 @@ Parameters
     * ``codehash`` - ``string``: the codehash of token.
     * ``receivers`` - :ref:`TokenReceiver[]<TokenReceiver>`:   token receivers.[{address:'xxx',amount:'1000'}]
     * ``senderWif`` - ``string``: the private key of the token sender,can be wif or other format
-    * ``senderPrivateKey`` - ``string|bsv.PrivateKey``: the private key of the token sender,can be wif or other format
-    * ``senderPublicKey`` - ``string|bsv.PublicKey``: (Optional) senderWif and senderPublicKey must be provided 
+    * ``senderPrivateKey`` - ``string|mvc.PrivateKey``: the private key of the token sender,can be wif or other format
+    * ``senderPublicKey`` - ``string|mvc.PublicKey``: (Optional) senderWif and senderPublicKey must be provided
     * ``ftUtxos`` - ``ParamFtUtxo[]``: (Optional) specify token utxos
-    * ``ftChangeAddress`` - ``string|bsv.Adderss``: (Optional) specify ft changeAddress 
+    * ``ftChangeAddress`` - ``string|mvc.Adderss``: (Optional) specify ft changeAddress
     * ``isMerge`` - ``boolean``: (Optional) do not use this param. Please use function Merge.
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 3.
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 -------
 Returns
@@ -938,7 +938,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     //get genesis/codehash from genesis.
     const {...,genesis,codehash} = ft.genesis(options);
 
@@ -980,14 +980,14 @@ Parameters
     * ``genesis`` - ``string``: the genesis of token.
     * ``codehash`` - ``string``: the codehash of token.
     * ``ownerWif`` - ``string``: the private key of the token sender,can be wif or other format
-    * ``ownerPublicKey`` - ``string|bsv.PublicKey``: (Optional) senderWif and senderPublicKey must be provided 
+    * ``ownerPublicKey`` - ``string|mvc.PublicKey``: (Optional) senderWif and senderPublicKey must be provided
     * ``ftUtxos`` - ``ParamFtUtxo[]``: (Optional) specify token utxos
-    * ``ftChangeAddress`` - ``string|bsv.Adderss``: (Optional) specify ft changeAddress 
+    * ``ftChangeAddress`` - ``string|mvc.Adderss``: (Optional) specify ft changeAddress
     * ``isMerge`` - ``String``: (Optional) do not use this param. Please use function Merge.
     * ``opreturnData`` - ``Array``: (Optional) append an opReturn output
     * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 3.
 
-The number of bsv utxo inputs must not be greater than 3, or the transaction will failed.
+The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
 -------
 Returns
@@ -1026,8 +1026,8 @@ Parameters
 ----------
 
 * ``options`` - ``Object``:
-    * ``bsvInputLen`` - ``string``: the count of bsv inputs
-    * ``tokenInputLen`` - ``string``: the count of token inputs 
+    * ``bsvInputLen`` - ``string``: the count of mvc inputs
+    * ``tokenInputLen`` - ``string``: the count of token inputs
     * ``tokenOutputLen`` - ``string``: the count of token outputs
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
 
@@ -1111,7 +1111,7 @@ Parameters
 ----------
 
 1. ``options`` - ``Object``:
-    * ``tx`` - ``bsv.Transaction``: the genesis of token.
+    * ``tx`` - ``mvc.Transaction``: the genesis of token.
     * ``sigHashList`` - :ref:`SigHashInfo[]<SigHashInfo>`: the codehash of token.
     * ``sigList`` - :ref:`SigInfo[]<SigInfo>` :  token receivers.[{address:'xxx',amount:'1000'}]
 
@@ -1127,7 +1127,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const ft = new sensible.SensibleFT({});
     let { tx, sigHashList } = await ft.unsignGenesis({
         tokenName: "CoffeeCoin",
@@ -1143,7 +1143,7 @@ Example
 
     await sensibleApi.broadcast(tx.serialize(true));
 
-    
+
 
 
 ------------------------------------------------------------------------------
@@ -1176,7 +1176,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const {...,txHex} = ft.genesis({...,noBroadcast:true});
 
     let txid = await ft.broadcast(txHex);
@@ -1199,7 +1199,7 @@ Dump transaction.
 Parameters
 ----------
 
-* ``tx`` - ``bsv.Transaction``: the transaction to dump
+* ``tx`` - ``mvc.Transaction``: the transaction to dump
 
 
 -------
@@ -1213,7 +1213,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const {...,tx} = ft.genesis(options);
 
     ft.dumpTx(tx);
@@ -1276,11 +1276,11 @@ Example
 .. code-block:: javascript
 
     const ft = new SensibleFT({});
-    
+
     let summarys = await ft.getSummary("18WoTi5rkjtqrR74pQ2q6gSzshCosjyTTr");
     console.log(summarys)
 
-    
+
     > [
         {
             codehash: '777e4dd291059c9f7a0fd563f7204576dcceb791',
@@ -1292,7 +1292,7 @@ Example
             decimal: 3
         }
     ]
-    
+
 ------------------------------------------------------------------------------
 
 
@@ -1334,7 +1334,7 @@ Example
         address: "18WoTi5rkjtqrR74pQ2q6gSzshCosjyTTr",
     });
     console.log(balance);
-    > 
+    >
     631034354
 
 ------------------------------------------------------------------------------
@@ -1364,7 +1364,7 @@ Returns
 ``Promise`` returns ``Object``:
     * ``balance`` - ``string``: confirmed balance.
     * ``pendingBalance`` - ``string``: pending balance.
-    * ``utxoCount`` - ``number``: the number of the token utxo 
+    * ``utxoCount`` - ``number``: the number of the token utxo
     * ``decimal`` - ``number``: token decimal
 
 -------
@@ -1381,7 +1381,7 @@ Example
         address: "18WoTi5rkjtqrR74pQ2q6gSzshCosjyTTr",
     });
     console.log(detail);
-    > 
+    >
     { balance: '631034354', pendingBalance: '0', utxoCount: 1, decimal: 3 }
 
 ------------------------------------------------------------------------------
@@ -1452,7 +1452,7 @@ Get codehash and genesis from genesis tx.
 Parameters
 ----------
 
-* ``genesisTx`` - ``bsv.Transaction``: the genesis transaction.
+* ``genesisTx`` - ``mvc.Transaction``: the genesis transaction.
 * ``genesisOutputIndex`` - ``number``: (Optional) the outputIndex of the TokenGenesis contract. Default is 0.
 
 
@@ -1473,7 +1473,7 @@ Example
 .. code-block:: javascript
 
     const {tx} = ft.genesis(options);
-    
+
     const {genesis,codehash,sensibleId} = ft.getCodehashAndGensisByTx(tx);
 
 ------------------------------------------------------------------------------
@@ -1490,7 +1490,7 @@ selectSigners
 
     SensibleFT.selectSigners(signerConfigs)
 
-select available signers 
+select available signers
 
 3/5 signers are required to provide transaction correlation.
 
@@ -1523,7 +1523,7 @@ Example
     const { signers, signerSelecteds } = await SensibleFT.selectSigners();
     const ft = new SensibleFT({
         network: "testnet", //mainnet or testnet
-        purse: "", //the wif of a bsv address to offer transaction fees
+        purse: "", //the wif of a mvc address to offer transaction fees
         feeb: 0.5,
         signers,
         signerSelecteds,
@@ -1559,7 +1559,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     let isSupported = sensible.SensibleFT.isSupportedToken("777e4dd291059c9f7a0fd563f7204576dcceb791");
     console.log(isSupported);
 
@@ -1591,8 +1591,8 @@ Returns
 
 ``Object``: The transaction object:
 
-- ``codehash`` - ``string``: the codehash of token 
-- ``genesis`` - ``string``: the genesis of token. 
+- ``codehash`` - ``string``: the codehash of token
+- ``genesis`` - ``string``: the genesis of token.
 - ``sensibleId`` - ``string`` the sensibleId of token.
 - ``tokenName`` - ``string``: the token name
 - ``tokenSymbol`` - ``string``: the token symbol
@@ -1612,7 +1612,7 @@ Example
 
 .. code-block:: javascript
 
-    const tx = new bsv.Transaction(rawHex);
+    const tx = new mvc.Transaction(rawHex);
     const scriptBuf = tx.outputs[0].scriptBuf
     let { tokenAmount } = await ft.parseTokenScript(scriptBuf);
     console.log(tokenAmount.toString('hex'));

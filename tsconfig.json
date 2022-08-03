@@ -16,12 +16,13 @@
     "pretty": true,
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./typings", "./node_modules/@types/"],
+    "allowJs": true,
+    "typeRoots": ["./src/typings", "./node_modules/@types/"],
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.js"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.js", "src/**/*.json"],
   "exclude": ["src/index.browser.ts", "dist", "node_modules"]
 }

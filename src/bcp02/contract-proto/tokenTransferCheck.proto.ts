@@ -1,5 +1,5 @@
 import * as BN from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import * as TokenUtil from '../../common/tokenUtil'
 const NFT_ID_LEN = 36
 const NFT_CODE_HASH_LEN = 20
@@ -10,7 +10,7 @@ const NFT_CODE_HASH_OFFSET = NFT_ID_OFFSET + NFT_CODE_HASH_LEN
 export type FormatedDataPart = {
   nSenders?: number
   receiverTokenAmountArray?: BN[]
-  receiverArray?: bsv.Address[]
+  receiverArray?: mvc.Address[]
   nReceivers?: number
   tokenCodeHash?: string
   tokenID?: string

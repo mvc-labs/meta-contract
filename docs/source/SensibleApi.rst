@@ -38,7 +38,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
     const sensibleApi = new sensible.SensibleApi(API_NET.MAIN, API_TARGET.SENSIBLE);
 
 ------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ When your apiTarget is metasv, you need to authorize.
 Parameters
 ----------
 
-* ``options`` - :ref:`AuthorizationOption<AuthorizationOption>` 
+* ``options`` - :ref:`AuthorizationOption<AuthorizationOption>`
 
 -------
 Returns
@@ -94,13 +94,13 @@ getBalance
 
     sensibleApi.getBalance(address)
 
-Get bsv balance
+Get mvc balance
 
 ----------
 Parameters
 ----------
 
-* ``address`` - ``string``: the bsv address
+* ``address`` - ``string``: the mvc address
 
 
 -------
@@ -117,13 +117,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let balance = await sensibleApi.getBalance("1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3");
     console.log(balance);
 
-    > 
+    >
     { balance: 0, pendingBalance: 0 }
 
 ------------------------------------------------------------------------------
@@ -136,13 +136,13 @@ getUnspents
 
     sensibleApi.getUnspents(address)
 
-Query bsv utxos.
+Query mvc utxos.
 
 ----------
 Parameters
 ----------
 
-* ``address`` - ``string`` bsv address
+* ``address`` - ``string`` mvc address
 
 -------
 Returns
@@ -153,7 +153,7 @@ Returns
 - ``txid`` - ``string``: txid
 - ``outputIndex`` - ``number``: outputIndex
 - ``satoshis`` - ``number``: satoshis
-- ``address`` - ``string``: address 
+- ``address`` - ``string``: address
 
 -------
 Example
@@ -204,7 +204,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let txid = await sensibleApi.broadcast(txHex);
@@ -239,7 +239,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let rawtx = await sensibleApi.getRawTxData("e37dbe764865f5e887cdd5c91f4c9853e5d6898b71429f08df83b67cf8b1a531");
@@ -278,7 +278,7 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let spent = await sensibleApi.getOutpointSpent("62b37ce3bb9f2b146abef0faa4dcc7dd6d9266880923b0ae5a1237bf2b4c25cf",1);
@@ -323,13 +323,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let ftUtxos = await sensibleApi.getFungibleTokenUnspents("777e4dd291059c9f7a0fd563f7204576dcceb791","5d15eedd93c90d91e0d76de5cc932c833baf8336","1Bq7WZKzxe3Ftf4U7e9treVrnn7Uo3evQu",10);
     console.log(ftUtxos);
 
-    > 
+    >
     [
         {
             txId: 'e467016c96dda51b23186060ff115089459b5b8d8f649236c80e6b4b35279598',
@@ -370,13 +370,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let balance = await sensibleApi.getFungibleTokenBalance("777e4dd291059c9f7a0fd563f7204576dcceb791","5d15eedd93c90d91e0d76de5cc932c833baf8336","1Bq7WZKzxe3Ftf4U7e9treVrnn7Uo3evQu");
     console.log(balance);
 
-    > 
+    >
     {
         balance: '1656451380',
         pendingBalance: '0',
@@ -414,13 +414,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let ftSummary = await sensibleApi.getFungibleTokenSummary("1Bq7WZKzxe3Ftf4U7e9treVrnn7Uo3evQu");
     console.log(ftSummary);
 
-    > 
+    >
     [
         {
             codehash: '777e4dd291059c9f7a0fd563f7204576dcceb791',
@@ -466,13 +466,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let nftUtxos = await sensibleApi.getNonFungibleTokenUnspents("0d0fc08db6e27dc0263b594d6b203f55fb5282e2","8b3a2aac0aa3ed60745898ffaba10891ec09b97b","1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3",0,10);
     console.log(nftUtxos);
 
-    > 
+    >
     [
         {
             txId: '987a56b4018643b70f088f0c84f62d8fe2208f7d192780704ab86c89b24a362b',
@@ -515,13 +515,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let nftUtxo = await sensibleApi.getNonFungibleTokenUnspentDetail("0d0fc08db6e27dc0263b594d6b203f55fb5282e2","8b3a2aac0aa3ed60745898ffaba10891ec09b97b",0);
     console.log(nftUtxo);
 
-    > 
+    >
     {
         txId: '987a56b4018643b70f088f0c84f62d8fe2208f7d192780704ab86c89b24a362b',
         outputIndex: 1,
@@ -560,13 +560,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let nftSummary = await sensibleApi.getNonFungibleTokenSummary("1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3");
     console.log(nftSummary);
 
-    > 
+    >
     [
        {
             codehash: '0d0fc08db6e27dc0263b594d6b203f55fb5282e2',
@@ -612,13 +612,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let sellUtxo = await sensibleApi.getNftSellUtxo("0d0fc08db6e27dc0263b594d6b203f55fb5282e2","8b3a2aac0aa3ed60745898ffaba10891ec09b97b",0);
     console.log(sellUtxo);
 
-    > 
+    >
     {
         codehash: '0d0fc08db6e27dc0263b594d6b203f55fb5282e2',
         genesis: '8b3a2aac0aa3ed60745898ffaba10891ec09b97b',
@@ -660,13 +660,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let sellUtxos = await sensibleApi.getNftSellList("0d0fc08db6e27dc0263b594d6b203f55fb5282e2","8b3a2aac0aa3ed60745898ffaba10891ec09b97b",0,10);
     console.log(sellUtxos);
 
-    > 
+    >
     [
         {
             codehash: '0d0fc08db6e27dc0263b594d6b203f55fb5282e2',
@@ -712,13 +712,13 @@ Example
 -------
 
 .. code-block:: javascript
-    
+
    const sensibleApi = new sensible.SensibleApi(API_NET.MAIN);
 
     let sellUtxos = await sensibleApi.getNftSellListByAddress("1FVyetCQrPdjNaG962bqYA5EL6q1JxNET3",0,10);
     console.log(sellUtxos);
 
-    > 
+    >
     [
         {
             codehash: '0d0fc08db6e27dc0263b594d6b203f55fb5282e2',

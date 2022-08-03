@@ -46,7 +46,7 @@ contract TokenGenesis {
     if (sensibleID == b'000000000000000000000000000000000000000000000000000000000000000000000000') {
       isFirst = true;
       sensibleID = Util.outpoint(txPreimage);
-    } 
+    }
     int protoVersion = ProtoHeader.getProtoVersion(genesisScript, dataLen);
     require(TokenProto.PROTO_VERSION == protoVersion);
     int protoType = ProtoHeader.getProtoType(genesisScript, dataLen);
@@ -105,7 +105,7 @@ contract TokenGenesis {
       opReturnOutput = Util.buildOutput(opReturnScript, 0);
     }
 
-    // bsv change output
+    // mvc change output
     bytes changeOutput = TxUtil.genBsvOutput(changeSatoshis, changeAddress);
 
     bytes hashOutput = hash256(genesisOutput + tokenOutput + opReturnOutput + changeOutput);

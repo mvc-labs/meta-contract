@@ -1,5 +1,5 @@
 import * as BN from '../../bn.js'
-import * as bsv from '../../bsv'
+import * as mvc from '../../mvc'
 import { ContractAdapter } from '../../common/ContractAdapter'
 import {
   dummyAddress,
@@ -31,9 +31,9 @@ import { NftFactory } from './nft'
 const genesisTokenIDTxid = '0000000000000000000000000000000000000000000000000000000000000000'
 
 export class NftGenesis extends ContractAdapter {
-  constuctParams: { issuerPubKey: bsv.PublicKey }
+  constuctParams: { issuerPubKey: mvc.PublicKey }
   private _formatedDataPart: nftProto.FormatedDataPart
-  constructor(constuctParams: { issuerPubKey: bsv.PublicKey }) {
+  constructor(constuctParams: { issuerPubKey: mvc.PublicKey }) {
     const desc = require('../contract-desc/nftGenesis_desc.json')
     let GenesisContractClass = buildContractClass(desc)
     let contract = new GenesisContractClass(new PubKey(toHex(constuctParams.issuerPubKey)))
@@ -60,7 +60,7 @@ export class NftGenesis extends ContractAdapter {
     return this._formatedDataPart
   }
 
-  public setFormatedDataPartFromLockingScript(script: bsv.Script) {
+  public setFormatedDataPartFromLockingScript(script: mvc.Script) {
     let dataPart = nftProto.parseDataPart(script.toBuffer())
     this.setFormatedDataPart(dataPart)
   }
@@ -126,7 +126,7 @@ export class NftGenesisFactory {
     return this.lockingScriptSize
   }
 
-  public static createContract(issuerPubKey: bsv.PublicKey): NftGenesis {
+  public static createContract(issuerPubKey: mvc.PublicKey): NftGenesis {
     return new NftGenesis({ issuerPubKey })
   }
 
@@ -144,7 +144,7 @@ export class NftGenesisFactory {
   public static calUnlockingScriptSize(opreturnData) {
     let opreturnScriptHex = ''
     if (opreturnData) {
-      let script = bsv.Script.buildSafeDataOut(opreturnData)
+      let script = mvc.Script.buildSafeDataOut(opreturnData)
       opreturnScriptHex = script.toHex()
     }
     let contract = this.getDummyInstance()
@@ -179,6 +179,6 @@ export class NftGenesisFactory {
       changeSatoshis: 1000,
       opReturnScript: new Bytes(opreturnScriptHex),
     })
-    return (unlockResult.toScript() as bsv.Script).toBuffer().length
+    return (unlockResult.toScript() as mvc.Script).toBuffer().length
   }
 }

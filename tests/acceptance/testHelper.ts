@@ -1,11 +1,11 @@
-import * as bsv from '../../src/bsv'
-const { Script } = bsv
+import * as mvc from '../../src/mvc'
+const { Script } = mvc
 const { Interpreter } = Script
 const Interp = Interpreter
 
 const flags =
   Interp.SCRIPT_ENABLE_MAGNETIC_OPCODES |
-  Interp.SCRIPT_ENABLE_MONOLITH_OPCODES | // TODO: to be removed after upgrade to bsv 2.0
+  Interp.SCRIPT_ENABLE_MONOLITH_OPCODES | // TODO: to be removed after upgrade to mvc 2.0
   Interp.SCRIPT_VERIFY_STRICTENC |
   Interp.SCRIPT_ENABLE_SIGHASH_FORKID |
   Interp.SCRIPT_VERIFY_LOW_S |
@@ -17,7 +17,7 @@ const flags =
   Interp.SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY |
   Interp.SCRIPT_VERIFY_CHECKSEQUENCEVERIFY
 
-export function verifyTx(tx: bsv.Transaction) {
+export function verifyTx(tx: mvc.Transaction) {
   let pass = true
   tx.inputs.forEach((input, inputIndex) => {
     const interpreter = new Interpreter()
