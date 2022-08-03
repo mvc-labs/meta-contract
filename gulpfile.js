@@ -43,7 +43,7 @@ gulp.task("browserify", function () {
     .plugin(tsify, tsProject.config)
     .plugin(standalonify, { name: "sensible" })
     .bundle()
-    .pipe(source("sensible.browser.min.js"))
+    .pipe(source("metaContract.browser.min.js"))
     .pipe(buffer())
     .pipe(
       sourcemaps.init({
