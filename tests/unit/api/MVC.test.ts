@@ -11,15 +11,17 @@ describe('MetaSV MVC API测试', () => {
 
   it('获取地址余额', async () => {
     const MVCAPI = new MVC(API_NET.MAIN)
-    MVCAPI.authorize({
-      authorization:
-        'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJpbnRlcm5hbF90ZXN0X3Nob3dwYXkiLCJpc3MiOiJNZXRhU1YiLCJleHAiOjE3MTYxMDY4NTl9.lARtWFAxMmCyTqOu9EgxB5SqZPc48dp2iWYKYRyDrrg',
-    })
+    MVCAPI.authorize({ authorization: process.env.METASV_BEARER })
 
     const address = process.env.ADDRESS
-    const res = await MVCAPI.getBalance(address)
+    const res1 = await MVCAPI.getBalance(address)
+    console.log(`账号1余额 - balance: ${res1.balance} - pendingBalance: ${res1.pendingBalance}`)
 
-    expect(res.balance + res.pendingBalance).toBeGreaterThan(0)
+    const address2 = process.env.ADDRESS2
+    const res2 = await MVCAPI.getBalance(address2)
+    console.log(`账号2余额 - balance: ${res2.balance} - pendingBalance: ${res2.pendingBalance}`)
+
+    expect(res1.balance + res1.pendingBalance).toBeGreaterThan(0)
   })
 
   it.todo('获取地址UTXOs')

@@ -2,11 +2,63 @@ import { API_NET, API_TARGET } from '../../../src/api'
 import { Wallet } from '../../../src/wallet'
 import 'dotenv/config'
 
+let wallet: Wallet
+let wallet2: Wallet
+
+beforeAll(async () => {
+  const [wif, wif2] = [process.env.WIF, process.env.WIF2]
+  const feeb = 0.5
+
+  wallet = new Wallet(wif, API_NET.MAIN, feeb, API_TARGET.MVC)
+  wallet2 = new Wallet(wif2, API_NET.MAIN, feeb, API_TARGET.MVC)
+  wallet.api.authorize({ authorization: process.env.METASV_BEARER })
+  wallet2.api.authorize({ authorization: process.env.METASV_BEARER })
+})
+
 describe('钱包测试', () => {
   it('正常初始化', async () => {
-    const wif = process.env.WIF
-    const feeb = 0.05
-    const wallet = new Wallet(wif, API_NET.MAIN, feeb, API_TARGET.MVC)
     expect(wallet).toBeInstanceOf(Wallet)
   })
+
+  it('获取Utxos', async () => {
+    const utxos: Utxo[] = await wallet.getUtxos()
+    expect(utxos).toBeInstanceOf(Array)
+    // console.log(utxos)
+
+    const totalBalance = utxos.reduce((acc, cur) => acc + cur.satoshis, 0)
+    expect(totalBalance).toBeGreaterThan(0)
+  })
+
+  it('获取余额', async () => {
+    const balance = await wallet.getBalance()
+    expect(balance).toBeGreaterThan(0)
+  })
+
+  it('转账', async () => {
+    const receiverAddress = wallet2.address.toString()
+    const txId = await wallet.send(receiverAddress, 500)
+    expect(txId).toHaveLength(64)
+  })
+
+  it('批量转账', async () => {
+    // await wallet2.merge()
+    // const receivers: Receiver[] = [
+    //   { address: wallet2.address.toString(), amount: 1000 },
+    //   { address: wallet2.address.toString(), amount: 2000 },
+    // ]
+    // const txComposer = await wallet.sendArray(receivers)
+    // const txId = txComposer.getTxId()
+    // console.log(txId)
+    // expect(txId).toHaveLength(64)
+    // 检查wallet2多出两个utxo
+    // const utxos = await wallet2.getUtxos()
+    // console.log(utxos)
+  })
+
+  it('合并UTXO', async () => {
+    const txId = await wallet2.merge()
+    expect(txId).toHaveLength(64)
+  })
+  it.todo('广播')
+  it.todo('发送OpReturn')
 })

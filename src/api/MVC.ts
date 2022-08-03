@@ -133,6 +133,10 @@ export class MVC implements ApiBase {
         headers: this._getHeaders(path),
       }
     )
+
+    if (!_res.txid) {
+      console.log(`广播出错：${_res.message.toString()}`)
+    }
     return _res.txid
   }
 

@@ -36,8 +36,16 @@ export class Wallet {
     this.network = network
   }
 
+  public get api() {
+    return this.blockChainApi
+  }
+
   public async getUnspents() {
     return await this.blockChainApi.getUnspents(this.address.toString())
+  }
+
+  public async getUtxos() {
+    return this.getUnspents()
   }
 
   public async getBalance() {
@@ -122,8 +130,8 @@ export class Wallet {
       return txComposer
     }
 
-    await this.blockChainApi.broadcast(txComposer.getRawHex())
-    return txComposer
+    return await this.blockChainApi.broadcast(txComposer.getRawHex())
+    // return txComposer
   }
 
   public async sendOpReturn(opreturnData: any, options?: BroadcastOptions) {

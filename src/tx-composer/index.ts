@@ -5,6 +5,7 @@ const Signature = bsv.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 const P2PKH_UNLOCK_SIZE = 1 + 1 + 71 + 1 + 33
 const P2PKH_DUST_AMOUNT = 1
+const MIN_FEE_AMOUNT = 56
 export class TxComposer {
   tx: bsv.Transaction
   sigHashList: SigHashInfo[] = []
