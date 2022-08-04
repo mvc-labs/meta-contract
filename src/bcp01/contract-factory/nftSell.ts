@@ -14,6 +14,7 @@ import {
   Sig,
   SigHashPreimage,
   toHex,
+  AbstractContract
 } from '../../scryptlib'
 import * as nftSellProto from '../contract-proto/nftSell.proto'
 import { NftFactory } from './nft'
@@ -56,8 +57,8 @@ export class NftSell extends ContractAdapter {
 
   static fromASM(asm: string) {
     let NftSellContractClass = NftSell.getClass()
-    let contract = NftSellContractClass.fromASM(asm)
-    let params = contract.scriptedConstructor.params
+    let contract: AbstractContract = NftSellContractClass.fromASM(asm)
+    let params = (contract.scriptedConstructor as any).params
     let senderAddress = params[0]
     let bsvRecAmount = parseInt(params[1].value)
     let nftCodeHash = params[2]

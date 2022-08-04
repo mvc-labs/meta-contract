@@ -1,4 +1,4 @@
-import { Bytes, toHex } from 'scryptlib'
+import { Bytes, toHex } from '../scryptlib'
 import * as mvc from '../mvc'
 import { TokenFactory } from './contract-factory/token'
 import { TokenGenesisFactory } from './contract-factory/tokenGenesis'

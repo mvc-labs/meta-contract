@@ -10,8 +10,8 @@ if (typeof globalThis.window !== 'undefined') {
   }
 }
 
-export { SensibleNFT } from './bcp01'
-export { SensibleFT } from './bcp02'
+// export { SensibleNFT } from './bcp01'
+// export { SensibleFT } from './bcp02'
 export { BN } from './bn.js'
 export * as mvc from './mvc'
 export { Net } from './net'

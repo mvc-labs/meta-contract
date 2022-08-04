@@ -1,4 +1,4 @@
-import { Bytes, Int, PubKey, Ripemd160, Sig, toHex } from 'scryptlib'
+import { Bytes, Int, PubKey, Ripemd160, Sig, toHex } from '../scryptlib'
 import * as BN from '../bn.js'
 import * as mvc from '../mvc'
 import { DustCalculator } from '../common/DustCalculator'

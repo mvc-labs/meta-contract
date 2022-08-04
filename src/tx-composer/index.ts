@@ -1,6 +1,6 @@
 import * as mvc from '../mvc'
 import { CONTRACT_TYPE, dumpTx, SigHashInfo } from '../common/utils'
-import { getPreimage, signTx, toHex } from '../scryptlib'
+import { getPreimage, signTx, toHex, Sig } from '../scryptlib'
 const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 const P2PKH_UNLOCK_SIZE = 1 + 1 + 71 + 1 + 33
@@ -190,7 +190,7 @@ export class TxComposer {
   }
 
   getTxFormatSig(privateKey: mvc.PrivateKey, inputIndex: number, sigtype = sighashType) {
-    let sig: Buffer = signTx(
+    let sig: Sig = signTx(
       this.tx,
       privateKey,
       this.getInput(inputIndex).output.script.toASM(),

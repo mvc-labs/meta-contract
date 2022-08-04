@@ -1,3 +1,3 @@
-const bsv = require('../mvc')
-var BN = bsv.crypto.BN
+const mvc = require('../mvc')
+var BN = mvc.crypto.BN
 module.exports = BN

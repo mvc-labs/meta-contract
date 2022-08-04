@@ -1,5 +1,5 @@
 import { toHex } from '../scryptlib'
-import { TxContext } from 'scryptlib/dist/contract'
+import { TxContext } from 'mvc-scryptlib/dist/contract'
 import * as mvc from '../mvc'
 export class ContractAdapter {
   _contract: any
