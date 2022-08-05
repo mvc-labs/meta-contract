@@ -2,7 +2,7 @@ import * as mvc from '../mvc'
 import { dumpTx } from '../common/utils'
 import { API_NET, API_TARGET, Api, ApiBase } from '../api'
 import { TxComposer } from '../tx-composer'
-type RECEIVER = {
+type Receiver = {
   amount: number
   address: any
 }
@@ -40,7 +40,7 @@ export class Wallet {
     return this.blockChainApi
   }
 
-  public async getUnspents() {
+  public async getUnspents(): Promise<Utxo[]> {
     return await this.blockChainApi.getUnspents(this.address.toString())
   }
 
@@ -76,7 +76,7 @@ export class Wallet {
     return await this.broadcastTxComposer(txComposer, options)
   }
 
-  public async sendArray(receivers: RECEIVER[], options?: BroadcastOptions) {
+  public async sendArray(receivers: Receiver[], options?: BroadcastOptions) {
     const txComposer = new TxComposer()
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
     utxos.forEach((v) => {

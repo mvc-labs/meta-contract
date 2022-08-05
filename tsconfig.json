@@ -17,7 +17,7 @@
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
-    "typeRoots": ["./src/typings", "./node_modules/@types/"],
+    "typeRoots": ["./src/typings", "./node_modules/@types"],
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"]

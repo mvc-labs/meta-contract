@@ -6,7 +6,7 @@ let wallet: Wallet
 let wallet2: Wallet
 
 beforeAll(async () => {
-  const [wif, wif2] = [process.env.WIF, process.env.WIF2]
+  const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
   const feeb = 0.5
 
   wallet = new Wallet(wif, API_NET.MAIN, feeb, API_TARGET.MVC)
@@ -41,24 +41,23 @@ describe('钱包测试', () => {
   })
 
   it('批量转账', async () => {
-    // await wallet2.merge()
-    // const receivers: Receiver[] = [
-    //   { address: wallet2.address.toString(), amount: 1000 },
-    //   { address: wallet2.address.toString(), amount: 2000 },
-    // ]
-    // const txComposer = await wallet.sendArray(receivers)
-    // const txId = txComposer.getTxId()
-    // console.log(txId)
-    // expect(txId).toHaveLength(64)
+    await wallet2.merge()
+    const receivers = [
+      { address: wallet2.address.toString(), amount: 1000 },
+      { address: wallet2.address.toString(), amount: 2000 },
+    ]
+    const txId = (await wallet.sendArray(receivers)) as String
+    expect(txId).toHaveLength(64)
     // 检查wallet2多出两个utxo
-    // const utxos = await wallet2.getUtxos()
-    // console.log(utxos)
+    const utxos = await wallet2.getUtxos()
+    expect(utxos.length).toBe(3)
   })
 
   it('合并UTXO', async () => {
     const txId = await wallet2.merge()
     expect(txId).toHaveLength(64)
   })
+
   it.todo('广播')
   it.todo('发送OpReturn')
 })

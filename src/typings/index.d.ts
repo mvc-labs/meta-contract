@@ -1,11 +1,15 @@
-type Utxo = {
-  txId: string
-  outputIndex: number
-  satoshis: number
-  address: string
-}
+export {}
 
-type Receiver = {
-  amount: number
-  address: any
+declare global {
+  type Utxo = {
+    txId: string
+    outputIndex: number
+    satoshis: number
+    address: string
+  }
+
+  type Receiver = {
+    amount: number
+    address: any
+  }
 }
