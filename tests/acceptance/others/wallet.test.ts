@@ -69,7 +69,7 @@ describe('Wallet Test', () => {
   let wallet: Wallet
   describe('basic test ', () => {
     before(async () => {
-      wallet = new Wallet(FeePayer.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.SENSIBLE)
+      wallet = new Wallet(FeePayer.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.MVC)
       wallet.blockChainApi = api
       await genDummyFeeUtxos(100000001)
     })
@@ -81,7 +81,7 @@ describe('Wallet Test', () => {
     })
 
     it('split 3000 Sat. should be ok', async () => {
-      wallet = new Wallet(Alice.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.SENSIBLE)
+      wallet = new Wallet(Alice.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.MVC)
       wallet.blockChainApi = api
       let txComposer = await wallet.sendArray(
         [
@@ -106,7 +106,7 @@ describe('Wallet Test', () => {
     })
 
     it('merge Alice satoshis should be ok', async () => {
-      wallet = new Wallet(Alice.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.SENSIBLE)
+      wallet = new Wallet(Alice.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.MVC)
       wallet.blockChainApi = api
       let txComposer = await wallet.merge({
         noBroadcast: false,
@@ -115,7 +115,7 @@ describe('Wallet Test', () => {
     })
 
     it('send opreturnData should be ok', async () => {
-      wallet = new Wallet(Alice.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.SENSIBLE)
+      wallet = new Wallet(Alice.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.MVC)
       wallet.blockChainApi = api
       let txComposer = await wallet.sendOpReturn('Alice and Bob are friends', {
         noBroadcast: false,

@@ -40,7 +40,7 @@ export class Wallet {
     return this.blockChainApi
   }
 
-  public async getUnspents(): Promise<Utxo[]> {
+  public async getUnspents(): Promise<any[]> {
     return await this.blockChainApi.getUnspents(this.address.toString())
   }
 

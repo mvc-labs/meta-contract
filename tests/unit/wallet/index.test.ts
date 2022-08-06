@@ -21,7 +21,7 @@ describe('钱包测试', () => {
   })
 
   it('获取Utxos', async () => {
-    const utxos: Utxo[] = await wallet.getUtxos()
+    const utxos = await wallet.getUtxos()
     expect(utxos).toBeInstanceOf(Array)
     // console.log(utxos)
 
