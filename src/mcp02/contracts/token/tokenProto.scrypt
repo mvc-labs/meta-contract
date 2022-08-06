@@ -1,0 +1,92 @@
+import "../protoheader.scrypt";
+
+library TokenProto {
+
+    static const int OP_TRANSFER = 1;
+    static const int OP_UNLOCK_FROM_CONTRACT = 2;
+
+    static const bytes BURN_ADDRESS = b'0000000000000000000000000000000000000000';
+
+    // proto type and version
+    static const int PROTO_TYPE = 1;
+    static const int PROTO_VERSION = 1;
+
+    // <op_pushdata> + <type specific data> + <proto header> + <data_len(4 bytes)> + <version(1 bytes)>
+    // <token type specific data> = <name(40 bytes)> + <symbol(20 bytes)> + <decimal(1 bytes)> + <address(20 bytes)> + <token amount(8 bytes)> + <genesisHash(20 bytes)> + <genesisTxid(36 bytes)>
+
+    static const int TOKEN_NAME_LEN = 40;
+    static const int TOKEN_SYMBOL_LEN = 20;
+    static const int TOKEN_DECIMAL_LEN = 1;
+
+    // OP_PUSH_DATA(0x76) + data_len(1 byte) + data + OP_DROP
+    static const int OP_PUSH_LEN = 2;
+    static const int GENESIS_TXID_OFFSET = ProtoHeader.PROTO_HEADER_OFFSET + ProtoHeader.GENESIS_TXID_LEN;
+    static const int GENESIS_HASH_OFFSET = GENESIS_TXID_OFFSET + ProtoHeader.HASH_LEN;
+    static const int TOKEN_AMOUNT_OFFSET = GENESIS_HASH_OFFSET + ProtoHeader.AMOUNT_LEN;
+    static const int TOKEN_ADDRESS_OFFSET = TOKEN_AMOUNT_OFFSET + ProtoHeader.ADDRESS_LEN;
+    static const int TOKEN_DECIMAL_OFFSET = TOKEN_ADDRESS_OFFSET + TOKEN_DECIMAL_LEN;
+    static const int TOKEN_SYMBOL_OFFSET = TOKEN_DECIMAL_OFFSET + TOKEN_SYMBOL_LEN;
+    static const int TOKEN_NAME_OFFSET = TOKEN_SYMBOL_OFFSET + TOKEN_NAME_LEN;
+    // data_len include op_push
+    static const int DATA_LEN = TOKEN_NAME_OFFSET + OP_PUSH_LEN;
+
+    static function getTokenMetaData(bytes script, int slen): bytes {
+        return script[slen - TOKEN_NAME_OFFSET: slen - TOKEN_DECIMAL_OFFSET + TOKEN_DECIMAL_LEN];
+    }
+
+    static function getTokenAddress(bytes script, int slen) : bytes {
+        return script[slen - TOKEN_ADDRESS_OFFSET : slen - TOKEN_AMOUNT_OFFSET];
+    }
+
+    static function getTokenAmount(bytes script, int slen) : int {
+        return Utils.fromLEUnsigned(script[slen - TOKEN_AMOUNT_OFFSET : slen - GENESIS_HASH_OFFSET]);
+    }
+
+    static function getGenesisHash(bytes script, int slen) : bytes {
+        return script[slen - GENESIS_HASH_OFFSET : slen - GENESIS_TXID_OFFSET];
+    }
+
+    static function getGenesisTxid(bytes script, int slen) : bytes {
+        return script[slen - GENESIS_TXID_OFFSET : slen - GENESIS_TXID_OFFSET + ProtoHeader.GENESIS_TXID_LEN];
+    }
+
+    static function getTokenID(bytes script, int slen) : bytes {
+        return hash160(script[slen - GENESIS_HASH_OFFSET : slen - GENESIS_TXID_OFFSET + ProtoHeader.GENESIS_TXID_LEN]);
+    }
+
+    static function getNewTokenScript(bytes script, int slen, bytes address, int tokenValue) : bytes {
+        return script[: slen - TOKEN_ADDRESS_OFFSET] + address + Utils.toLEUnsigned(tokenValue, 8) + script[slen - GENESIS_HASH_OFFSET :];
+    }
+
+    static function getNewTokenScriptData(bytes script, int slen, bytes address, int tokenAmount) : bytes {
+        return script[slen - DATA_LEN : slen - TOKEN_ADDRESS_OFFSET] + address + Utils.toLEUnsigned(tokenAmount, 8) + script[slen - GENESIS_HASH_OFFSET :];
+    }
+
+    static function checkDataLen(bytes script, int slen) : bool {
+        return script[slen - DATA_LEN - 1 : slen - DATA_LEN] == b'6a' && script[slen - DATA_LEN : slen - DATA_LEN + 1] == b'4c' && Utils.fromLEUnsigned(script[slen - DATA_LEN + 1 : slen - DATA_LEN + 2]) == DATA_LEN - OP_PUSH_LEN;
+    }
+
+    static function getScriptCode(bytes script, int slen) : bytes {
+        return script[: slen - DATA_LEN];
+    }
+
+    static function getScriptData(bytes script, int slen) : bytes {
+        return script[slen - DATA_LEN :];
+    }
+
+    static function getScriptCodeHash(bytes script, int slen) : bytes {
+        return hash160(getScriptCode(script, slen));
+    }
+
+    static function getNewGenesisScript(bytes script, int slen, bytes genesisTxid) : bytes {
+        return script[: slen - GENESIS_TXID_OFFSET] + genesisTxid + script[slen - GENESIS_TXID_OFFSET + ProtoHeader.GENESIS_TXID_LEN :];
+    }
+
+    static function getNewTokenScriptFromGenesisData(bytes script, int slen, bytes address, int tokenAmount, bytes genesisHash) : bytes {
+        return script[0 : slen - TOKEN_ADDRESS_OFFSET] + address + Utils.toLEUnsigned(tokenAmount, 8) + genesisHash + script[slen - GENESIS_TXID_OFFSET :];
+    }
+
+    static function checkProtoHeader(bytes script, int slen) : bool {
+        return script[slen - ProtoHeader.PROTO_HEADER_OFFSET : slen - ProtoHeader.PROTO_HEADER_OFFSET + ProtoHeader.HEADER_LEN] == b'0100000001000000' + ProtoHeader.PROTO_FLAG;
+    }
+}

@@ -1,0 +1,31 @@
+library ProtoHeader {
+
+    // <proto header> = <proto_version(4 bytes)> + <proto_type(4 bytes)> + <'metacontract'(12 bytes)>
+    static const bytes PROTO_FLAG = b'6d657461636f6e7472616374'; // metacontract
+
+    static const int HASH_ID_LEN = 20;
+    static const int HASH_LEN = 20;
+    static const int GENESIS_TXID_LEN = 36;
+    static const int AMOUNT_LEN = 8;
+    static const int ADDRESS_LEN = 20;
+    static const int GENESIS_FLAG_LEN = 1;
+    static const int DATA_VERSION_LEN = 5;
+    static const int UNIQUE_ID_LEN = 20;
+    static const int TX_HASH_LEN = 32;
+    static const int BLOCK_NUM_LEN = 4;
+
+    static const int PROTO_VERSION_LEN = 4;
+    static const int PROTO_TYPE_LEN = 4;
+    static const int PROTO_FLAG_LEN = 12;
+
+    static const int HEADER_LEN = 20;
+
+    static const bytes NULL_GENESIS_TXID = b'000000000000000000000000000000000000000000000000000000000000000000000000';
+    static const int TX_VERSION = 10;
+
+    static const SigHashType SIG_HASH_ALL = SigHash.ALL | SigHash.FORKID;
+    static const SigHashType SIG_HASH_SINGLE = SigHash.SINGLE | SigHash.FORKID;
+
+    static const int PROTO_HEADER_OFFSET = ProtoHeader.HEADER_LEN + DATA_VERSION_LEN;
+
+}

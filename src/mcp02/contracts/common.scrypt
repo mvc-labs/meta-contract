@@ -1,0 +1,51 @@
+import "token/tokenProto.scrypt";
+
+library Common {
+
+    static function checkTokenInput(bytes tokenID, bytes tokenScriptCodeHash, bytes address, bytes tokenScript) : int {
+        int tokenScriptLen = len(tokenScript);
+        require(tokenID == TokenProto.getTokenID(tokenScript, tokenScriptLen));
+        require(tokenScriptCodeHash == TokenProto.getScriptCodeHash(tokenScript, tokenScriptLen));
+        require(address == TokenProto.getTokenAddress(tokenScript, tokenScriptLen));
+        int tokenInputAmount = TokenProto.getTokenAmount(tokenScript, tokenScriptLen);
+        return tokenInputAmount;
+    }
+
+    static function checkTokenInput2(bytes tokenID, bytes tokenScriptCodeHash, bytes tokenScript) : int {
+        int tokenScriptLen = len(tokenScript);
+        require(tokenID == TokenProto.getTokenID(tokenScript, tokenScriptLen));
+        require(tokenScriptCodeHash == TokenProto.getScriptCodeHash(tokenScript, tokenScriptLen));
+        int tokenInputAmount = TokenProto.getTokenAmount(tokenScript, tokenScriptLen);
+        return tokenInputAmount;
+    }
+
+    static function genRefundOutputs(bytes prevouts, bytes thisOutpoint, bytes tokenScript, bytes senderAddress, int tokenInputAmount, int tokenOutputSatoshis, bytes changeOutput) : bytes {
+
+        // refund token to user
+
+        // verify input script
+        // only three inputs enabled in order:
+        // 1. lockingContract
+        // 2. token
+        // 3. tokenUnlockContractCheck
+        require(len(prevouts) == 108);
+        require(thisOutpoint == prevouts[0 : 36]);
+
+        bytes newTokenScript = TokenProto.getNewTokenScript(tokenScript, len(tokenScript), senderAddress, tokenInputAmount);
+        bytes tokenOutput = Utils.buildOutput(newTokenScript, tokenOutputSatoshis);
+
+        bytes outputs = tokenOutput + changeOutput;
+
+        return outputs;
+    }
+
+    static function changeToken(int tokenInputAmount, int tokenRemove, bytes tokenScript, bytes address, int tokenOutputSatoshis) : bytes {
+        int changeTokenAmount = tokenInputAmount - tokenRemove;
+        bytes tokenChangeOutput = b'';
+        if (changeTokenAmount > 0) {
+            bytes newTokenScript2 = TokenProto.getNewTokenScript(tokenScript, len(tokenScript), address, changeTokenAmount);
+            tokenChangeOutput = Utils.buildOutput(newTokenScript2, tokenOutputSatoshis);
+        }
+        return tokenChangeOutput;
+    }
+}

@@ -1,0 +1,205 @@
+struct LockingScriptParts {
+    bytes code;
+    bytes data;
+}
+
+struct OpPushData {
+    int len;
+    int value;
+}
+
+struct VarIntData {
+    int len;
+    int value;
+}
+
+struct TxInputProof {
+    bytes hashProof;
+    bytes txHash;
+    bytes outputIndexBytes;
+    bytes sequenceBytes;
+}
+
+struct TxOutputProof {
+    bytes txHeader;
+    bytes hashProof;
+    bytes satoshiBytes;
+    bytes scriptHash;
+}
+
+library TxUtil {
+    static const int OUTPOINT_LEN = 36;
+    static const int TX_ID_LEN = 32;
+
+    static const int TX_HEADER_LEN = 112;
+
+    static function verifyTxOutput(TxOutputProof txProof, bytes outpoint) : bool {
+
+        require(hash256(txProof.txHeader) == outpoint[:32]);
+        int outputIndex = Utils.fromLEUnsigned(outpoint[32:]);
+
+        int outputsLen = Utils.fromLEUnsigned(txProof.txHeader[12: 16]);
+        bytes outputHashRoot = txProof.txHeader[80: 112];
+        // verify hashProof
+        require(len(txProof.hashProof) == outputsLen * 40);
+        require(sha256(txProof.hashProof) == outputHashRoot);
+
+        // verify hashValue
+        // checking one can confirm two
+        //require(len(txProof.satoshiBytes) == 8);
+        require(len(txProof.scriptHash) == 32);
+        bytes hashValue = txProof.satoshiBytes + txProof.scriptHash;
+
+        require(hashValue == txProof.hashProof[outputIndex * 40: (outputIndex + 1) * 40]);
+        return true;
+    }
+
+    static function verifyTxInput(bytes txHeader, int inputIndex, TxInputProof proof): bool {
+        int inputsLen = Utils.fromLEUnsigned(txHeader[8: 12]);
+        bytes inputHashRoot = txHeader[16: 48];
+        require(inputIndex < inputsLen);
+
+        // verify hashProof
+        require(len(proof.hashProof) == inputsLen * 40);
+        require(sha256(proof.hashProof) == inputHashRoot);
+
+        // verify hashValue
+        // checking two can confirm three
+        require(len(proof.txHash) == 32);
+        require(len(proof.outputIndexBytes) == 4);
+        //require(len(proof.sequenceBytes) == 4);
+        bytes hashValue = proof.txHash + proof.outputIndexBytes + proof.sequenceBytes;
+        require(hashValue == proof.hashProof[inputIndex * 40: (inputIndex + 1) * 40]);
+        return true;
+    }
+
+    static function getVarintLen(bytes b) : int {
+        int len = 0;
+        bytes header = b[0 : 1];
+
+        if (header == b'fd') {
+            len = 3;
+        }
+        else if (header == b'fe') {
+            len = 5;
+        }
+        else if (header == b'ff') {
+            len = 9;
+        }
+        else {
+            len = 1;
+        }
+
+        return len;
+    }
+
+    static function getVarIntData(bytes b) : VarIntData {
+        int len = 0;
+        int value = 0;
+        bytes header = b[0 : 1];
+
+        if (header == b'fd') {
+            len = 3;
+            value = Utils.fromLEUnsigned(b[1: 3]);
+        }
+        else if (header == b'fe') {
+            len = 5;
+            value = Utils.fromLEUnsigned(b[1: 5]);
+        }
+        else if (header == b'ff') {
+            len = 9;
+            value = Utils.fromLEUnsigned(b[1: 9]);
+        }
+        else {
+            len = 1;
+            value = Utils.fromLEUnsigned(b[0: 1]);
+        }
+
+        return {len, value};
+    }
+
+    static function getOpPushDataLen(bytes b) : int {
+        int len = 0;
+        bytes header = b[0 : 1];
+
+        if (header == b'4c') {
+            len = 2;
+        }
+        else if (header == b'4d') {
+            len = 3;
+        }
+        else if (header == b'4e') {
+            len = 5;
+        }
+        else {
+            len = 1;
+        }
+        return len;
+    }
+
+    static function decodeOpPushData(bytes b) : OpPushData {
+        int len = 0;
+        int value = 0;
+        bytes header = b[0 : 1];
+
+        if (header == b'4c') {
+            len = 2;
+            value = Utils.fromLEUnsigned(b[1: 2]);
+        }
+        else if (header == b'4d') {
+            len = 3;
+            value = Utils.fromLEUnsigned(b[1: 3]);
+        }
+        else if (header == b'4e') {
+            len = 5;
+            value = Utils.fromLEUnsigned(b[1: 5]);
+        }
+        else {
+            len = 1;
+            value = Utils.fromLEUnsigned(header);
+        }
+
+        return {len, value};
+    }
+
+    static function getScriptCodeFromOutput(bytes output) : bytes {
+        return Utils.readVarint(output[8 :]);
+    }
+
+    static function getVarOpLen(int length) : int {
+        int res = 0;
+        if (length <= 75) {
+            res = 1;
+        }
+        else if (length <= 255) {
+            res = 2;
+        }
+        else if (length <= 65535) {
+            res = 3;
+        }
+        else {
+            res = 5;
+        }
+        return res;
+    }
+
+    static function getVarOpLenOpt(int length) : int {
+        int res = 0;
+        if (length <= 75) {
+            res = 1;
+        }
+        else {
+            res = 2;
+        }
+        return res;
+    }
+
+    static function genBsvOutput(int satoshis, Ripemd160 address) : bytes {
+        bytes output = b'';
+        if (satoshis > 0) {
+            bytes outputScript = Utils.buildPublicKeyHashScript(address);
+            output = Utils.buildOutput(outputScript, satoshis);
+        }
+        return output;
+    }
+}

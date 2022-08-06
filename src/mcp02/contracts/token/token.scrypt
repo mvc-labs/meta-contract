@@ -1,0 +1,180 @@
+import "tokenProto.scrypt";
+import "../txUtil.scrypt";
+import "../backtrace.scrypt";
+import "tokenAmountCheckProto.scrypt";
+
+/**
+ * Token contract
+ * @contructor
+ * @param transferAmountCheckCodeHashArray {} script code hash array (not including data part) of contracts which are used to check token amounts between tx's inputs and outputs when transfering tokens.
+ * @param unlockAmountCheckCodeHashArray {} script code hash array (not including data part) of contracts which are used to check token amounts between tx's inputs and outputs when unlock tokens from contracts.
+ */
+contract Token {
+
+    bytes[5] transferAmountCheckCodeHashArray;
+    bytes[5] unlockAmountCheckCodeHashArray;
+
+    /**
+     * @function unlock
+     * @param txPreimage {SigHashPreimage} preimage of tx.
+     * @param prevouts {bytes} previous outputs.
+     * @param tokenInputIndex {int} the i-st token input in this tx
+     * @param amountCheckHashIndex {int} the index number of the amountCheck contract this tx used
+     * @param amountCheckInputIndex {int} the input index of amountCheck contract in this tx
+     * @param amountCheckTxProof {TxOutputProof} the amountCheck utxo output proof in amountCheckTx
+     * @param amountCheckScriptData {int} the data part of amountCheck locking script
+     * @param prevTokenInputIndex {int} the input index of prev token utxo in tokenTx
+     * @param prevTokenAddress {bytes} the token address of prev token utxo
+     * @param prevTokenAmount {int} the token amount of prev token utxo
+     * @param tokenTxOutputProof {TxOutputProof} the token utxo output proof in tokenTx
+     * @param prevTokenTxProof {TxOutputProof} the prev token utxo output proof in prevTokenTx
+     * @param senderPubKey {} the pubkey of owner, only transfer need
+     * @param senderSig {} the signature of owner, only transfer need
+     * @param contractInputIndex {int} the input index of contract which control token utxo, only unlockFromContract need
+     * @param contractTxProof {} the contract utxo output proof in contractTx
+     * @param operation {int} 1: transfer, 2: unlock from contract
+    */
+    public function unlock(
+        SigHashPreimage txPreimage,
+        bytes prevouts,
+        // amountCheck 
+        int tokenInputIndex,
+        int amountCheckHashIndex,
+        int amountCheckInputIndex,
+        TxOutputProof amountCheckTxProof,
+        bytes amountCheckScript,
+        // token
+        int prevTokenInputIndex,
+        bytes prevTokenAddress,
+        int prevTokenAmount,
+        bytes tokenTxHeader,
+        TxInputProof tokenTxInputProof,
+        TxOutputProof prevTokenTxProof,
+        // sig data
+        PubKey senderPubKey,
+        Sig senderSig,
+        // contract
+        int contractInputIndex,
+        TxOutputProof contractTxProof,
+        // op
+        int operation) {
+
+        // verify this tx's version
+        require(Utils.fromLEUnsigned(SigHash.nVersion(txPreimage)) == ProtoHeader.TX_VERSION);
+        require(hash256(prevouts) == SigHash.hashPrevouts(txPreimage));
+
+        bytes tokenScript = SigHash.scriptCode(txPreimage);
+        int tokenScriptLen = len(tokenScript);
+
+        if (operation == TokenProto.OP_TRANSFER) {
+            bytes senderAddress = TokenProto.getTokenAddress(tokenScript, tokenScriptLen);
+
+            // burning address is not allowed to unlock token from sig
+            require(senderAddress != TokenProto.BURN_ADDRESS);
+
+            // authorize
+            require(hash160(senderPubKey) == senderAddress);
+            require(checkSig(senderSig, senderPubKey));
+        }
+        else if (operation == TokenProto.OP_UNLOCK_FROM_CONTRACT) {
+            // verify the lockContractTx
+            bytes contractHash = TokenProto.getTokenAddress(tokenScript, tokenScriptLen);
+            // do not check burning address
+            if (contractHash != TokenProto.BURN_ADDRESS) {
+                require(contractHash == ripemd160(contractTxProof.scriptHash));
+                // verify the contract locking script
+                bytes contractOutpoint = prevouts[contractInputIndex * TxUtil.OUTPOINT_LEN: (contractInputIndex + 1) * TxUtil.OUTPOINT_LEN];
+                TxUtil.verifyTxOutput(contractTxProof, contractOutpoint);
+            }
+        }
+        else {
+            // do not remove
+            require(false);
+        }
+
+        // backtrace verify
+        // backtrace to genesis
+        bytes genesisTxid = TokenProto.getGenesisTxid(tokenScript, tokenScriptLen);
+
+        if (genesisTxid[:32] != hash256(prevTokenTxProof.txHeader)) {
+            // backtrace to genesis contract
+            bytes genesisHash = TokenProto.getGenesisHash(tokenScript, tokenScriptLen);
+            bool backtraceGenesis = (genesisHash == ripemd160(prevTokenTxProof.scriptHash));
+
+            // backtrace to token contract
+            // verify prev token script data and script code
+            bytes prevTokenScript = TokenProto.getNewTokenScript(tokenScript, tokenScriptLen, prevTokenAddress, prevTokenAmount);
+            bool backtraceToken = (sha256(prevTokenScript) == prevTokenTxProof.scriptHash);
+
+            require(backtraceGenesis || backtraceToken);
+        }
+
+        // verify tx and prevTx script
+        bytes thisOutpoint = SigHash.outpoint(txPreimage);
+        Backtrace.verify(thisOutpoint, tokenTxHeader, prevTokenInputIndex, prevTokenTxProof, genesisTxid, tokenTxInputProof);
+
+        // verify amountCheck contract
+        bytes tokenID = TokenProto.getTokenID(tokenScript, tokenScriptLen);
+        // TODO: remove tokenCodeHash checking and use checkPreimageOCS
+        bytes tokenCodeHash = TokenProto.getScriptCodeHash(tokenScript, tokenScriptLen);
+        this.verifyAmountCheckContract(prevouts, amountCheckHashIndex, amountCheckInputIndex, amountCheckTxProof, amountCheckScript, tokenID, tokenCodeHash, thisOutpoint, tokenInputIndex, operation);
+
+        require(Tx.checkPreimageSigHashType(txPreimage, ProtoHeader.SIG_HASH_ALL));
+    }
+
+    function verifyAmountCheckContract(
+        bytes prevouts,
+        int amountCheckHashIndex,
+        int amountCheckInputIndex,
+        TxOutputProof amountCheckTxProof,
+        bytes amountCheckScript,
+        bytes tokenID,
+        bytes tokenCodeHash,
+        bytes thisOutpoint,
+        int tokenInputIndex,
+        int operation) : bool {
+
+        bytes amountCheckOutpoint = prevouts[amountCheckInputIndex * TxUtil.OUTPOINT_LEN : (amountCheckInputIndex + 1) * TxUtil.OUTPOINT_LEN];
+
+        // verify amountCheckData belong amountCheckScript
+        require(sha256(amountCheckScript) == amountCheckTxProof.scriptHash);
+        TxUtil.verifyTxOutput(amountCheckTxProof, amountCheckOutpoint);
+
+        // verify tokenInput
+
+        // check tokenID and tokenCodeHash
+        int amountCheckScriptLen = len(amountCheckScript);
+        require(tokenID == amountCheckScript[amountCheckScriptLen - AmountCheckProto.TOKEN_ID_OFFSET: amountCheckScriptLen - AmountCheckProto.TOKEN_ID_OFFSET + ProtoHeader.UNIQUE_ID_LEN]);
+        require(tokenCodeHash == amountCheckScript[amountCheckScriptLen - AmountCheckProto.TOKEN_CODE_HASH_OFFSET : amountCheckScriptLen - AmountCheckProto.TOKEN_ID_OFFSET]);
+        
+        // get token output number
+        int nReceivers = Utils.fromLEUnsigned(amountCheckScript[amountCheckScriptLen - AmountCheckProto.NRECERIVERS_OFFSET : amountCheckScriptLen - AmountCheckProto.TOKEN_CODE_HASH_OFFSET]);
+
+        int pos = AmountCheckProto.NRECERIVERS_OFFSET + nReceivers * (ProtoHeader.ADDRESS_LEN + ProtoHeader.AMOUNT_LEN) + 4;
+        // get token input number
+        int nSenders = Utils.fromLEUnsigned(amountCheckScript[amountCheckScriptLen - pos : amountCheckScriptLen - pos + 4]);
+
+        // check if this token input is verified by amountCheck contract
+        // tokenInputIndex should be included in amountCheck's tokenInputArray
+        if (operation == TokenProto.OP_UNLOCK_FROM_CONTRACT) {
+            require(nReceivers >= 0);
+            bytes inputIndexArray = amountCheckScript[amountCheckScriptLen - pos - nSenders * 4: amountCheckScriptLen - pos];
+            pos += nSenders * 4;
+            tokenInputIndex = Utils.fromLEUnsigned(inputIndexArray[tokenInputIndex * 4 : (tokenInputIndex + 1) * 4]);
+        }
+        else {
+            require(nReceivers > 0);
+            require(tokenInputIndex < nSenders);
+        }
+
+        // code hash do not count data length + data
+        int dataOffset = TxUtil.getVarOpLen(pos) + pos;
+
+        bytes hash = hash160(amountCheckScript[: amountCheckScriptLen - dataOffset]);
+        require(hash == this.transferAmountCheckCodeHashArray[amountCheckHashIndex] || hash == this.unlockAmountCheckCodeHashArray[amountCheckHashIndex]);
+
+        // verify tokenInputIndex
+        require(thisOutpoint == prevouts[tokenInputIndex * 36 : (tokenInputIndex + 1) * 36]);
+        return true;
+    }
+}
