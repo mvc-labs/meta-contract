@@ -20,10 +20,24 @@ beforeAll(async () => {
     purse: wif,
     feeb: feeb,
   })
+  ftManager.api.authorize({ authorization: process.env.METASV_BEARER })
 })
 
 describe('FT Manager测试', () => {
   it('正常初始化', async () => {
     expect(ftManager).toBeInstanceOf(FtManager)
+  })
+
+  it('创世', async () => {
+    const tokenName = '测试FT'
+    const tokenSymbol = 'HelloWorldCoin'
+    const decimalNum = 8
+    const genesisWif = process.env.WIF
+    const genesis = await ftManager.genesis({
+      tokenName,
+      tokenSymbol,
+      decimalNum,
+      genesisWif,
+    })
   })
 })

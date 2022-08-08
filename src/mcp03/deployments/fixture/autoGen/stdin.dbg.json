@@ -1,0 +1,2096 @@
+{
+    "topVars": [
+        {
+            "ns": [
+                "OpCode.OP_DUP"
+            ],
+            "i": 1
+        },
+        {
+            "ns": [
+                "OpCode.OP_EQUALVERIFY"
+            ],
+            "i": 2
+        },
+        {
+            "ns": [
+                "OpCode.OP_HASH160"
+            ],
+            "i": 3
+        },
+        {
+            "ns": [
+                "OpCode.OP_CHECKSIG"
+            ],
+            "i": 4
+        },
+        {
+            "ns": [
+                "SigHash.ALL"
+            ],
+            "i": 5
+        },
+        {
+            "ns": [
+                "SigHash.SINGLE"
+            ],
+            "i": 6
+        },
+        {
+            "ns": [
+                "SigHash.FORKID"
+            ],
+            "i": 7
+        },
+        {
+            "ns": [
+                "Tx.privKey"
+            ],
+            "i": 8
+        },
+        {
+            "ns": [
+                "Tx.pubKey"
+            ],
+            "i": 9
+        },
+        {
+            "ns": [
+                "Tx.rBigEndian"
+            ],
+            "i": 10
+        },
+        {
+            "ns": [
+                "ProtoHeader.PROTO_FLAG"
+            ],
+            "i": 11
+        },
+        {
+            "ns": [
+                "ProtoHeader.SIG_HASH_ALL"
+            ],
+            "i": 16
+        },
+        {
+            "ns": [
+                "ProtoHeader.PROTO_HEADER_OFFSET"
+            ],
+            "i": 19
+        },
+        {
+            "ns": [
+                "TokenProto.GENESIS_TXID_OFFSET"
+            ],
+            "i": 23
+        },
+        {
+            "ns": [
+                "TokenProto.GENESIS_HASH_OFFSET"
+            ],
+            "i": 27
+        },
+        {
+            "ns": [
+                "TokenProto.TOKEN_AMOUNT_OFFSET"
+            ],
+            "i": 31
+        },
+        {
+            "ns": [
+                "TokenProto.TOKEN_ADDRESS_OFFSET"
+            ],
+            "i": 35
+        },
+        {
+            "ns": [
+                "TokenProto.TOKEN_DECIMAL_OFFSET"
+            ],
+            "i": 39
+        },
+        {
+            "ns": [
+                "TokenProto.TOKEN_SYMBOL_OFFSET"
+            ],
+            "i": 43
+        },
+        {
+            "ns": [
+                "TokenProto.TOKEN_NAME_OFFSET"
+            ],
+            "i": 47
+        },
+        {
+            "ns": [
+                "TokenProto.DATA_LEN",
+                "TokenProto.TOKEN_NAME_OFFSET",
+                "TokenProto.TOKEN_SYMBOL_OFFSET",
+                "TokenProto.TOKEN_DECIMAL_OFFSET",
+                "TokenProto.TOKEN_ADDRESS_OFFSET",
+                "TokenProto.TOKEN_AMOUNT_OFFSET",
+                "TokenProto.GENESIS_HASH_OFFSET",
+                "TokenProto.GENESIS_TXID_OFFSET",
+                "ProtoHeader.PROTO_HEADER_OFFSET",
+                "ProtoHeader.SIG_HASH_ALL",
+                "ProtoHeader.PROTO_FLAG",
+                "Tx.rBigEndian",
+                "Tx.pubKey",
+                "Tx.privKey",
+                "SigHash.FORKID",
+                "SigHash.SINGLE",
+                "SigHash.ALL",
+                "OpCode.OP_CHECKSIG",
+                "OpCode.OP_HASH160",
+                "OpCode.OP_EQUALVERIFY",
+                "OpCode.OP_DUP",
+                "opReturnScript",
+                "changeSatoshis",
+                "changeAddress",
+                "tokenSatoshis",
+                "genesisSatoshis",
+                "prevTxOutputSatoshiBytes",
+                "prevTxOutputHashProof",
+                "prevGenesisTxHeader",
+                "genesisTxInputProof.sequenceBytes",
+                "genesisTxInputProof.outputIndexBytes",
+                "genesisTxInputProof.txHash",
+                "genesisTxInputProof.hashProof",
+                "prevInputIndex",
+                "genesisTxHeader",
+                "tokenScript",
+                "sig",
+                "pubKey",
+                "txPreimage"
+            ],
+            "i": 51
+        },
+        {
+            "ns": [
+                "preimage"
+            ],
+            "i": 54
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 64
+        },
+        {
+            "ns": [
+                "preimage"
+            ],
+            "i": 79
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 85
+        },
+        {
+            "ns": [
+                "l"
+            ],
+            "i": 86
+        },
+        {
+            "ns": [
+                "ret"
+            ],
+            "i": 87
+        },
+        {
+            "ns": [
+                "header"
+            ],
+            "i": 95
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 109
+        },
+        {
+            "ns": [
+                "$tmp",
+                "l"
+            ],
+            "i": 120
+        },
+        {
+            "ns": [
+                "$tmp",
+                "ret"
+            ],
+            "i": 138
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 156
+        },
+        {
+            "ns": [
+                "$tmp",
+                "l"
+            ],
+            "i": 167
+        },
+        {
+            "ns": [
+                "$tmp",
+                "ret"
+            ],
+            "i": 185
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 203
+        },
+        {
+            "ns": [
+                "$tmp",
+                "l"
+            ],
+            "i": 214
+        },
+        {
+            "ns": [
+                "$tmp",
+                "ret"
+            ],
+            "i": 232
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 245
+        },
+        {
+            "ns": [
+                "$tmp",
+                "l"
+            ],
+            "i": 256
+        },
+        {
+            "ns": [
+                "$tmp",
+                "ret"
+            ],
+            "i": 274
+        },
+        {
+            "ns": [
+                "genesisScript"
+            ],
+            "i": 299
+        },
+        {
+            "ns": [
+                "genesisScriptLen"
+            ],
+            "i": 303
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 308
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 325
+        },
+        {
+            "ns": [
+                "tokenValue"
+            ],
+            "i": 341
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 351
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 382
+        },
+        {
+            "ns": [
+                "genesisTxid"
+            ],
+            "i": 407
+        },
+        {
+            "ns": [
+                "isFirst"
+            ],
+            "i": 408
+        },
+        {
+            "ns": [
+                "preimage"
+            ],
+            "i": 411
+        },
+        {
+            "ns": [
+                "thisOutpoint"
+            ],
+            "i": 423
+        },
+        {
+            "ns": [
+                "$const",
+                "isFirst"
+            ],
+            "i": 431
+        },
+        {
+            "ns": [
+                "$thisOutpoint",
+                "genesisTxid"
+            ],
+            "i": 438
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 449
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 485
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 551
+        },
+        {
+            "ns": [
+                "prevScriptHash"
+            ],
+            "i": 583
+        },
+        {
+            "ns": [
+                "prevGenesisTxProof.scriptHash",
+                "prevGenesisTxProof.satoshiBytes",
+                "prevGenesisTxProof.hashProof",
+                "prevGenesisTxProof.txHeader"
+            ],
+            "i": 591
+        },
+        {
+            "ns": [
+                "inputProof.sequenceBytes",
+                "inputProof.outputIndexBytes",
+                "inputProof.txHash",
+                "inputProof.hashProof",
+                "genesisTxid",
+                "prevTxProof.scriptHash",
+                "prevTxProof.satoshiBytes",
+                "prevTxProof.hashProof",
+                "prevTxProof.txHeader",
+                "prevTxInputIndex",
+                "txHeader",
+                "outpoint"
+            ],
+            "i": 616
+        },
+        {
+            "ns": [
+                "proof.sequenceBytes",
+                "proof.outputIndexBytes",
+                "proof.txHash",
+                "proof.hashProof",
+                "inputIndex",
+                "txHeader"
+            ],
+            "i": 639
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 648
+        },
+        {
+            "ns": [
+                "inputsLen"
+            ],
+            "i": 657
+        },
+        {
+            "ns": [
+                "inputHashRoot"
+            ],
+            "i": 665
+        },
+        {
+            "ns": [
+                "hashValue"
+            ],
+            "i": 710
+        },
+        {
+            "ns": [
+                "prevOutpoint"
+            ],
+            "i": 765
+        },
+        {
+            "ns": [
+                "outpoint",
+                "txProof.scriptHash",
+                "txProof.satoshiBytes",
+                "txProof.hashProof",
+                "txProof.txHeader"
+            ],
+            "i": 783
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 799
+        },
+        {
+            "ns": [
+                "outputIndex"
+            ],
+            "i": 808
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 817
+        },
+        {
+            "ns": [
+                "outputsLen"
+            ],
+            "i": 826
+        },
+        {
+            "ns": [
+                "outputHashRoot"
+            ],
+            "i": 834
+        },
+        {
+            "ns": [
+                "hashValue"
+            ],
+            "i": 863
+        },
+        {
+            "ns": [
+                "genesisTxid",
+                "slen",
+                "script"
+            ],
+            "i": 969
+        },
+        {
+            "ns": [
+                "newGenesisScript"
+            ],
+            "i": 1003
+        },
+        {
+            "ns": [
+                "genesisHash"
+            ],
+            "i": 1006
+        },
+        {
+            "ns": [
+                "tokenScriptLen"
+            ],
+            "i": 1010
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 1017
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 1051
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 1081
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 1111
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 1143
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 1209
+        },
+        {
+            "ns": [
+                "genesisOutput"
+            ],
+            "i": 1235
+        },
+        {
+            "ns": [
+                "outputSatoshis",
+                "outputScript"
+            ],
+            "i": 1245
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 1252
+        },
+        {
+            "ns": [
+                "n"
+            ],
+            "i": 1256
+        },
+        {
+            "ns": [
+                "header"
+            ],
+            "i": 1257
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1266
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1273
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1298
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1310
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1317
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1343
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1355
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1362
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1388
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1400
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1407
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1433
+        },
+        {
+            "ns": [
+                "$tmp",
+                "genesisOutput"
+            ],
+            "i": 1463
+        },
+        {
+            "ns": [
+                "outputSatoshis",
+                "outputScript"
+            ],
+            "i": 1470
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 1477
+        },
+        {
+            "ns": [
+                "n"
+            ],
+            "i": 1481
+        },
+        {
+            "ns": [
+                "header"
+            ],
+            "i": 1482
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1491
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1498
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1523
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1535
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1542
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1568
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1580
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1587
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1613
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1625
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1632
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1658
+        },
+        {
+            "ns": [
+                "tokenOutput"
+            ],
+            "i": 1686
+        },
+        {
+            "ns": [
+                "opReturnOutput"
+            ],
+            "i": 1687
+        },
+        {
+            "ns": [
+                "outputSatoshis",
+                "outputScript"
+            ],
+            "i": 1709
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 1716
+        },
+        {
+            "ns": [
+                "n"
+            ],
+            "i": 1720
+        },
+        {
+            "ns": [
+                "header"
+            ],
+            "i": 1721
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1730
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1737
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1762
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1774
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1781
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1807
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1819
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1826
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1852
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1864
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1871
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 1897
+        },
+        {
+            "ns": [
+                "$tmp",
+                "opReturnOutput"
+            ],
+            "i": 1927
+        },
+        {
+            "ns": [
+                "address",
+                "satoshis"
+            ],
+            "i": 1934
+        },
+        {
+            "ns": [
+                "output"
+            ],
+            "i": 1935
+        },
+        {
+            "ns": [
+                "pubKeyHash"
+            ],
+            "i": 1943
+        },
+        {
+            "ns": [
+                "outputScript"
+            ],
+            "i": 1963
+        },
+        {
+            "ns": [
+                "outputSatoshis",
+                "outputScript"
+            ],
+            "i": 1968
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 1975
+        },
+        {
+            "ns": [
+                "n"
+            ],
+            "i": 1979
+        },
+        {
+            "ns": [
+                "header"
+            ],
+            "i": 1980
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 1989
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 1996
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 2021
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 2033
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 2040
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 2066
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 2078
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 2085
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 2111
+        },
+        {
+            "ns": [
+                "l",
+                "n"
+            ],
+            "i": 2123
+        },
+        {
+            "ns": [
+                "m"
+            ],
+            "i": 2130
+        },
+        {
+            "ns": [
+                "$tmp",
+                "header"
+            ],
+            "i": 2156
+        },
+        {
+            "ns": [
+                "$tmp",
+                "output"
+            ],
+            "i": 2186
+        },
+        {
+            "ns": [
+                "changeOutput"
+            ],
+            "i": 2203
+        },
+        {
+            "ns": [
+                "hashOutput"
+            ],
+            "i": 2215
+        },
+        {
+            "ns": [
+                "preimage"
+            ],
+            "i": 2220
+        },
+        {
+            "ns": [
+                "l"
+            ],
+            "i": 2224
+        },
+        {
+            "ns": [
+                "slen",
+                "script"
+            ],
+            "i": 2252
+        },
+        {
+            "ns": [
+                "senderAddress"
+            ],
+            "i": 2275
+        },
+        {
+            "ns": [
+                "sigHashType",
+                "txPreimage"
+            ],
+            "i": 2293
+        },
+        {
+            "ns": [
+                "sigHashType",
+                "rBigEndian",
+                "r",
+                "inverseK",
+                "pubKey",
+                "privKey",
+                "rawTx"
+            ],
+            "i": 2306
+        },
+        {
+            "ns": [
+                "h"
+            ],
+            "i": 2309
+        },
+        {
+            "ns": [
+                "b"
+            ],
+            "i": 2312
+        },
+        {
+            "ns": [
+                "sigHashType",
+                "rBigEndian",
+                "r",
+                "inverseK",
+                "privKey",
+                "h"
+            ],
+            "i": 2456
+        },
+        {
+            "ns": [
+                "s"
+            ],
+            "i": 2467
+        },
+        {
+            "ns": [
+                "N"
+            ],
+            "i": 2468
+        },
+        {
+            "ns": [
+                "modulus",
+                "k"
+            ],
+            "i": 2473
+        },
+        {
+            "ns": [
+                "res"
+            ],
+            "i": 2478
+        },
+        {
+            "ns": [
+                "$res",
+                "s"
+            ],
+            "i": 2504
+        },
+        {
+            "ns": [
+                "$tmp",
+                "s"
+            ],
+            "i": 2522
+        },
+        {
+            "ns": [
+                "rlen"
+            ],
+            "i": 2530
+        },
+        {
+            "ns": [
+                "slen"
+            ],
+            "i": 2534
+        },
+        {
+            "ns": [
+                "sBigEndian"
+            ],
+            "i": 2668
+        },
+        {
+            "ns": [
+                "len"
+            ],
+            "i": 2675
+        },
+        {
+            "ns": [
+                "rb"
+            ],
+            "i": 2698
+        },
+        {
+            "ns": [
+                "sig"
+            ],
+            "i": 2740
+        }
+    ],
+    "autoTypedVars": [],
+    "tags": [
+        {
+            "t": "#SigHash.nVersion:0#SigHash",
+            "i": 53
+        },
+        {
+            "t": "#SigHash.nVersion:1",
+            "i": 62
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0#Utils",
+            "i": 63
+        },
+        {
+            "t": "#Utils",
+            "i": 68
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1",
+            "i": 72
+        },
+        {
+            "t": "#SigHash.scriptCode:0#SigHash",
+            "i": 78
+        },
+        {
+            "t": "#Utils.readVarint:0#Utils",
+            "i": 84
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0",
+            "i": 108
+        },
+        {
+            "t": "#Utils",
+            "i": 113
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#Utils",
+            "i": 117
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0",
+            "i": 155
+        },
+        {
+            "t": "#Utils",
+            "i": 160
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#Utils",
+            "i": 164
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0",
+            "i": 202
+        },
+        {
+            "t": "#Utils",
+            "i": 207
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#Utils",
+            "i": 211
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0",
+            "i": 244
+        },
+        {
+            "t": "#Utils",
+            "i": 249
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#Utils",
+            "i": 253
+        },
+        {
+            "t": "#Utils.readVarint:1#SigHash",
+            "i": 294
+        },
+        {
+            "t": "#SigHash.scriptCode:1",
+            "i": 298
+        },
+        {
+            "t": "#TokenProto.getTokenAmount:0#TokenProto",
+            "i": 307
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0#Utils",
+            "i": 324
+        },
+        {
+            "t": "#Utils",
+            "i": 329
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#TokenProto",
+            "i": 333
+        },
+        {
+            "t": "#TokenProto.getTokenAmount:1",
+            "i": 340
+        },
+        {
+            "t": "#TokenProto.getGenesisHash:0#TokenProto",
+            "i": 350
+        },
+        {
+            "t": "#TokenProto.getGenesisHash:1",
+            "i": 373
+        },
+        {
+            "t": "#TokenProto.getGenesisTxid:0#TokenProto",
+            "i": 381
+        },
+        {
+            "t": "#TokenProto.getGenesisTxid:1",
+            "i": 406
+        },
+        {
+            "t": "#SigHash.outpoint:0#SigHash",
+            "i": 410
+        },
+        {
+            "t": "#SigHash.outpoint:1",
+            "i": 422
+        },
+        {
+            "t": "#TokenProto.checkProtoHeader:0#TokenProto",
+            "i": 448
+        },
+        {
+            "t": "#TokenProto.checkProtoHeader:1",
+            "i": 478
+        },
+        {
+            "t": "#TokenProto.checkDataLen:0#TokenProto",
+            "i": 484
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0#Utils",
+            "i": 550
+        },
+        {
+            "t": "#Utils",
+            "i": 555
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#TokenProto",
+            "i": 559
+        },
+        {
+            "t": "#TokenProto.checkDataLen:1",
+            "i": 574
+        },
+        {
+            "t": "#Backtrace.verify:0#Backtrace",
+            "i": 615
+        },
+        {
+            "t": "#Backtrace",
+            "i": 623
+        },
+        {
+            "t": "#TxUtil.verifyTxInput:0#TxUtil",
+            "i": 638
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0#Utils",
+            "i": 647
+        },
+        {
+            "t": "#Utils",
+            "i": 652
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#TxUtil",
+            "i": 656
+        },
+        {
+            "t": "#TxUtil",
+            "i": 673
+        },
+        {
+            "t": "#TxUtil",
+            "i": 674
+        },
+        {
+            "t": "#TxUtil",
+            "i": 683
+        },
+        {
+            "t": "#TxUtil",
+            "i": 690
+        },
+        {
+            "t": "#TxUtil",
+            "i": 691
+        },
+        {
+            "t": "#TxUtil",
+            "i": 697
+        },
+        {
+            "t": "#TxUtil",
+            "i": 698
+        },
+        {
+            "t": "#TxUtil.verifyTxInput:1#Backtrace",
+            "i": 758
+        },
+        {
+            "t": "#TxUtil.verifyTxOutput:0#TxUtil",
+            "i": 782
+        },
+        {
+            "t": "#TxUtil",
+            "i": 785
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0#Utils",
+            "i": 798
+        },
+        {
+            "t": "#Utils",
+            "i": 803
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#TxUtil",
+            "i": 807
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0#Utils",
+            "i": 816
+        },
+        {
+            "t": "#Utils",
+            "i": 821
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#TxUtil",
+            "i": 825
+        },
+        {
+            "t": "#TxUtil",
+            "i": 836
+        },
+        {
+            "t": "#TxUtil",
+            "i": 837
+        },
+        {
+            "t": "#TxUtil",
+            "i": 846
+        },
+        {
+            "t": "#TxUtil",
+            "i": 853
+        },
+        {
+            "t": "#TxUtil",
+            "i": 854
+        },
+        {
+            "t": "#TxUtil.verifyTxOutput:1#Backtrace",
+            "i": 911
+        },
+        {
+            "t": "#Backtrace.verify:1",
+            "i": 954
+        },
+        {
+            "t": "#TokenProto.getNewGenesisScript:0#TokenProto",
+            "i": 968
+        },
+        {
+            "t": "#TokenProto.getNewGenesisScript:1",
+            "i": 1002
+        },
+        {
+            "t": "#TokenProto.getGenesisTxid:0#TokenProto",
+            "i": 1016
+        },
+        {
+            "t": "#TokenProto.getGenesisTxid:1",
+            "i": 1041
+        },
+        {
+            "t": "#TokenProto.getGenesisHash:0#TokenProto",
+            "i": 1050
+        },
+        {
+            "t": "#TokenProto.getGenesisHash:1",
+            "i": 1073
+        },
+        {
+            "t": "#TokenProto.getTokenMetaData:0#TokenProto",
+            "i": 1080
+        },
+        {
+            "t": "#TokenProto.getTokenMetaData:1",
+            "i": 1105
+        },
+        {
+            "t": "#TokenProto.getTokenMetaData:0#TokenProto",
+            "i": 1110
+        },
+        {
+            "t": "#TokenProto.getTokenMetaData:1",
+            "i": 1135
+        },
+        {
+            "t": "#TokenProto.checkDataLen:0#TokenProto",
+            "i": 1142
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:0#Utils",
+            "i": 1208
+        },
+        {
+            "t": "#Utils",
+            "i": 1213
+        },
+        {
+            "t": "#Utils.fromLEUnsigned:1#TokenProto",
+            "i": 1217
+        },
+        {
+            "t": "#TokenProto.checkDataLen:1",
+            "i": 1232
+        },
+        {
+            "t": "#Utils.buildOutput:0#Utils",
+            "i": 1244
+        },
+        {
+            "t": "#Utils",
+            "i": 1248
+        },
+        {
+            "t": "#Utils.writeVarint:0",
+            "i": 1251
+        },
+        {
+            "t": "#Utils",
+            "i": 1254
+        },
+        {
+            "t": "#Utils",
+            "i": 1255
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1265
+        },
+        {
+            "t": "#Utils",
+            "i": 1272
+        },
+        {
+            "t": "#Utils",
+            "i": 1277
+        },
+        {
+            "t": "#Utils",
+            "i": 1278
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1295
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1309
+        },
+        {
+            "t": "#Utils",
+            "i": 1316
+        },
+        {
+            "t": "#Utils",
+            "i": 1321
+        },
+        {
+            "t": "#Utils",
+            "i": 1322
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1339
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1354
+        },
+        {
+            "t": "#Utils",
+            "i": 1361
+        },
+        {
+            "t": "#Utils",
+            "i": 1366
+        },
+        {
+            "t": "#Utils",
+            "i": 1367
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1384
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1399
+        },
+        {
+            "t": "#Utils",
+            "i": 1406
+        },
+        {
+            "t": "#Utils",
+            "i": 1411
+        },
+        {
+            "t": "#Utils",
+            "i": 1412
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1429
+        },
+        {
+            "t": "#Utils.writeVarint:1#Utils",
+            "i": 1452
+        },
+        {
+            "t": "#Utils.buildOutput:1",
+            "i": 1460
+        },
+        {
+            "t": "#Utils.buildOutput:0#Utils",
+            "i": 1469
+        },
+        {
+            "t": "#Utils",
+            "i": 1473
+        },
+        {
+            "t": "#Utils.writeVarint:0",
+            "i": 1476
+        },
+        {
+            "t": "#Utils",
+            "i": 1479
+        },
+        {
+            "t": "#Utils",
+            "i": 1480
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1490
+        },
+        {
+            "t": "#Utils",
+            "i": 1497
+        },
+        {
+            "t": "#Utils",
+            "i": 1502
+        },
+        {
+            "t": "#Utils",
+            "i": 1503
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1520
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1534
+        },
+        {
+            "t": "#Utils",
+            "i": 1541
+        },
+        {
+            "t": "#Utils",
+            "i": 1546
+        },
+        {
+            "t": "#Utils",
+            "i": 1547
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1564
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1579
+        },
+        {
+            "t": "#Utils",
+            "i": 1586
+        },
+        {
+            "t": "#Utils",
+            "i": 1591
+        },
+        {
+            "t": "#Utils",
+            "i": 1592
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1609
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1624
+        },
+        {
+            "t": "#Utils",
+            "i": 1631
+        },
+        {
+            "t": "#Utils",
+            "i": 1636
+        },
+        {
+            "t": "#Utils",
+            "i": 1637
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1654
+        },
+        {
+            "t": "#Utils.writeVarint:1#Utils",
+            "i": 1677
+        },
+        {
+            "t": "#Utils.buildOutput:1",
+            "i": 1685
+        },
+        {
+            "t": "#Utils.buildOutput:0#Utils",
+            "i": 1708
+        },
+        {
+            "t": "#Utils",
+            "i": 1712
+        },
+        {
+            "t": "#Utils.writeVarint:0",
+            "i": 1715
+        },
+        {
+            "t": "#Utils",
+            "i": 1718
+        },
+        {
+            "t": "#Utils",
+            "i": 1719
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1729
+        },
+        {
+            "t": "#Utils",
+            "i": 1736
+        },
+        {
+            "t": "#Utils",
+            "i": 1741
+        },
+        {
+            "t": "#Utils",
+            "i": 1742
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1759
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1773
+        },
+        {
+            "t": "#Utils",
+            "i": 1780
+        },
+        {
+            "t": "#Utils",
+            "i": 1785
+        },
+        {
+            "t": "#Utils",
+            "i": 1786
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1803
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1818
+        },
+        {
+            "t": "#Utils",
+            "i": 1825
+        },
+        {
+            "t": "#Utils",
+            "i": 1830
+        },
+        {
+            "t": "#Utils",
+            "i": 1831
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1848
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1863
+        },
+        {
+            "t": "#Utils",
+            "i": 1870
+        },
+        {
+            "t": "#Utils",
+            "i": 1875
+        },
+        {
+            "t": "#Utils",
+            "i": 1876
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 1893
+        },
+        {
+            "t": "#Utils.writeVarint:1#Utils",
+            "i": 1916
+        },
+        {
+            "t": "#Utils.buildOutput:1",
+            "i": 1924
+        },
+        {
+            "t": "#TxUtil.genBsvOutput:0#TxUtil",
+            "i": 1933
+        },
+        {
+            "t": "#Utils.buildPublicKeyHashScript:0#Utils",
+            "i": 1942
+        },
+        {
+            "t": "#Utils.buildPublicKeyHashScript:1#TxUtil",
+            "i": 1962
+        },
+        {
+            "t": "#Utils.buildOutput:0#Utils",
+            "i": 1967
+        },
+        {
+            "t": "#Utils",
+            "i": 1971
+        },
+        {
+            "t": "#Utils.writeVarint:0",
+            "i": 1974
+        },
+        {
+            "t": "#Utils",
+            "i": 1977
+        },
+        {
+            "t": "#Utils",
+            "i": 1978
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 1988
+        },
+        {
+            "t": "#Utils",
+            "i": 1995
+        },
+        {
+            "t": "#Utils",
+            "i": 2000
+        },
+        {
+            "t": "#Utils",
+            "i": 2001
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 2018
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 2032
+        },
+        {
+            "t": "#Utils",
+            "i": 2039
+        },
+        {
+            "t": "#Utils",
+            "i": 2044
+        },
+        {
+            "t": "#Utils",
+            "i": 2045
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 2062
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 2077
+        },
+        {
+            "t": "#Utils",
+            "i": 2084
+        },
+        {
+            "t": "#Utils",
+            "i": 2089
+        },
+        {
+            "t": "#Utils",
+            "i": 2090
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 2107
+        },
+        {
+            "t": "#Utils.toLEUnsigned:0",
+            "i": 2122
+        },
+        {
+            "t": "#Utils",
+            "i": 2129
+        },
+        {
+            "t": "#Utils",
+            "i": 2134
+        },
+        {
+            "t": "#Utils",
+            "i": 2135
+        },
+        {
+            "t": "#Utils.toLEUnsigned:1#Utils",
+            "i": 2152
+        },
+        {
+            "t": "#Utils.writeVarint:1#Utils",
+            "i": 2175
+        },
+        {
+            "t": "#Utils.buildOutput:1#TxUtil",
+            "i": 2183
+        },
+        {
+            "t": "#TxUtil.genBsvOutput:1",
+            "i": 2202
+        },
+        {
+            "t": "#SigHash.hashOutputs:0#SigHash",
+            "i": 2219
+        },
+        {
+            "t": "#SigHash",
+            "i": 2222
+        },
+        {
+            "t": "#SigHash",
+            "i": 2223
+        },
+        {
+            "t": "#SigHash.hashOutputs:1",
+            "i": 2244
+        },
+        {
+            "t": "#TokenProto.getTokenAddress:0#TokenProto",
+            "i": 2251
+        },
+        {
+            "t": "#TokenProto.getTokenAddress:1",
+            "i": 2274
+        },
+        {
+            "t": "#Tx.checkPreimageSigHashType:0#Tx",
+            "i": 2292
+        },
+        {
+            "t": "#Tx.checkPreimageAdvanced:0#Tx",
+            "i": 2305
+        },
+        {
+            "t": "#Tx",
+            "i": 2308
+        },
+        {
+            "t": "#Tx.fromBEUnsigned:0#Tx",
+            "i": 2311
+        },
+        {
+            "t": "#Tx",
+            "i": 2440
+        },
+        {
+            "t": "#Tx.fromBEUnsigned:1#Tx",
+            "i": 2444
+        },
+        {
+            "t": "#Tx.sign:0#Tx",
+            "i": 2455
+        },
+        {
+            "t": "#Tx.normalize:0#Tx",
+            "i": 2472
+        },
+        {
+            "t": "#Tx.normalize:1#Tx",
+            "i": 2501
+        },
+        {
+            "t": "#Tx",
+            "i": 2528
+        },
+        {
+            "t": "#Tx",
+            "i": 2529
+        },
+        {
+            "t": "#Tx",
+            "i": 2532
+        },
+        {
+            "t": "#Tx",
+            "i": 2533
+        },
+        {
+            "t": "#Tx",
+            "i": 2537
+        },
+        {
+            "t": "#Tx.sign:1#Tx",
+            "i": 2739
+        },
+        {
+            "t": "#Tx",
+            "i": 2744
+        },
+        {
+            "t": "#Tx.checkPreimageAdvanced:1#Tx",
+            "i": 2772
+        },
+        {
+            "t": "#Tx.checkPreimageSigHashType:1",
+            "i": 2779
+        }
+    ]
+}

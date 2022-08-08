@@ -1,6 +1,9 @@
+import { API_NET, API_TARGET, mvc } from '..'
+
 export interface Mcp02 {
-  genesis: () => any
+  genesis: (options: GenesisOptions) => any
   issue: () => any
+  mint: () => any
   transfer: () => any
   merge: () => any
 
@@ -9,4 +12,6 @@ export interface Mcp02 {
   // approve()
   // allowance()
   // transferFrom()
+  // batchTransfer()
+  // burn()
 }
