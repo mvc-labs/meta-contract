@@ -12,6 +12,8 @@
     "compile-bcp01-dev": "node tools/compiler.js --bcp01 --debug",
     "compile-bcp02": "node tools/compiler.js --bcp02",
     "compile-bcp02-dev": "node tools/compiler.js --bcp02  --debug",
+    "compile-mcp02": "node tools/compiler.js --mcp02",
+    "compile-mcp02-dev": "node tools/compiler.js --mcp02  --debug",
     "build": "npx gulp",
     "build:watch": "gulp dev",
     "stest": "mocha -r ts-node/register tests/**/*scrypttest.*  --reporter spec --timeout 600000",

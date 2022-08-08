@@ -1,24 +1,18 @@
 {
     "version": 8,
     "compilerVersion": "1.17.1+commit.3385a0d",
-    "contract": "NftProto",
-    "md5": "2e716cce5cc3c5ba7c70f12a789b9654",
+    "contract": "TxUtil",
+    "md5": "0772652e4fd70ae769ac6a1074486a7b",
     "structs": [],
     "library": [
         {
-            "name": "NftProto",
+            "name": "TxUtil",
             "params": [],
             "properties": [],
             "genericTypes": []
         },
         {
             "name": "Util",
-            "params": [],
-            "properties": [],
-            "genericTypes": []
-        },
-        {
-            "name": "ProtoHeader",
             "params": [],
             "properties": [],
             "genericTypes": []
@@ -34,7 +28,7 @@
     "stateProps": [],
     "buildType": "debug",
     "file": "",
-    "asm": "OP_16 24 OP_ADD OP_0 OP_PICK 14 OP_ADD OP_0 OP_PICK 14 OP_ADD OP_0 OP_PICK OP_8 OP_ADD OP_0 OP_PICK OP_8 OP_ADD OP_0 OP_PICK 14 OP_ADD OP_0 OP_PICK OP_1 OP_ADD OP_0 OP_PICK 24 OP_ADD",
+    "asm": "",
     "hex": "",
     "sources": [],
     "sourceMap": []

@@ -1,6 +1,6 @@
 {
     "version": 8,
-    "compilerVersion": "1.17.0+commit.1f8e505",
+    "compilerVersion": "1.17.1+commit.3385a0d",
     "contract": "NftGenesis",
     "md5": "fee4f87fad7c25b10e8f3c7eb0daadf2",
     "structs": [

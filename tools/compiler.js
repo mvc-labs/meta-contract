@@ -12,6 +12,8 @@ if (process.argv.includes("--bcp01")) {
   protocolName = "bcp01";
 } else if (process.argv.includes("--bcp02")) {
   protocolName = "bcp02";
+} else if (process.argv.includes("--mcp02")) {
+  protocolName = "mcp02";
 }
 const contractScryptPath = join(__dirname, "../src/", protocolName, "contract");
 const contractJsonPath = join(
@@ -21,8 +23,8 @@ const contractJsonPath = join(
   "contract-desc"
 );
 
-function compileContract(fileName, isDebug) {
-  const filePath = join(contractScryptPath, fileName);
+function compileContract(filePath, isDebug) {
+  // const filePath = join(contractScryptPath, fileName);
   const out = contractJsonPath;
 
   const result = compile(
@@ -48,7 +50,7 @@ function compile_for(file) {
   if (fileName.endsWith(".scrypt")) {
     try {
       clean_description_file(fileName);
-      compileContract(fileName, isDebug);
+      compileContract(file, isDebug);
     } catch (error) {
       console.log(error);
     }
@@ -56,7 +58,7 @@ function compile_for(file) {
 }
 
 function clean_description_file(fileName) {
-  if (fileName.endsWith(".scrypt")) {
+  if (fileName.endsWith(".scrypt") && existsSync(fileName)) {
     try {
       const descFile = join(
         contractJsonPath,

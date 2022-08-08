@@ -94,6 +94,8 @@ export class FtManager {
     network = API_NET.MAIN,
     apiTarget = API_TARGET.MVC,
     purse: wif,
+    // dustLimitFactor = 300,
+    // dustAmount,
     feeb = FEEB,
 
     dustLimitFactor = 300,
