@@ -20,9 +20,31 @@ import {
 } from './contract-factory/tokenTransferCheck'
 import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
-import { SizeTransaction } from '@/common/SizeTransaction'
+import { SizeTransaction } from '../common/SizeTransaction'
 const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
+
+type Utxo = {
+  txId: string
+  outputIndex: number
+  satoshis: number
+  address?: string | mvc.Address
+}
+
+type GenesisOptions = {
+  tokenName: string
+  tokenSymbol: string
+  decimalNum: number
+  genesisWif: string
+}
+
+type ParamUtxo = {
+  txId: string
+  outputIndex: number
+  satoshis: number
+  wif?: string
+  address?: string | mvc.Address
+}
 
 type Purse = {
   privateKey: mvc.PrivateKey
@@ -32,7 +54,7 @@ type Purse = {
 type Mcp02Options = {
   network?: API_NET
   apiTarget?: API_TARGET
-  purse: string
+  purse?: string
   feeb?: number
   dustLimitFactor?: number
   dustAmount?: number
@@ -93,11 +115,8 @@ export class FtManager {
   constructor({
     network = API_NET.MAIN,
     apiTarget = API_TARGET.MVC,
-    purse: wif,
-    // dustLimitFactor = 300,
-    // dustAmount,
+    purse,
     feeb = FEEB,
-
     dustLimitFactor = 300,
     dustAmount,
   }: Mcp02Options) {
@@ -106,11 +125,13 @@ export class FtManager {
     this._api = new Api(network, apiTarget)
 
     // 初始化钱包
-    const privateKey = mvc.PrivateKey.fromWIF(wif)
-    const address = privateKey.toAddress(network)
-    this.purse = {
-      privateKey,
-      address,
+    if (purse) {
+      const privateKey = mvc.PrivateKey.fromWIF(purse)
+      const address = privateKey.toAddress(network)
+      this.purse = {
+        privateKey,
+        address,
+      }
     }
 
     // 初始化零地址
@@ -123,13 +144,47 @@ export class FtManager {
     this.feeb = feeb
   }
 
-  public async genesis({ tokenName, tokenSymbol, decimalNum, genesisWif }: GenesisOptions) {
+  /**
+   * Create a transaction for genesis
+   * @param tokenName token name, limited to 20 bytes
+   * @param tokenSymbol the token symbol, limited to 10 bytes
+   * @param decimalNum the decimal number, range 0-255
+   * @param utxos (Optional) specify mvc utxos
+   * @param changeAddress (Optional) specify mvc changeAddress
+   * @param opreturnData (Optional) append an opReturn output
+   * @param genesisWif the private key of the token genesiser
+   * @param noBroadcast (Optional) whether not to broadcast the transaction, the default is false
+   * @returns
+   */
+  public async genesis({
+    tokenName,
+    tokenSymbol,
+    decimalNum,
+    utxos,
+    changeAddress,
+    opreturnData,
+    genesisWif,
+    noBroadcast = false,
+  }: {
+    tokenName: string
+    tokenSymbol: string
+    decimalNum: number
+    utxos?: ParamUtxo[]
+    changeAddress?: string | mvc.Address
+    opreturnData?: any
+    genesisWif: string | mvc.PrivateKey
+    noBroadcast?: boolean
+  }) {
+    // TODO 检查必要参数
+    // validate params
+    // ...
+
     let utxoInfo = await this._pretreatUtxos()
 
     // if (changeAddress) {
     //   changeAddress = new mvc.Address(changeAddress, this.network)
     // } else {
-    const changeAddress = utxoInfo.utxos[0].address
+    changeAddress = utxoInfo.utxos[0].address
     // }
 
     let genesisPrivateKey = new mvc.PrivateKey(genesisWif)
@@ -650,303 +705,304 @@ export class FtManager {
     opreturnData?: any
     minUtxoSet: boolean
   }) {
-    if (utxos.length > 3) {
-      throw new CodeError(
-        ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in the transfer operation, please merge it first '
-      )
-    }
+    // if (utxos.length > 3) {
+    //   throw new CodeError(
+    //     ErrCode.EC_UTXOS_MORE_THAN_3,
+    //     'Bsv utxos should be no more than 3 in the transfer operation, please merge it first '
+    //   )
+    // }
 
-    if (!middleChangeAddress) {
-      middleChangeAddress = utxos[0].address
-      middlePrivateKey = utxoPrivateKeys[0]
-    }
+    // if (!middleChangeAddress) {
+    //   middleChangeAddress = utxos[0].address
+    //   middlePrivateKey = utxoPrivateKeys[0]
+    // }
 
-    let { tokenInputArray, tokenOutputArray, tokenTransferType } =
-      await this._prepareTransferTokens({
-        codehash,
-        genesis,
-        receivers,
-        ftUtxos,
-        ftChangeAddress,
-        isMerge,
-        minUtxoSet,
-      })
+    // let { tokenInputArray, tokenOutputArray, tokenTransferType } =
+    //   await this._prepareTransferTokens({
+    //     codehash,
+    //     genesis,
+    //     receivers,
+    //     ftUtxos,
+    //     ftChangeAddress,
+    //     isMerge,
+    //     minUtxoSet,
+    //   })
 
-    let estimateSatoshis = this._calTransferEstimateFee({
-      p2pkhInputNum: utxos.length,
-      tokenInputArray,
-      tokenOutputArray,
-      tokenTransferType,
-      opreturnData,
-    })
+    // let estimateSatoshis = this._calTransferEstimateFee({
+    //   p2pkhInputNum: utxos.length,
+    //   tokenInputArray,
+    //   tokenOutputArray,
+    //   tokenTransferType,
+    //   opreturnData,
+    // })
 
-    const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
-    if (balance < estimateSatoshis) {
-      throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
-        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
-      )
-    }
+    // const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    // if (balance < estimateSatoshis) {
+    //   throw new CodeError(
+    //     ErrCode.EC_INSUFFICIENT_BSV,
+    //     `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
+    //   )
+    // }
 
-    ftUtxos = tokenInputArray
-    const defaultFtUtxo = tokenInputArray[0]
-    const ftUtxoTx = new mvc.Transaction(defaultFtUtxo.satotxInfo.txHex)
-    const tokenLockingScript = ftUtxoTx.outputs[defaultFtUtxo.outputIndex].script
+    // ftUtxos = tokenInputArray
+    // const defaultFtUtxo = tokenInputArray[0]
+    // const ftUtxoTx = new mvc.Transaction(defaultFtUtxo.satotxInfo.txHex)
+    // const tokenLockingScript = ftUtxoTx.outputs[defaultFtUtxo.outputIndex].script
 
-    //create routeCheck contract
-    let tokenTransferCheckContract = TokenTransferCheckFactory.createContract(tokenTransferType)
-    tokenTransferCheckContract.setFormatedDataPart({
-      nSenders: tokenInputArray.length,
-      receiverTokenAmountArray: tokenOutputArray.map((v) => v.tokenAmount),
+    // //create routeCheck contract
+    // let tokenTransferCheckContract = TokenTransferCheckFactory.createContract(tokenTransferType)
+    // tokenTransferCheckContract.setFormatedDataPart({
+    //   nSenders: tokenInputArray.length,
+    //   receiverTokenAmountArray: tokenOutputArray.map((v) => v.tokenAmount),
 
-      receiverArray: tokenOutputArray.map((v) => v.address),
-      nReceivers: tokenOutputArray.length,
-      tokenCodeHash: toHex(ftProto.getContractCodeHash(tokenLockingScript.toBuffer())),
-      tokenID: toHex(ftProto.getTokenID(tokenLockingScript.toBuffer())),
-    })
+    //   receiverArray: tokenOutputArray.map((v) => v.address),
+    //   nReceivers: tokenOutputArray.length,
+    //   tokenCodeHash: toHex(ftProto.getContractCodeHash(tokenLockingScript.toBuffer())),
+    //   tokenID: toHex(ftProto.getTokenID(tokenLockingScript.toBuffer())),
+    // })
 
-    const transferCheckTxComposer = new TxComposer()
+    // const transferCheckTxComposer = new TxComposer()
 
-    //tx addInput utxo
-    const transferCheck_p2pkhInputIndexs = utxos.map((utxo) => {
-      const inputIndex = transferCheckTxComposer.appendP2PKHInput(utxo as any)
-      transferCheckTxComposer.addSigHashInfo({
-        inputIndex,
-        address: utxo.address.toString(),
-        sighashType,
-        contractType: CONTRACT_TYPE.P2PKH,
-      })
-      return inputIndex
-    })
+    // //tx addInput utxo
+    // const transferCheck_p2pkhInputIndexs = utxos.map((utxo) => {
+    //   const inputIndex = transferCheckTxComposer.appendP2PKHInput(utxo as any)
+    //   transferCheckTxComposer.addSigHashInfo({
+    //     inputIndex,
+    //     address: utxo.address.toString(),
+    //     sighashType,
+    //     contractType: CONTRACT_TYPE.P2PKH,
+    //   })
+    //   return inputIndex
+    // })
 
-    const transferCheckOutputIndex = transferCheckTxComposer.appendOutput({
-      lockingScript: tokenTransferCheckContract.lockingScript,
-      satoshis: this.getDustThreshold(tokenTransferCheckContract.lockingScript.toBuffer().length),
-    })
+    // const transferCheckOutputIndex = transferCheckTxComposer.appendOutput({
+    //   lockingScript: tokenTransferCheckContract.lockingScript,
+    //   satoshis: this.getDustThreshold(tokenTransferCheckContract.lockingScript.toBuffer().length),
+    // })
 
-    let changeOutputIndex = transferCheckTxComposer.appendChangeOutput(
-      middleChangeAddress,
-      this.feeb
-    )
-    let unsignSigPlaceHolderSize = 0
-    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
-      transferCheck_p2pkhInputIndexs.forEach((inputIndex) => {
-        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
-        transferCheckTxComposer.unlockP2PKHInput(privateKey, inputIndex)
-      })
-    } else {
-      //To supplement the size calculation when unsigned
-      transferCheck_p2pkhInputIndexs.forEach((v) => {
-        unsignSigPlaceHolderSize += P2PKH_UNLOCK_SIZE
-      })
-      //Each ftUtxo need to unlock with the size
-      unsignSigPlaceHolderSize = unsignSigPlaceHolderSize * ftUtxos.length
-    }
+    // let changeOutputIndex = transferCheckTxComposer.appendChangeOutput(
+    //   middleChangeAddress,
+    //   this.feeb
+    // )
+    // let unsignSigPlaceHolderSize = 0
+    // if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+    //   transferCheck_p2pkhInputIndexs.forEach((inputIndex) => {
+    //     let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+    //     transferCheckTxComposer.unlockP2PKHInput(privateKey, inputIndex)
+    //   })
+    // } else {
+    //   //To supplement the size calculation when unsigned
+    //   transferCheck_p2pkhInputIndexs.forEach((v) => {
+    //     unsignSigPlaceHolderSize += P2PKH_UNLOCK_SIZE
+    //   })
+    //   //Each ftUtxo need to unlock with the size
+    //   unsignSigPlaceHolderSize = unsignSigPlaceHolderSize * ftUtxos.length
+    // }
 
-    utxos = [
-      {
-        txId: transferCheckTxComposer.getTxId(),
-        satoshis: transferCheckTxComposer.getOutput(changeOutputIndex).satoshis,
-        outputIndex: changeOutputIndex,
-        address: middleChangeAddress,
-      },
-    ]
-    utxoPrivateKeys = utxos.map((v) => middlePrivateKey).filter((v) => v)
+    // utxos = [
+    //   {
+    //     txId: transferCheckTxComposer.getTxId(),
+    //     satoshis: transferCheckTxComposer.getOutput(changeOutputIndex).satoshis,
+    //     outputIndex: changeOutputIndex,
+    //     address: middleChangeAddress,
+    //   },
+    // ]
+    // utxoPrivateKeys = utxos.map((v) => middlePrivateKey).filter((v) => v)
 
-    let transferCheckUtxo = {
-      txId: transferCheckTxComposer.getTxId(),
-      outputIndex: transferCheckOutputIndex,
-      satoshis: transferCheckTxComposer.getOutput(transferCheckOutputIndex).satoshis,
-      lockingScript: transferCheckTxComposer.getOutput(transferCheckOutputIndex).script,
-    }
+    // let transferCheckUtxo = {
+    //   txId: transferCheckTxComposer.getTxId(),
+    //   outputIndex: transferCheckOutputIndex,
+    //   satoshis: transferCheckTxComposer.getOutput(transferCheckOutputIndex).satoshis,
+    //   lockingScript: transferCheckTxComposer.getOutput(transferCheckOutputIndex).script,
+    // }
 
-    let transferCheckTx = transferCheckTxComposer.getTx()
+    // let transferCheckTx = transferCheckTxComposer.getTx()
 
-    const txComposer = new TxComposer()
-    let prevouts = new Prevouts()
+    // const txComposer = new TxComposer()
+    // let prevouts = new Prevouts()
 
-    let inputTokenScript: mvc.Script
-    let inputTokenAmountArray = Buffer.alloc(0)
-    let inputTokenAddressArray = Buffer.alloc(0)
+    // let inputTokenScript: mvc.Script
+    // let inputTokenAmountArray = Buffer.alloc(0)
+    // let inputTokenAddressArray = Buffer.alloc(0)
 
-    const ftUtxoInputIndexs = ftUtxos.map((ftUtxo) => {
-      const inputIndex = txComposer.appendInput(ftUtxo)
-      prevouts.addVout(ftUtxo.txId, ftUtxo.outputIndex)
-      txComposer.addSigHashInfo({
-        inputIndex,
-        address: ftUtxo.tokenAddress.toString(),
-        sighashType,
-        contractType: CONTRACT_TYPE.BCP02_TOKEN,
-      })
-      inputTokenScript = ftUtxo.lockingScript
-      inputTokenAddressArray = Buffer.concat([
-        inputTokenAddressArray,
-        ftUtxo.tokenAddress.hashBuffer,
-      ])
+    // const ftUtxoInputIndexs = ftUtxos.map((ftUtxo) => {
+    //   const inputIndex = txComposer.appendInput(ftUtxo)
+    //   prevouts.addVout(ftUtxo.txId, ftUtxo.outputIndex)
+    //   txComposer.addSigHashInfo({
+    //     inputIndex,
+    //     address: ftUtxo.tokenAddress.toString(),
+    //     sighashType,
+    //     contractType: CONTRACT_TYPE.BCP02_TOKEN,
+    //   })
+    //   inputTokenScript = ftUtxo.lockingScript
+    //   inputTokenAddressArray = Buffer.concat([
+    //     inputTokenAddressArray,
+    //     ftUtxo.tokenAddress.hashBuffer,
+    //   ])
 
-      inputTokenAmountArray = Buffer.concat([
-        inputTokenAmountArray,
-        ftUtxo.tokenAmount.toBuffer({
-          endian: 'little',
-          size: 8,
-        }),
-      ])
-      return inputIndex
-    })
+    //   inputTokenAmountArray = Buffer.concat([
+    //     inputTokenAmountArray,
+    //     ftUtxo.tokenAmount.toBuffer({
+    //       endian: 'little',
+    //       size: 8,
+    //     }),
+    //   ])
+    //   return inputIndex
+    // })
 
-    //tx addInput utxo
-    const p2pkhInputIndexs = utxos.map((utxo) => {
-      const inputIndex = txComposer.appendP2PKHInput(utxo as any)
-      prevouts.addVout(utxo.txId, utxo.outputIndex)
-      txComposer.addSigHashInfo({
-        inputIndex,
-        address: utxo.address.toString(),
-        sighashType,
-        contractType: CONTRACT_TYPE.P2PKH,
-      })
-      return inputIndex
-    })
+    // //tx addInput utxo
+    // const p2pkhInputIndexs = utxos.map((utxo) => {
+    //   const inputIndex = txComposer.appendP2PKHInput(utxo as any)
+    //   prevouts.addVout(utxo.txId, utxo.outputIndex)
+    //   txComposer.addSigHashInfo({
+    //     inputIndex,
+    //     address: utxo.address.toString(),
+    //     sighashType,
+    //     contractType: CONTRACT_TYPE.P2PKH,
+    //   })
+    //   return inputIndex
+    // })
 
-    //添加routeCheck为最后一个输入
-    const transferCheckInputIndex = txComposer.appendInput(transferCheckUtxo)
-    prevouts.addVout(transferCheckUtxo.txId, transferCheckUtxo.outputIndex)
+    // //添加routeCheck为最后一个输入
+    // const transferCheckInputIndex = txComposer.appendInput(transferCheckUtxo)
+    // prevouts.addVout(transferCheckUtxo.txId, transferCheckUtxo.outputIndex)
 
-    let recervierArray = Buffer.alloc(0)
-    let receiverTokenAmountArray = Buffer.alloc(0)
-    let outputSatoshiArray = Buffer.alloc(0)
-    const tokenOutputLen = tokenOutputArray.length
+    // let recervierArray = Buffer.alloc(0)
+    // let receiverTokenAmountArray = Buffer.alloc(0)
+    // let outputSatoshiArray = Buffer.alloc(0)
+    // const tokenOutputLen = tokenOutputArray.length
 
-    for (let i = 0; i < tokenOutputLen; i++) {
-      const tokenOutput = tokenOutputArray[i]
-      const address = tokenOutput.address
-      const outputTokenAmount = tokenOutput.tokenAmount
+    // for (let i = 0; i < tokenOutputLen; i++) {
+    //   const tokenOutput = tokenOutputArray[i]
+    //   const address = tokenOutput.address
+    //   const outputTokenAmount = tokenOutput.tokenAmount
 
-      const lockingScriptBuf = ftProto.getNewTokenScript(
-        inputTokenScript.toBuffer(),
-        address.hashBuffer,
-        outputTokenAmount
-      )
-      let outputIndex = txComposer.appendOutput({
-        lockingScript: mvc.Script.fromBuffer(lockingScriptBuf),
-        satoshis: this.getDustThreshold(lockingScriptBuf.length),
-      })
-      recervierArray = Buffer.concat([recervierArray, address.hashBuffer])
-      const tokenBuf = outputTokenAmount.toBuffer({
-        endian: 'little',
-        size: 8,
-      })
-      receiverTokenAmountArray = Buffer.concat([receiverTokenAmountArray, tokenBuf])
-      const satoshiBuf = BN.fromNumber(txComposer.getOutput(outputIndex).satoshis).toBuffer({
-        endian: 'little',
-        size: 8,
-      })
-      outputSatoshiArray = Buffer.concat([outputSatoshiArray, satoshiBuf])
-    }
+    //   const lockingScriptBuf = ftProto.getNewTokenScript(
+    //     inputTokenScript.toBuffer(),
+    //     address.hashBuffer,
+    //     outputTokenAmount
+    //   )
+    //   let outputIndex = txComposer.appendOutput({
+    //     lockingScript: mvc.Script.fromBuffer(lockingScriptBuf),
+    //     satoshis: this.getDustThreshold(lockingScriptBuf.length),
+    //   })
+    //   recervierArray = Buffer.concat([recervierArray, address.hashBuffer])
+    //   const tokenBuf = outputTokenAmount.toBuffer({
+    //     endian: 'little',
+    //     size: 8,
+    //   })
+    //   receiverTokenAmountArray = Buffer.concat([receiverTokenAmountArray, tokenBuf])
+    //   const satoshiBuf = BN.fromNumber(txComposer.getOutput(outputIndex).satoshis).toBuffer({
+    //     endian: 'little',
+    //     size: 8,
+    //   })
+    //   outputSatoshiArray = Buffer.concat([outputSatoshiArray, satoshiBuf])
+    // }
 
-    //tx addOutput OpReturn
-    let opreturnScriptHex = ''
-    if (opreturnData) {
-      const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
-      opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
-    }
+    // //tx addOutput OpReturn
+    // let opreturnScriptHex = ''
+    // if (opreturnData) {
+    //   const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
+    //   opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
+    // }
 
-    //The first round of calculations get the exact size of the final transaction, and then change again
-    //Due to the change, the script needs to be unlocked again in the second round
-    //let the fee to be exact in the second round
-    for (let c = 0; c < 2; c++) {
-      txComposer.clearChangeOutput()
-      const changeOutputIndex = txComposer.appendChangeOutput(
-        changeAddress,
-        this.feeb,
-        unsignSigPlaceHolderSize
-      )
+    // //The first round of calculations get the exact size of the final transaction, and then change again
+    // //Due to the change, the script needs to be unlocked again in the second round
+    // //let the fee to be exact in the second round
+    // for (let c = 0; c < 2; c++) {
+    //   txComposer.clearChangeOutput()
+    //   const changeOutputIndex = txComposer.appendChangeOutput(
+    //     changeAddress,
+    //     this.feeb,
+    //     unsignSigPlaceHolderSize
+    //   )
 
-      ftUtxoInputIndexs.forEach((inputIndex, idx) => {
-        let ftUtxo = ftUtxos[idx]
-        let senderPrivateKey = ftPrivateKeys[idx]
+    //   ftUtxoInputIndexs.forEach((inputIndex, idx) => {
+    //     let ftUtxo = ftUtxos[idx]
+    //     let senderPrivateKey = ftPrivateKeys[idx]
 
-        let dataPartObj = ftProto.parseDataPart(ftUtxo.lockingScript.toBuffer())
-        const dataPart = ftProto.newDataPart(dataPartObj)
+    //     let dataPartObj = ftProto.parseDataPart(ftUtxo.lockingScript.toBuffer())
+    //     const dataPart = ftProto.newDataPart(dataPartObj)
 
-        const tokenContract = TokenFactory.createContract(
-          this.transferCheckCodeHashArray,
-          this.unlockContractCodeHashArray
-        )
+    //     const tokenContract = TokenFactory.createContract(
+    //       this.transferCheckCodeHashArray,
+    //       this.unlockContractCodeHashArray
+    //     )
 
-        tokenContract.setDataPart(toHex(dataPart))
-        const unlockingContract = tokenContract.unlock({
-          txPreimage: txComposer.getInputPreimage(inputIndex),
-          tokenInputIndex: inputIndex,
-          prevouts: new Bytes(prevouts.toHex()),
+    //     tokenContract.setDataPart(toHex(dataPart))
+    //     const unlockingContract = tokenContract.unlock({
+    //       txPreimage: txComposer.getInputPreimage(inputIndex),
+    //       tokenInputIndex: inputIndex,
+    //       prevouts: new Bytes(prevouts.toHex()),
 
-          checkInputIndex: transferCheckInputIndex,
-          checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
-          nReceivers: tokenOutputLen,
-          prevTokenAddress: new Bytes(toHex(ftUtxo.preTokenAddress.hashBuffer)),
-          prevTokenAmount: new Int(ftUtxo.preTokenAmount.toString(10)),
-          senderPubKey: new PubKey(
-            ftUtxo.publicKey ? toHex(ftUtxo.publicKey.toBuffer()) : PLACE_HOLDER_PUBKEY
-          ),
-          senderSig: new Sig(
-            senderPrivateKey
-              ? toHex(txComposer.getTxFormatSig(senderPrivateKey, inputIndex))
-              : PLACE_HOLDER_SIG
-          ),
-          operation: ftProto.OP_TRANSFER,
-        })
-        // if (this.debug && senderPrivateKey) {
-        //   let txContext = {
-        //     tx: txComposer.getTx(),
-        //     inputIndex: inputIndex,
-        //     inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
-        //   }
-        //   let ret = unlockingContract.verify(txContext)
-        //   if (ret.success == false) throw ret
-        // }
+    //       checkInputIndex: transferCheckInputIndex,
+    //       checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
+    //       nReceivers: tokenOutputLen,
+    //       prevTokenAddress: new Bytes(toHex(ftUtxo.preTokenAddress.hashBuffer)),
+    //       prevTokenAmount: new Int(ftUtxo.preTokenAmount.toString(10)),
+    //       senderPubKey: new PubKey(
+    //         ftUtxo.publicKey ? toHex(ftUtxo.publicKey.toBuffer()) : PLACE_HOLDER_PUBKEY
+    //       ),
+    //       senderSig: new Sig(
+    //         senderPrivateKey
+    //           ? toHex(txComposer.getTxFormatSig(senderPrivateKey, inputIndex))
+    //           : PLACE_HOLDER_SIG
+    //       ),
+    //       operation: ftProto.OP_TRANSFER,
+    //     })
+    //     // if (this.debug && senderPrivateKey) {
+    //     //   let txContext = {
+    //     //     tx: txComposer.getTx(),
+    //     //     inputIndex: inputIndex,
+    //     //     inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
+    //     //   }
+    //     //   let ret = unlockingContract.verify(txContext)
+    //     //   if (ret.success == false) throw ret
+    //     // }
 
-        txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
-      })
+    //     txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
+    //   })
 
-      let unlockingContract = tokenTransferCheckContract.unlock({
-        txPreimage: txComposer.getInputPreimage(transferCheckInputIndex),
-        tokenScript: new Bytes(inputTokenScript.toHex()),
-        prevouts: new Bytes(prevouts.toHex()),
+    //   let unlockingContract = tokenTransferCheckContract.unlock({
+    //     txPreimage: txComposer.getInputPreimage(transferCheckInputIndex),
+    //     tokenScript: new Bytes(inputTokenScript.toHex()),
+    //     prevouts: new Bytes(prevouts.toHex()),
 
-        inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
-        inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
-        receiverSatoshiArray: new Bytes(toHex(outputSatoshiArray)),
-        changeSatoshis: new Int(
-          changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0
-        ),
-        changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
-        opReturnScript: new Bytes(opreturnScriptHex),
-      })
+    //     inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
+    //     inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
+    //     receiverSatoshiArray: new Bytes(toHex(outputSatoshiArray)),
+    //     changeSatoshis: new Int(
+    //       changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0
+    //     ),
+    //     changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
+    //     opReturnScript: new Bytes(opreturnScriptHex),
+    //   })
 
-      // if (this.debug) {
-      //   let txContext = {
-      //     tx: txComposer.getTx(),
-      //     inputIndex: transferCheckInputIndex,
-      //     inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
-      //   }
-      //   let ret = unlockingContract.verify(txContext)
-      //   if (ret.success == false) throw ret
-      // }
+    //   // if (this.debug) {
+    //   //   let txContext = {
+    //   //     tx: txComposer.getTx(),
+    //   //     inputIndex: transferCheckInputIndex,
+    //   //     inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
+    //   //   }
+    //   //   let ret = unlockingContract.verify(txContext)
+    //   //   if (ret.success == false) throw ret
+    //   // }
 
-      txComposer
-        .getInput(transferCheckInputIndex)
-        .setScript(unlockingContract.toScript() as mvc.Script)
-    }
+    //   txComposer
+    //     .getInput(transferCheckInputIndex)
+    //     .setScript(unlockingContract.toScript() as mvc.Script)
+    // }
 
-    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
-      p2pkhInputIndexs.forEach((inputIndex) => {
-        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
-        txComposer.unlockP2PKHInput(privateKey, inputIndex)
-      })
-    }
-    this._checkTxFeeRate(txComposer)
+    // if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+    //   p2pkhInputIndexs.forEach((inputIndex) => {
+    //     let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+    //     txComposer.unlockP2PKHInput(privateKey, inputIndex)
+    //   })
+    // }
+    // this._checkTxFeeRate(txComposer)
 
-    return { transferCheckTxComposer, txComposer }
+    // return { transferCheckTxComposer, txComposer }
+    return {txComposer: undefined, transferCheckTxComposer: undefined}
   }
 
   private _calTransferEstimateFee({
