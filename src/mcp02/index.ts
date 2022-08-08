@@ -25,6 +25,7 @@ import { SizeTransaction } from '../common/SizeTransaction'
 const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 
+ContractUtil.init()
 type Utxo = {
   txId: string
   outputIndex: number
@@ -146,6 +147,47 @@ export class FtManager {
   }
 
   /**
+   * Get codehash and genesis from genesis tx.
+   * @param genesisTx genesis tx
+   * @param genesisOutputIndex (Optional) outputIndex - default value is 0.
+   * @returns
+   */
+  public getCodehashAndGensisByTx(genesisTx: mvc.Transaction, genesisOutputIndex: number = 0) {
+    //calculate genesis/codehash
+    let genesis: string, codehash: string, sensibleId: string
+    let genesisTxId = genesisTx.id
+    let genesisLockingScriptBuf = genesisTx.outputs[genesisOutputIndex].script.toBuffer()
+    const dataPartObj = ftProto.parseDataPart(genesisLockingScriptBuf)
+    // dataPartObj.sensibleID = {
+    //   txid: genesisTxId,
+    //   index: genesisOutputIndex,
+    // }
+    dataPartObj.address = this.purse.address
+    genesisLockingScriptBuf = ftProto.updateScript(genesisLockingScriptBuf, dataPartObj)
+
+    let tokenContract = TokenFactory.createContract(
+      this.transferCheckCodeHashArray,
+      this.unlockContractCodeHashArray
+    )
+
+    tokenContract.setFormatedDataPart({
+      // rabinPubKeyHashArrayHash: toHex(this.rabinPubKeyHashArrayHash),
+      // sensibleID: {
+      //   txid: genesisTxId,
+      //   index: genesisOutputIndex,
+      // },
+      genesisHash: toHex(TokenUtil.getScriptHashBuf(genesisLockingScriptBuf)),
+    })
+
+    let scriptBuf = tokenContract.lockingScript.toBuffer()
+    genesis = ftProto.getQueryGenesis(scriptBuf)
+    codehash = tokenContract.getCodeHash()
+    sensibleId = toHex(TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex))
+
+    return { codehash, genesis, sensibleId }
+  }
+
+  /**
    * Create a transaction for genesis
    * @param tokenName token name, limited to 20 bytes
    * @param tokenSymbol the token symbol, limited to 10 bytes
@@ -186,11 +228,8 @@ export class FtManager {
     } else {
       changeAddress = utxoInfo.utxos[0].address
     }
-    let genesisPrivateKey = new mvc.PrivateKey(genesisWif)
-    let genesisPublicKey = genesisPrivateKey.toPublicKey()
 
-    // let { txComposer } = await this._genesis({
-    await this._genesis({
+    let { txComposer } = await this._genesis({
       tokenName,
       tokenSymbol,
       decimalNum,
@@ -198,23 +237,22 @@ export class FtManager {
       utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
       changeAddress: changeAddress as mvc.Address,
       opreturnData,
-      // genesisPublicKey,
     })
 
-    // let txHex = txComposer.getRawHex()
+    let txHex = txComposer.getRawHex()
     // if (!noBroadcast) {
     //   await this.api.broadcast(txHex)
     // }
 
-    // let { codehash, genesis, sensibleId } = this.getCodehashAndGensisByTx(txComposer.getTx())
-    // return {
-    //   txHex,
-    //   txid: txComposer.getTxId(),
-    //   tx: txComposer.getTx(),
-    //   codehash,
-    //   genesis,
-    //   sensibleId,
-    // }
+    let { codehash, genesis, sensibleId } = this.getCodehashAndGensisByTx(txComposer.getTx())
+    return {
+      txHex,
+      txid: txComposer.getTxId(),
+      tx: txComposer.getTx(),
+      codehash,
+      genesis,
+      sensibleId,
+    }
   }
 
   public async issue() {

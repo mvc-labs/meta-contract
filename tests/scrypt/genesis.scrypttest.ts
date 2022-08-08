@@ -17,16 +17,21 @@ describe('Test genesis contract unlock In Javascript', () => {
 
     ft.api.authorize({ authorization: metaSvAuthorization })
 
-    
-  })
-
-  it('g0: genesis', async () => {
     await ft.genesis({
       genesisWif: CoffeeShop.wif,
       tokenName: 'COFFEE COIN',
       tokenSymbol: 'CC',
       decimalNum: 3,
     })
+  })
+
+  it('g0: genesis', async () => {
+    // await ft.genesis({
+    //   genesisWif: CoffeeShop.wif,
+    //   tokenName: 'COFFEE COIN',
+    //   tokenSymbol: 'CC',
+    //   decimalNum: 3,
+    // })
     expect(true, 'yes').to.be.true
   })
 })

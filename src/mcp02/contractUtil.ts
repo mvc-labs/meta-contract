@@ -15,10 +15,10 @@ import BN = require('../bn.js')
 function getTokenTransferCheckCodeHashArray(): string[] {
   let contractArray = [
     TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_3_OUT_3),
-    TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_6_OUT_6),
-    TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_10_OUT_10),
-    TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_20_OUT_3),
-    TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_3_OUT_100),
+    // TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_6_OUT_6),
+    // TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_10_OUT_10),
+    // TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_20_OUT_3),
+    // TokenTransferCheckFactory.createContract(TOKEN_TRANSFER_TYPE.IN_3_OUT_100),
   ]
   return contractArray.map((v) => v.getCodeHash())
 }
@@ -26,10 +26,10 @@ function getTokenTransferCheckCodeHashArray(): string[] {
 function getTokenUnlockContractCheckCodeHashArray(): string[] {
   let contractArray = [
     TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_2_OUT_5),
-    TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_4_OUT_8),
-    TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_8_OUT_12),
-    TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_20_OUT_5),
-    TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_3_OUT_100),
+    // TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_4_OUT_8),
+    // TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_8_OUT_12),
+    // TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_20_OUT_5),
+    // TokenUnlockContractCheckFactory.createContract(TOKEN_UNLOCK_TYPE.IN_3_OUT_100),
   ]
   return contractArray.map((v) => v.getCodeHash())
 }

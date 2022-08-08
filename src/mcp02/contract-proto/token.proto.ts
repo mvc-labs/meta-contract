@@ -24,12 +24,13 @@ export type FormatedDataPart = {
   protoVersion?: number
   protoType?: proto.PROTO_TYPE
   address?: mvc.Address
+  genesisTxid?: string
 }
 
 // <op_pushdata> + <type specific data> + <proto header> + <data_len(4 bytes)> + <version(1 bytes)>
 // <token type specific data> = <name(40 bytes)> + <symbol(20 bytes)> + <decimal(1 bytes)> + <address(20 bytes)> + <token amount(8 bytes)> + <genesisHash(20 bytes)> + <genesisTxid(36 bytes)>
 const TOKEN_ID_LEN = 20
-const SENSIBLE_ID_LEN = 36
+const GENESIS_TX_ID_LEN = 36
 const RABIN_PUBKEY_HASH_ARRAY_HASH_LEN = 20
 const GENESIS_HASH_LEN = 20
 const TOKEN_AMOUNT_LEN = 8
@@ -39,8 +40,8 @@ const GENESIS_FLAG_LEN = 1
 const TOKEN_SYMBOL_LEN = 10
 const TOKEN_NAME_LEN = 40
 
-const SENSIBLE_ID_OFFSET = SENSIBLE_ID_LEN + proto.getHeaderLen()
-const RABIN_PUBKEY_HASH_ARRAY_HASH_OFFSET = SENSIBLE_ID_OFFSET + RABIN_PUBKEY_HASH_ARRAY_HASH_LEN
+const GENESIS_TX_ID_OFFSET = GENESIS_TX_ID_LEN + proto.getHeaderLen()
+const RABIN_PUBKEY_HASH_ARRAY_HASH_OFFSET = GENESIS_TX_ID_OFFSET + RABIN_PUBKEY_HASH_ARRAY_HASH_LEN
 const GENESIS_HASH_OFFSET = RABIN_PUBKEY_HASH_ARRAY_HASH_OFFSET + GENESIS_HASH_LEN
 const TOKEN_AMOUNT_OFFSET = GENESIS_HASH_OFFSET + TOKEN_AMOUNT_LEN
 const TOKEN_ADDRESS_OFFSET = TOKEN_AMOUNT_OFFSET + TOKEN_ADDRESS_LEN
@@ -89,11 +90,11 @@ export function getTokenID(script: Buffer) {
 }
 
 export function getSensibleID(script0: Buffer) {
-  if (script0.length < SENSIBLE_ID_OFFSET) return { txid: '', index: 0 }
+  if (script0.length < GENESIS_TX_ID_OFFSET) return { txid: '', index: 0 }
   let script = Buffer.from(script0)
   let sensibleIDBuf = script.slice(
-    script.length - SENSIBLE_ID_OFFSET,
-    script.length - SENSIBLE_ID_OFFSET + SENSIBLE_ID_LEN
+    script.length - GENESIS_TX_ID_OFFSET,
+    script.length - GENESIS_TX_ID_OFFSET + GENESIS_TX_ID_LEN
   )
   let txid = sensibleIDBuf.slice(0, 32).reverse().toString('hex') //reverse会改变原对象
   let index = sensibleIDBuf.readUIntLE(32, 4)
@@ -189,15 +190,13 @@ export function getNewTokenScript(scriptBuf: Buffer, address: Buffer, tokenAmoun
 export function newDataPart({
   tokenName,
   tokenSymbol,
-  genesisFlag,
   decimalNum,
-  tokenAddress,
-  tokenAmount,
   genesisHash,
-  sensibleID,
-  protoVersion,
-  protoType,
   address,
+  // bufferValue = 总为8位0
+  genesisTxid,
+  protoType,
+  protoVersion,
 }: FormatedDataPart): Buffer {
   const tokenNameBuf = Buffer.alloc(TOKEN_NAME_LEN, 0)
   if (tokenName) {
@@ -214,39 +213,23 @@ export function newDataPart({
     decimalBuf.writeUInt8(decimalNum)
   }
 
-  const addressBuf = address.hashBuffer
-
-  const buffValue = Buffer.alloc(8, 0)
-
-  const genesisFlagBuf = Buffer.alloc(GENESIS_FLAG_LEN, 0)
-  if (genesisFlag) {
-    genesisFlagBuf.writeUInt8(genesisFlag)
+  const addressBuf = Buffer.alloc(20, 0)
+  if (address) {
+    // addressBuf = address.hashBuffer
+    addressBuf.write(address.hashBuffer.toString('hex'), 'hex')
   }
 
-  // const tokenAddressBuf = Buffer.alloc(TOKEN_ADDRESS_LEN, 0)
-  // if (tokenAddress) {
-  //   tokenAddressBuf.write(tokenAddress, 'hex')
-  // }
-
-  // let tokenAmountBuf = Buffer.alloc(TOKEN_AMOUNT_LEN, 0)
-  // if (tokenAmount) {
-  //   tokenAmountBuf = tokenAmount
-  //     .toBuffer({ endian: 'little', size: TOKEN_AMOUNT_LEN })
-  //     .slice(0, TOKEN_AMOUNT_LEN)
-  // }
+  const buffValue = Buffer.alloc(8, 0)
 
   const genesisHashBuf = Buffer.alloc(GENESIS_HASH_LEN, 0)
   if (genesisHash) {
     genesisHashBuf.write(genesisHash, 'hex')
   }
 
-  // let sensibleIDBuf = Buffer.alloc(SENSIBLE_ID_LEN, 0)
-  // if (sensibleID) {
-  //   const txidBuf = Buffer.from(sensibleID.txid, 'hex').reverse()
-  //   const indexBuf = Buffer.alloc(4, 0)
-  //   indexBuf.writeUInt32LE(sensibleID.index)
-  //   sensibleIDBuf = Buffer.concat([txidBuf, indexBuf])
-  // }
+  const genesisTxidBuf = Buffer.alloc(GENESIS_HASH_LEN, 0)
+  if (genesisTxid) {
+    genesisTxidBuf.write(genesisTxid)
+  }
 
   const protoTypeBuf = Buffer.alloc(proto.PROTO_TYPE_LEN, 0)
   if (protoType) {
@@ -266,8 +249,8 @@ export function newDataPart({
     buffValue,
     genesisHash,
     genesisTxidBuf,
-    tokenVersion,
-    tokenType, // type
+    tokenVersion, = protoVersion
+    tokenType,  = protoType
     PROTO_FLAG,
    */
   return Buffer.concat([
@@ -277,6 +260,10 @@ export function newDataPart({
     addressBuf,
     buffValue,
     genesisHashBuf,
+    genesisTxidBuf,
+    protoVersionBuf,
+    protoTypeBuf,
+    proto.PROTO_FLAG,
   ])
 }
 
@@ -324,8 +311,8 @@ export function getQueryGenesis(script: Buffer): string {
 export function getQuerySensibleID(script0: Buffer): string {
   let script = Buffer.from(script0)
   let sensibleIDBuf = script.slice(
-    script.length - SENSIBLE_ID_OFFSET,
-    script.length - SENSIBLE_ID_OFFSET + SENSIBLE_ID_LEN
+    script.length - GENESIS_TX_ID_OFFSET,
+    script.length - GENESIS_TX_ID_OFFSET + GENESIS_TX_ID_LEN
   )
   return toHex(sensibleIDBuf)
 }
