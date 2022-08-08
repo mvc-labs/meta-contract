@@ -13,6 +13,8 @@ type Mcp02Options = {
   apiTarget?: API_TARGET
   purse: string
   feeb?: number
+  // dustLimitFactor?: number
+  // dustAmount?: number
 }
 
 export class FtManager implements Mcp02 {
@@ -29,6 +31,8 @@ export class FtManager implements Mcp02 {
     network = API_NET.MAIN,
     apiTarget = API_TARGET.MVC,
     purse: wif,
+    // dustLimitFactor = 300,
+    // dustAmount,
     feeb = FEEB,
   }: Mcp02Options) {
     // 初始化API

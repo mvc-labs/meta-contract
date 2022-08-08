@@ -1,18 +1,12 @@
 {
     "version": 8,
     "compilerVersion": "1.17.1+commit.3385a0d",
-    "contract": "NftProto",
-    "md5": "2e716cce5cc3c5ba7c70f12a789b9654",
+    "contract": "AmountCheckProto",
+    "md5": "69201d4610206bbb6a4f0d6ef4b78f3b",
     "structs": [],
     "library": [
         {
-            "name": "NftProto",
-            "params": [],
-            "properties": [],
-            "genericTypes": []
-        },
-        {
-            "name": "Util",
+            "name": "AmountCheckProto",
             "params": [],
             "properties": [],
             "genericTypes": []
@@ -34,7 +28,7 @@
     "stateProps": [],
     "buildType": "debug",
     "file": "",
-    "asm": "OP_16 24 OP_ADD OP_0 OP_PICK 14 OP_ADD OP_0 OP_PICK 14 OP_ADD OP_0 OP_PICK OP_8 OP_ADD OP_0 OP_PICK OP_8 OP_ADD OP_0 OP_PICK 14 OP_ADD OP_0 OP_PICK OP_1 OP_ADD OP_0 OP_PICK 24 OP_ADD",
+    "asm": "OP_1 OP_3 40 OP_5 14 OP_ADD OP_0 OP_PICK 14 OP_ADD",
     "hex": "",
     "sources": [],
     "sourceMap": []
