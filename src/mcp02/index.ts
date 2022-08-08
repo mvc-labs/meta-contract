@@ -1,7 +1,28 @@
+import { Bytes, Int, PubKey, Ripemd160, Sig, toHex } from '../scryptlib'
 import { CodeError, ErrCode } from '../common/error'
 import { API_TARGET, API_NET, mvc, Api } from '..'
 import { FEEB } from './constants'
-import { Mcp02 } from './index.interface'
+import * as BN from '../bn.js'
+import * as TokenUtil from '../common/tokenUtil'
+import { Prevouts } from '../common/Prevouts'
+import { TxComposer } from '../tx-composer'
+import { TokenFactory } from './contract-factory/token'
+import { ContractUtil } from './contractUtil'
+import {
+  CONTRACT_TYPE,
+  P2PKH_UNLOCK_SIZE,
+  PLACE_HOLDER_PUBKEY,
+  PLACE_HOLDER_SIG,
+} from '../common/utils'
+import {
+  TokenTransferCheckFactory,
+  TOKEN_TRANSFER_TYPE,
+} from './contract-factory/tokenTransferCheck'
+import * as ftProto from './contract-proto/token.proto'
+import { DustCalculator } from '../common/DustCalculator'
+import { SizeTransaction } from '@/common/SizeTransaction'
+const Signature = mvc.crypto.Signature
+export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 
 type Purse = {
   privateKey: mvc.PrivateKey
@@ -13,13 +34,57 @@ type Mcp02Options = {
   apiTarget?: API_TARGET
   purse: string
   feeb?: number
+  dustLimitFactor?: number
+  dustAmount?: number
 }
 
-export class FtManager implements Mcp02 {
+type TokenReceiver = {
+  address: string
+  amount: string
+}
+
+type ParamFtUtxo = {
+  txId: string
+  outputIndex: number
+  tokenAddress: string
+  tokenAmount: string
+  wif?: string
+}
+
+export type FtUtxo = {
+  txId: string
+  outputIndex: number
+  satoshis?: number
+  lockingScript?: mvc.Script
+
+  tokenAddress?: mvc.Address
+  tokenAmount?: BN
+
+  satotxInfo?: {
+    txId?: string
+    outputIndex?: number
+    txHex?: string
+    preTxId?: string
+    preOutputIndex?: number
+    preTxHex?: string
+  }
+
+  preTokenAddress?: mvc.Address
+  preTokenAmount?: BN
+  preLockingScript?: mvc.Script
+
+  publicKey?: mvc.PublicKey
+}
+
+export class FtManager {
   private network: API_NET
   private _api: Api
+  private zeroAddress: mvc.Address
   private purse: Purse
   private feeb: number
+  private dustCalculator?: DustCalculator
+  transferCheckCodeHashArray: Bytes[]
+  unlockContractCodeHashArray: Bytes[]
 
   get api() {
     return this._api
@@ -30,6 +95,9 @@ export class FtManager implements Mcp02 {
     apiTarget = API_TARGET.MVC,
     purse: wif,
     feeb = FEEB,
+
+    dustLimitFactor = 300,
+    dustAmount,
   }: Mcp02Options) {
     // 初始化API
     this.network = network
@@ -42,6 +110,12 @@ export class FtManager implements Mcp02 {
       privateKey,
       address,
     }
+
+    // 初始化零地址
+    this.zeroAddress = new mvc.Address('1111111111111111111114oLvT2')
+    this.dustCalculator = new DustCalculator(dustLimitFactor, dustAmount)
+    this.transferCheckCodeHashArray = ContractUtil.transferCheckCodeHashArray
+    this.unlockContractCodeHashArray = ContractUtil.unlockContractCodeHashArray
 
     // 初始化费率
     this.feeb = feeb
@@ -93,7 +167,6 @@ export class FtManager implements Mcp02 {
   }
 
   public async mint() {}
-  public async transfer() {}
   public async merge() {}
 
   private async _pretreatUtxos(
@@ -151,4 +224,803 @@ export class FtManager implements Mcp02 {
     opreturnData?: any
     genesisPublicKey: mvc.PublicKey
   }) {}
+
+  public async transfer({
+    codehash,
+    genesis,
+    receivers,
+
+    senderWif,
+    ftUtxos,
+    ftChangeAddress,
+
+    utxos,
+    changeAddress,
+
+    middleChangeAddress,
+    middlePrivateKey,
+
+    minUtxoSet = true,
+    isMerge,
+    opreturnData,
+    noBroadcast = false,
+  }: {
+    codehash: string
+    genesis: string
+    receivers?: TokenReceiver[]
+
+    senderWif?: string
+    ftUtxos?: ParamFtUtxo[]
+    ftChangeAddress?: string | mvc.Address
+
+    utxos?: ParamUtxo[]
+    changeAddress?: string | mvc.Address
+
+    middleChangeAddress?: string | mvc.Address
+    middlePrivateKey?: string | mvc.PrivateKey
+
+    minUtxoSet?: boolean
+    isMerge?: boolean
+    opreturnData?: any
+    noBroadcast?: boolean
+  }): Promise<{
+    tx: mvc.Transaction
+    txHex: string
+    txid: string
+    routeCheckTx: mvc.Transaction
+    routeCheckTxHex: string
+  }> {
+    // checkParamGenesis(genesis)
+    // checkParamCodehash(codehash)
+    // checkParamReceivers(receivers)
+
+    let senderPrivateKey: mvc.PrivateKey
+    let senderPublicKey: mvc.PublicKey
+    if (senderWif) {
+      senderPrivateKey = new mvc.PrivateKey(senderWif)
+    }
+
+    let utxoInfo = await this._pretreatUtxos(utxos)
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxoInfo.utxos[0].address as mvc.Address
+    }
+
+    if (middleChangeAddress) {
+      middleChangeAddress = new mvc.Address(middleChangeAddress, this.network)
+      middlePrivateKey = new mvc.PrivateKey(middlePrivateKey)
+    } else {
+      middleChangeAddress = utxoInfo.utxos[0].address as mvc.Address
+      middlePrivateKey = utxoInfo.utxoPrivateKeys[0]
+    }
+
+    let ftUtxoInfo = await this._pretreatFtUtxos(
+      ftUtxos,
+      codehash,
+      genesis,
+      senderPrivateKey,
+      senderPublicKey
+    )
+    if (ftChangeAddress) {
+      ftChangeAddress = new mvc.Address(ftChangeAddress, this.network)
+    } else {
+      ftChangeAddress = ftUtxoInfo.ftUtxos[0].tokenAddress as mvc.Address
+    }
+
+    let { txComposer, transferCheckTxComposer } = await this._transfer({
+      codehash,
+      genesis,
+      receivers,
+      ftUtxos: ftUtxoInfo.ftUtxos,
+      ftPrivateKeys: ftUtxoInfo.ftUtxoPrivateKeys,
+      ftChangeAddress,
+      utxos: utxoInfo.utxos,
+      utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
+      changeAddress,
+      opreturnData,
+      isMerge,
+      middleChangeAddress,
+      middlePrivateKey,
+      minUtxoSet,
+    })
+    let routeCheckTxHex = transferCheckTxComposer.getRawHex()
+    let txHex = txComposer.getRawHex()
+
+    if (!noBroadcast) {
+      await this.api.broadcast(routeCheckTxHex)
+      await this.api.broadcast(txHex)
+    }
+
+    return {
+      tx: txComposer.getTx(),
+      txHex,
+      routeCheckTx: transferCheckTxComposer.getTx(),
+      routeCheckTxHex,
+      txid: txComposer.getTxId(),
+    }
+  }
+
+  private async _pretreatFtUtxos(
+    paramFtUtxos: ParamFtUtxo[],
+    codehash?: string,
+    genesis?: string,
+    senderPrivateKey?: mvc.PrivateKey,
+    senderPublicKey?: mvc.PublicKey
+  ): Promise<{ ftUtxos: FtUtxo[]; ftUtxoPrivateKeys: mvc.PrivateKey[] }> {
+    let ftUtxos: FtUtxo[] = []
+    let ftUtxoPrivateKeys = []
+
+    let publicKeys = []
+    if (!paramFtUtxos) {
+      if (senderPrivateKey) {
+        senderPublicKey = senderPrivateKey.toPublicKey()
+      }
+      if (!senderPublicKey)
+        throw new CodeError(
+          ErrCode.EC_INVALID_ARGUMENT,
+          'ftUtxos or senderPublicKey or senderPrivateKey must be provided.'
+        )
+
+      paramFtUtxos = await this.api.getFungibleTokenUnspents(
+        codehash,
+        genesis,
+        senderPublicKey.toAddress(this.network).toString(),
+        20
+      )
+
+      paramFtUtxos.forEach((v) => {
+        if (senderPrivateKey) {
+          ftUtxoPrivateKeys.push(senderPrivateKey)
+        }
+        publicKeys.push(senderPublicKey)
+      })
+    } else {
+      paramFtUtxos.forEach((v) => {
+        if (v.wif) {
+          let privateKey = new mvc.PrivateKey(v.wif)
+          ftUtxoPrivateKeys.push(privateKey)
+          publicKeys.push(privateKey.toPublicKey())
+        }
+      })
+    }
+
+    paramFtUtxos.forEach((v, index) => {
+      ftUtxos.push({
+        txId: v.txId,
+        outputIndex: v.outputIndex,
+        tokenAddress: new mvc.Address(v.tokenAddress, this.network),
+        tokenAmount: new BN(v.tokenAmount.toString()),
+        publicKey: publicKeys[index],
+      })
+    })
+
+    if (ftUtxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_FT, 'Insufficient token.')
+
+    return { ftUtxos, ftUtxoPrivateKeys }
+  }
+
+  private async _prepareTransferTokens({
+    codehash,
+    genesis,
+    receivers,
+    ftUtxos,
+    ftChangeAddress,
+    isMerge,
+    minUtxoSet,
+  }: {
+    codehash: string
+    genesis: string
+    receivers?: TokenReceiver[]
+    ftUtxos: FtUtxo[]
+    ftChangeAddress: mvc.Address
+    isMerge?: boolean
+    minUtxoSet: boolean
+  }) {
+    let mergeUtxos: FtUtxo[] = []
+    let mergeTokenAmountSum: BN = BN.Zero
+    if (isMerge) {
+      mergeUtxos = ftUtxos.slice(0, 20)
+      mergeTokenAmountSum = mergeUtxos.reduce((pre, cur) => cur.tokenAmount.add(pre), BN.Zero)
+      receivers = [
+        {
+          address: ftChangeAddress.toString(),
+          amount: mergeTokenAmountSum.toString(),
+        },
+      ]
+    }
+
+    let tokenOutputArray = receivers.map((v) => ({
+      address: new mvc.Address(v.address, this.network),
+      tokenAmount: new BN(v.amount.toString()),
+    }))
+
+    let outputTokenAmountSum = tokenOutputArray.reduce(
+      (pre, cur) => cur.tokenAmount.add(pre),
+      BN.Zero
+    )
+
+    let inputTokenAmountSum = BN.Zero
+    let _ftUtxos = []
+    for (let i = 0; i < ftUtxos.length; i++) {
+      let ftUtxo = ftUtxos[i]
+      _ftUtxos.push(ftUtxo)
+      inputTokenAmountSum = ftUtxo.tokenAmount.add(inputTokenAmountSum)
+      if (minUtxoSet && inputTokenAmountSum.gte(outputTokenAmountSum)) {
+        break
+      }
+    }
+
+    if (isMerge) {
+      _ftUtxos = mergeUtxos
+      inputTokenAmountSum = mergeTokenAmountSum
+      if (mergeTokenAmountSum.eq(BN.Zero)) {
+        throw new CodeError(ErrCode.EC_INNER_ERROR, 'No utxos to merge.')
+      }
+    }
+
+    //Decide whether to change the token
+    let changeTokenAmount = inputTokenAmountSum.sub(outputTokenAmountSum)
+    if (changeTokenAmount.gt(BN.Zero)) {
+      tokenOutputArray.push({
+        address: ftChangeAddress,
+        tokenAmount: changeTokenAmount,
+      })
+    }
+
+    if (inputTokenAmountSum.lt(outputTokenAmountSum)) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_FT,
+        `Insufficient token. Need ${outputTokenAmountSum} But only ${inputTokenAmountSum}`
+      )
+    }
+
+    ftUtxos = _ftUtxos
+    await this.perfectFtUtxosInfo(ftUtxos, codehash, genesis)
+
+    let tokenInputArray = ftUtxos
+
+    //Choose a transfer plan
+    let inputLength = tokenInputArray.length
+    let outputLength = tokenOutputArray.length
+    let tokenTransferType = TokenTransferCheckFactory.getOptimumType(inputLength, outputLength)
+    if (tokenTransferType == TOKEN_TRANSFER_TYPE.UNSUPPORT) {
+      throw new CodeError(
+        ErrCode.EC_TOO_MANY_FT_UTXOS,
+        'Too many token-utxos, should merge them to continue.'
+      )
+    }
+
+    return {
+      tokenInputArray,
+      tokenOutputArray,
+      tokenTransferType,
+    }
+  }
+
+  private async perfectFtUtxosInfo(
+    ftUtxos: FtUtxo[],
+    codehash: string,
+    genesis: string
+  ): Promise<FtUtxo[]> {
+    //Cache txHex to prevent redundant queries
+    let cachedHexs: {
+      [txid: string]: { waitingRes?: Promise<string>; hex?: string }
+    } = {}
+
+    //Get txHex
+    for (let i = 0; i < ftUtxos.length; i++) {
+      let ftUtxo = ftUtxos[i]
+      if (!cachedHexs[ftUtxo.txId]) {
+        cachedHexs[ftUtxo.txId] = {
+          waitingRes: this.api.getRawTxData(ftUtxo.txId), //async request
+        }
+      }
+    }
+    for (let id in cachedHexs) {
+      //Wait for all async requests to complete
+      if (cachedHexs[id].waitingRes && !cachedHexs[id].hex) {
+        cachedHexs[id].hex = await cachedHexs[id].waitingRes
+      }
+    }
+    ftUtxos.forEach((v) => {
+      v.satotxInfo = v.satotxInfo || {}
+      v.satotxInfo.txHex = cachedHexs[v.txId].hex
+      v.satotxInfo.txId = v.txId
+      v.satotxInfo.outputIndex = v.outputIndex
+    })
+
+    //Get preTxHex
+    let curDataPartObj: ftProto.FormatedDataPart
+    for (let i = 0; i < ftUtxos.length; i++) {
+      let ftUtxo = ftUtxos[i]
+      const tx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
+      if (!curDataPartObj) {
+        let tokenScript = tx.outputs[ftUtxo.outputIndex].script
+        curDataPartObj = ftProto.parseDataPart(tokenScript.toBuffer())
+      }
+      //Find a valid preTx
+      let input = tx.inputs.find((input) => {
+        let script = new mvc.Script(input.script)
+        if (script.chunks.length > 0) {
+          const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
+          if (lockingScriptBuf) {
+            if (ftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
+              return true
+            }
+            let dataPartObj = ftProto.parseDataPart(lockingScriptBuf)
+            dataPartObj.sensibleID = curDataPartObj.sensibleID
+            const newScriptBuf = ftProto.updateScript(lockingScriptBuf, dataPartObj)
+
+            let genesisHash = toHex(mvc.crypto.Hash.sha256ripemd160(newScriptBuf))
+            if (genesisHash == curDataPartObj.genesisHash) {
+              return true
+            }
+          }
+        }
+      })
+      if (!input)
+        throw new CodeError(ErrCode.EC_INNER_ERROR, 'There is no valid preTx of the ftUtxo. ')
+      let preTxId = input.prevTxId.toString('hex')
+      let preOutputIndex = input.outputIndex
+      ftUtxo.satotxInfo.preTxId = preTxId
+      ftUtxo.satotxInfo.preOutputIndex = preOutputIndex
+
+      ftUtxo.satoshis = tx.outputs[ftUtxo.outputIndex].satoshis
+      ftUtxo.lockingScript = tx.outputs[ftUtxo.outputIndex].script
+
+      if (!cachedHexs[preTxId]) {
+        cachedHexs[preTxId] = {
+          waitingRes: this.api.getRawTxData(preTxId),
+        }
+      }
+    }
+    for (let id in cachedHexs) {
+      //Wait for all async requests to complete
+      if (cachedHexs[id].waitingRes && !cachedHexs[id].hex) {
+        cachedHexs[id].hex = await cachedHexs[id].waitingRes
+      }
+    }
+    ftUtxos.forEach((v) => {
+      v.satotxInfo.preTxHex = cachedHexs[v.satotxInfo.preTxId].hex
+
+      const preTx = new mvc.Transaction(v.satotxInfo.preTxHex)
+      let dataPartObj = ftProto.parseDataPart(
+        preTx.outputs[v.satotxInfo.preOutputIndex].script.toBuffer()
+      )
+      v.preTokenAmount = dataPartObj.tokenAmount
+      if (dataPartObj.tokenAddress == '0000000000000000000000000000000000000000') {
+        v.preTokenAddress = this.zeroAddress
+      } else {
+        v.preTokenAddress = mvc.Address.fromPublicKeyHash(
+          Buffer.from(dataPartObj.tokenAddress, 'hex'),
+          this.network
+        )
+      }
+      v.preLockingScript = preTx.outputs[v.satotxInfo.preOutputIndex].script
+    })
+
+    ftUtxos.forEach((v) => {
+      v.preTokenAmount = new BN(v.preTokenAmount.toString())
+    })
+
+    return ftUtxos
+  }
+
+  private async _transfer({
+    codehash,
+    genesis,
+
+    receivers,
+
+    ftUtxos,
+    ftPrivateKeys,
+    ftChangeAddress,
+
+    utxos,
+    utxoPrivateKeys,
+    changeAddress,
+
+    middlePrivateKey,
+    middleChangeAddress,
+
+    isMerge,
+    opreturnData,
+    minUtxoSet,
+  }: {
+    codehash: string
+    genesis: string
+
+    receivers?: TokenReceiver[]
+
+    ftUtxos: FtUtxo[]
+    ftPrivateKeys: mvc.PrivateKey[]
+    ftChangeAddress: mvc.Address
+
+    utxos: Utxo[]
+    utxoPrivateKeys: mvc.PrivateKey[]
+    changeAddress: mvc.Address
+
+    middlePrivateKey?: mvc.PrivateKey
+    middleChangeAddress: mvc.Address
+
+    isMerge?: boolean
+    opreturnData?: any
+    minUtxoSet: boolean
+  }) {
+    if (utxos.length > 3) {
+      throw new CodeError(
+        ErrCode.EC_UTXOS_MORE_THAN_3,
+        'Bsv utxos should be no more than 3 in the transfer operation, please merge it first '
+      )
+    }
+
+    if (!middleChangeAddress) {
+      middleChangeAddress = utxos[0].address
+      middlePrivateKey = utxoPrivateKeys[0]
+    }
+
+    let { tokenInputArray, tokenOutputArray, tokenTransferType } =
+      await this._prepareTransferTokens({
+        codehash,
+        genesis,
+        receivers,
+        ftUtxos,
+        ftChangeAddress,
+        isMerge,
+        minUtxoSet,
+      })
+
+    let estimateSatoshis = this._calTransferEstimateFee({
+      p2pkhInputNum: utxos.length,
+      tokenInputArray,
+      tokenOutputArray,
+      tokenTransferType,
+      opreturnData,
+    })
+
+    const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    if (balance < estimateSatoshis) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_BSV,
+        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
+      )
+    }
+
+    ftUtxos = tokenInputArray
+    const defaultFtUtxo = tokenInputArray[0]
+    const ftUtxoTx = new mvc.Transaction(defaultFtUtxo.satotxInfo.txHex)
+    const tokenLockingScript = ftUtxoTx.outputs[defaultFtUtxo.outputIndex].script
+
+    //create routeCheck contract
+    let tokenTransferCheckContract = TokenTransferCheckFactory.createContract(tokenTransferType)
+    tokenTransferCheckContract.setFormatedDataPart({
+      nSenders: tokenInputArray.length,
+      receiverTokenAmountArray: tokenOutputArray.map((v) => v.tokenAmount),
+
+      receiverArray: tokenOutputArray.map((v) => v.address),
+      nReceivers: tokenOutputArray.length,
+      tokenCodeHash: toHex(ftProto.getContractCodeHash(tokenLockingScript.toBuffer())),
+      tokenID: toHex(ftProto.getTokenID(tokenLockingScript.toBuffer())),
+    })
+
+    const transferCheckTxComposer = new TxComposer()
+
+    //tx addInput utxo
+    const transferCheck_p2pkhInputIndexs = utxos.map((utxo) => {
+      const inputIndex = transferCheckTxComposer.appendP2PKHInput(utxo as any)
+      transferCheckTxComposer.addSigHashInfo({
+        inputIndex,
+        address: utxo.address.toString(),
+        sighashType,
+        contractType: CONTRACT_TYPE.P2PKH,
+      })
+      return inputIndex
+    })
+
+    const transferCheckOutputIndex = transferCheckTxComposer.appendOutput({
+      lockingScript: tokenTransferCheckContract.lockingScript,
+      satoshis: this.getDustThreshold(tokenTransferCheckContract.lockingScript.toBuffer().length),
+    })
+
+    let changeOutputIndex = transferCheckTxComposer.appendChangeOutput(
+      middleChangeAddress,
+      this.feeb
+    )
+    let unsignSigPlaceHolderSize = 0
+    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+      transferCheck_p2pkhInputIndexs.forEach((inputIndex) => {
+        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+        transferCheckTxComposer.unlockP2PKHInput(privateKey, inputIndex)
+      })
+    } else {
+      //To supplement the size calculation when unsigned
+      transferCheck_p2pkhInputIndexs.forEach((v) => {
+        unsignSigPlaceHolderSize += P2PKH_UNLOCK_SIZE
+      })
+      //Each ftUtxo need to unlock with the size
+      unsignSigPlaceHolderSize = unsignSigPlaceHolderSize * ftUtxos.length
+    }
+
+    utxos = [
+      {
+        txId: transferCheckTxComposer.getTxId(),
+        satoshis: transferCheckTxComposer.getOutput(changeOutputIndex).satoshis,
+        outputIndex: changeOutputIndex,
+        address: middleChangeAddress,
+      },
+    ]
+    utxoPrivateKeys = utxos.map((v) => middlePrivateKey).filter((v) => v)
+
+    let transferCheckUtxo = {
+      txId: transferCheckTxComposer.getTxId(),
+      outputIndex: transferCheckOutputIndex,
+      satoshis: transferCheckTxComposer.getOutput(transferCheckOutputIndex).satoshis,
+      lockingScript: transferCheckTxComposer.getOutput(transferCheckOutputIndex).script,
+    }
+
+    let transferCheckTx = transferCheckTxComposer.getTx()
+
+    const txComposer = new TxComposer()
+    let prevouts = new Prevouts()
+
+    let inputTokenScript: mvc.Script
+    let inputTokenAmountArray = Buffer.alloc(0)
+    let inputTokenAddressArray = Buffer.alloc(0)
+
+    const ftUtxoInputIndexs = ftUtxos.map((ftUtxo) => {
+      const inputIndex = txComposer.appendInput(ftUtxo)
+      prevouts.addVout(ftUtxo.txId, ftUtxo.outputIndex)
+      txComposer.addSigHashInfo({
+        inputIndex,
+        address: ftUtxo.tokenAddress.toString(),
+        sighashType,
+        contractType: CONTRACT_TYPE.BCP02_TOKEN,
+      })
+      inputTokenScript = ftUtxo.lockingScript
+      inputTokenAddressArray = Buffer.concat([
+        inputTokenAddressArray,
+        ftUtxo.tokenAddress.hashBuffer,
+      ])
+
+      inputTokenAmountArray = Buffer.concat([
+        inputTokenAmountArray,
+        ftUtxo.tokenAmount.toBuffer({
+          endian: 'little',
+          size: 8,
+        }),
+      ])
+      return inputIndex
+    })
+
+    //tx addInput utxo
+    const p2pkhInputIndexs = utxos.map((utxo) => {
+      const inputIndex = txComposer.appendP2PKHInput(utxo as any)
+      prevouts.addVout(utxo.txId, utxo.outputIndex)
+      txComposer.addSigHashInfo({
+        inputIndex,
+        address: utxo.address.toString(),
+        sighashType,
+        contractType: CONTRACT_TYPE.P2PKH,
+      })
+      return inputIndex
+    })
+
+    //添加routeCheck为最后一个输入
+    const transferCheckInputIndex = txComposer.appendInput(transferCheckUtxo)
+    prevouts.addVout(transferCheckUtxo.txId, transferCheckUtxo.outputIndex)
+
+    let recervierArray = Buffer.alloc(0)
+    let receiverTokenAmountArray = Buffer.alloc(0)
+    let outputSatoshiArray = Buffer.alloc(0)
+    const tokenOutputLen = tokenOutputArray.length
+
+    for (let i = 0; i < tokenOutputLen; i++) {
+      const tokenOutput = tokenOutputArray[i]
+      const address = tokenOutput.address
+      const outputTokenAmount = tokenOutput.tokenAmount
+
+      const lockingScriptBuf = ftProto.getNewTokenScript(
+        inputTokenScript.toBuffer(),
+        address.hashBuffer,
+        outputTokenAmount
+      )
+      let outputIndex = txComposer.appendOutput({
+        lockingScript: mvc.Script.fromBuffer(lockingScriptBuf),
+        satoshis: this.getDustThreshold(lockingScriptBuf.length),
+      })
+      recervierArray = Buffer.concat([recervierArray, address.hashBuffer])
+      const tokenBuf = outputTokenAmount.toBuffer({
+        endian: 'little',
+        size: 8,
+      })
+      receiverTokenAmountArray = Buffer.concat([receiverTokenAmountArray, tokenBuf])
+      const satoshiBuf = BN.fromNumber(txComposer.getOutput(outputIndex).satoshis).toBuffer({
+        endian: 'little',
+        size: 8,
+      })
+      outputSatoshiArray = Buffer.concat([outputSatoshiArray, satoshiBuf])
+    }
+
+    //tx addOutput OpReturn
+    let opreturnScriptHex = ''
+    if (opreturnData) {
+      const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
+      opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
+    }
+
+    //The first round of calculations get the exact size of the final transaction, and then change again
+    //Due to the change, the script needs to be unlocked again in the second round
+    //let the fee to be exact in the second round
+    for (let c = 0; c < 2; c++) {
+      txComposer.clearChangeOutput()
+      const changeOutputIndex = txComposer.appendChangeOutput(
+        changeAddress,
+        this.feeb,
+        unsignSigPlaceHolderSize
+      )
+
+      ftUtxoInputIndexs.forEach((inputIndex, idx) => {
+        let ftUtxo = ftUtxos[idx]
+        let senderPrivateKey = ftPrivateKeys[idx]
+
+        let dataPartObj = ftProto.parseDataPart(ftUtxo.lockingScript.toBuffer())
+        const dataPart = ftProto.newDataPart(dataPartObj)
+
+        const tokenContract = TokenFactory.createContract(
+          this.transferCheckCodeHashArray,
+          this.unlockContractCodeHashArray
+        )
+
+        tokenContract.setDataPart(toHex(dataPart))
+        const unlockingContract = tokenContract.unlock({
+          txPreimage: txComposer.getInputPreimage(inputIndex),
+          tokenInputIndex: inputIndex,
+          prevouts: new Bytes(prevouts.toHex()),
+
+          checkInputIndex: transferCheckInputIndex,
+          checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
+          nReceivers: tokenOutputLen,
+          prevTokenAddress: new Bytes(toHex(ftUtxo.preTokenAddress.hashBuffer)),
+          prevTokenAmount: new Int(ftUtxo.preTokenAmount.toString(10)),
+          senderPubKey: new PubKey(
+            ftUtxo.publicKey ? toHex(ftUtxo.publicKey.toBuffer()) : PLACE_HOLDER_PUBKEY
+          ),
+          senderSig: new Sig(
+            senderPrivateKey
+              ? toHex(txComposer.getTxFormatSig(senderPrivateKey, inputIndex))
+              : PLACE_HOLDER_SIG
+          ),
+          operation: ftProto.OP_TRANSFER,
+        })
+        // if (this.debug && senderPrivateKey) {
+        //   let txContext = {
+        //     tx: txComposer.getTx(),
+        //     inputIndex: inputIndex,
+        //     inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
+        //   }
+        //   let ret = unlockingContract.verify(txContext)
+        //   if (ret.success == false) throw ret
+        // }
+
+        txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
+      })
+
+      let unlockingContract = tokenTransferCheckContract.unlock({
+        txPreimage: txComposer.getInputPreimage(transferCheckInputIndex),
+        tokenScript: new Bytes(inputTokenScript.toHex()),
+        prevouts: new Bytes(prevouts.toHex()),
+
+        inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
+        inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
+        receiverSatoshiArray: new Bytes(toHex(outputSatoshiArray)),
+        changeSatoshis: new Int(
+          changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0
+        ),
+        changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
+        opReturnScript: new Bytes(opreturnScriptHex),
+      })
+
+      // if (this.debug) {
+      //   let txContext = {
+      //     tx: txComposer.getTx(),
+      //     inputIndex: transferCheckInputIndex,
+      //     inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
+      //   }
+      //   let ret = unlockingContract.verify(txContext)
+      //   if (ret.success == false) throw ret
+      // }
+
+      txComposer
+        .getInput(transferCheckInputIndex)
+        .setScript(unlockingContract.toScript() as mvc.Script)
+    }
+
+    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+      p2pkhInputIndexs.forEach((inputIndex) => {
+        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+        txComposer.unlockP2PKHInput(privateKey, inputIndex)
+      })
+    }
+    this._checkTxFeeRate(txComposer)
+
+    return { transferCheckTxComposer, txComposer }
+  }
+
+  private _calTransferEstimateFee({
+    p2pkhInputNum = 10,
+    tokenInputArray,
+    tokenOutputArray,
+    tokenTransferType,
+    opreturnData,
+  }: {
+    p2pkhInputNum: number
+    tokenInputArray: FtUtxo[]
+    tokenOutputArray: { address: mvc.Address; tokenAmount: BN }[]
+    tokenTransferType: TOKEN_TRANSFER_TYPE
+    opreturnData: any
+  }) {
+    let inputTokenNum = tokenInputArray.length
+    let outputTokenNum = tokenOutputArray.length
+    let dummyTransferCheckContract = TokenTransferCheckFactory.getDummyInstance(tokenTransferType)
+    let routeCheckLockingSize = TokenTransferCheckFactory.getLockingScriptSize(tokenTransferType)
+    let routeCheckUnlockingSize = TokenTransferCheckFactory.calUnlockingScriptSize(
+      tokenTransferType,
+      p2pkhInputNum,
+      inputTokenNum,
+      outputTokenNum,
+      opreturnData
+    )
+    let tokenUnlockingSize = TokenFactory.calUnlockingScriptSize(
+      dummyTransferCheckContract,
+      p2pkhInputNum,
+      inputTokenNum,
+      outputTokenNum
+    )
+
+    let tokenLockingSize = TokenFactory.getLockingScriptSize()
+
+    let stx1 = new SizeTransaction(this.feeb, this.dustCalculator)
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx1.addP2PKHInput()
+    }
+    stx1.addOutput(routeCheckLockingSize)
+    stx1.addP2PKHOutput()
+
+    let stx = new SizeTransaction(this.feeb, this.dustCalculator)
+    for (let i = 0; i < inputTokenNum; i++) {
+      stx.addInput(tokenUnlockingSize, tokenInputArray[i].satoshis)
+    }
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx.addP2PKHInput()
+    }
+    stx.addInput(
+      routeCheckUnlockingSize,
+      this.dustCalculator.getDustThreshold(routeCheckLockingSize)
+    )
+
+    for (let i = 0; i < outputTokenNum; i++) {
+      stx.addOutput(tokenLockingSize)
+    }
+    if (opreturnData) {
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+    }
+    stx.addP2PKHOutput()
+    return stx1.getFee() + stx.getFee()
+  }
+
+  private getDustThreshold(size: number) {
+    return this.dustCalculator.getDustThreshold(size)
+  }
+
+  private _checkTxFeeRate(txComposer: TxComposer) {
+    //Determine whether the final fee is sufficient
+    let feeRate = txComposer.getFeeRate()
+    if (feeRate < this.feeb) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_BSV,
+        `Insufficient balance.The fee rate should not be less than ${this.feeb}, but in the end it is ${feeRate}.`
+      )
+    }
+  }
 }

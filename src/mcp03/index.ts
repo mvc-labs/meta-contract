@@ -159,58 +159,52 @@ export class FtManager implements Mcp02 {
     genesisPublicKey: mvc.PublicKey
   }) {
     //create genesis contract
-    const contractParams = {
-      tokenName,
-      tokenSymbol,
-      decimalNum,
-      address: changeAddress,
-    }
-    let genesisContract = TokenGenesisFactory.create(contractParams)
-
-    let estimateSatoshis = await this.getGenesisEstimateFee({
-      opreturnData,
-      utxoMaxCount: utxos.length,
-    })
-    const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
-    if (balance < estimateSatoshis) {
-      throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
-        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
-      )
-    }
-    const txComposer = new TxComposer()
-    const p2pkhInputIndexs = utxos.map((utxo) => {
-      const inputIndex = txComposer.appendP2PKHInput(utxo)
-      txComposer.addSigHashInfo({
-        inputIndex,
-        address: utxo.address.toString(),
-        sighashType,
-        contractType: CONTRACT_TYPE.P2PKH,
-      })
-      return inputIndex
-    })
-
-    const genesisOutputIndex = txComposer.appendOutput({
-      lockingScript: genesisContract.lockingScript,
-      satoshis: this.getDustThreshold(genesisContract.lockingScript.toBuffer().length),
-    })
-
-    //If there is opReturn, add it to the second output
-    if (opreturnData) {
-      txComposer.appendOpReturnOutput(opreturnData)
-    }
-
-    txComposer.appendChangeOutput(changeAddress, this.feeb)
-    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
-      p2pkhInputIndexs.forEach((inputIndex) => {
-        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
-        txComposer.unlockP2PKHInput(privateKey, inputIndex)
-      })
-    }
-
-    this._checkTxFeeRate(txComposer)
-
-    return { txComposer }
+    // const contractParams = {
+    //   tokenName,
+    //   tokenSymbol,
+    //   decimalNum,
+    //   address: changeAddress,
+    // }
+    // let genesisContract = TokenGenesisFactory.create(contractParams)
+    // let estimateSatoshis = await this.getGenesisEstimateFee({
+    //   opreturnData,
+    //   utxoMaxCount: utxos.length,
+    // })
+    // const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    // if (balance < estimateSatoshis) {
+    //   throw new CodeError(
+    //     ErrCode.EC_INSUFFICIENT_BSV,
+    //     `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
+    //   )
+    // }
+    // const txComposer = new TxComposer()
+    // const p2pkhInputIndexs = utxos.map((utxo) => {
+    //   const inputIndex = txComposer.appendP2PKHInput(utxo)
+    //   txComposer.addSigHashInfo({
+    //     inputIndex,
+    //     address: utxo.address.toString(),
+    //     sighashType,
+    //     contractType: CONTRACT_TYPE.P2PKH,
+    //   })
+    //   return inputIndex
+    // })
+    // const genesisOutputIndex = txComposer.appendOutput({
+    //   lockingScript: genesisContract.lockingScript,
+    //   satoshis: this.getDustThreshold(genesisContract.lockingScript.toBuffer().length),
+    // })
+    // //If there is opReturn, add it to the second output
+    // if (opreturnData) {
+    //   txComposer.appendOpReturnOutput(opreturnData)
+    // }
+    // txComposer.appendChangeOutput(changeAddress, this.feeb)
+    // if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+    //   p2pkhInputIndexs.forEach((inputIndex) => {
+    //     let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+    //     txComposer.unlockP2PKHInput(privateKey, inputIndex)
+    //   })
+    // }
+    // this._checkTxFeeRate(txComposer)
+    // return { txComposer }
   }
 
   private async _genesis({
