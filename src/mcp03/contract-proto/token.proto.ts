@@ -1,4 +1,4 @@
-import * as BN from '../../bn.js'
+import * as BN from '../../bn.js/index.js'
 import * as mvc from '../../mvc'
 import * as proto from '../../common/protoheader'
 import * as Utils from '../../common/utils'

@@ -1,5 +1,5 @@
 import { CodeError, ErrCode } from '../common/error'
-import { API_TARGET, API_NET, mvc, Api } from '../'
+import { API_TARGET, API_NET, mvc, Api } from '..'
 import { FEEB, PROTO_FLAG, TOKEN_NAME_LEN, TX_VERSION, SIG_HASH_ALL } from './constants'
 import { Mcp02 } from './index.interface'
 import * as ContractFactory from './contract-factory'

@@ -15,9 +15,9 @@ import { inputSatoshis, dummyTxId } from '../../scrypt_helper'
 
 import { privateKey } from '../../privateKey'
 
-import ProtoHeader = require('../../src/mcp02/deployments/protoheader')
-import TokenProto = require('../../src/mcp02/deployments/tokenProto')
-import Common = require('../../src/mcp02/deployments/common')
+import ProtoHeader = require('../../src/mcp03/deployments/protoheader')
+import TokenProto = require('../../src/mcp03/deployments/tokenProto')
+import Common = require('../../src/mcp03/deployments/common')
 
 const genContract = Common.genContract
 const addInput = Common.addInput

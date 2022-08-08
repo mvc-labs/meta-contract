@@ -1,29 +1,31 @@
-import "util.scrypt";
-
 library ProtoHeader {
 
-  // <proto header> = <proto_version(4 bytes)> + <proto_type(4 bytes)> + <'sesible'(8 bytes)>
-  static const bytes PROTO_FLAG = b'73656e7369626c65';
-  static const int PROTO_TYPE = 1;
+    // <proto header> = <proto_version(4 bytes)> + <proto_type(4 bytes)> + <'metacontract'(12 bytes)>
+    static const bytes PROTO_FLAG = b'6d657461636f6e7472616374'; // metacontract
 
-  static const int PROTO_VERSION_LEN = 4;
-  static const int PROTO_TYPE_LEN = 4;
-  static const int PROTO_FLAG_LEN = 8;
+    static const int HASH_ID_LEN = 20;
+    static const int HASH_LEN = 20;
+    static const int GENESIS_TXID_LEN = 36;
+    static const int AMOUNT_LEN = 8;
+    static const int ADDRESS_LEN = 20;
+    static const int GENESIS_FLAG_LEN = 1;
+    static const int DATA_VERSION_LEN = 5;
+    static const int UNIQUE_ID_LEN = 20;
+    static const int TX_HASH_LEN = 32;
+    static const int BLOCK_NUM_LEN = 4;
 
-  static const int TYPE_OFFSET = 12;
-  static const int VERSION_OFFSET = 16;
+    static const int PROTO_VERSION_LEN = 4;
+    static const int PROTO_TYPE_LEN = 4;
+    static const int PROTO_FLAG_LEN = 12;
 
-  static const int HEADER_LEN = VERSION_OFFSET;
+    static const int HEADER_LEN = 20;
 
-  static function getProtoFlag(bytes script, int slen): bytes {
-    return script[slen - PROTO_FLAG_LEN: slen];
-  }
+    static const bytes NULL_GENESIS_TXID = b'000000000000000000000000000000000000000000000000000000000000000000000000';
+    static const int TX_VERSION = 10;
 
-  static function getProtoType(bytes script, int slen): int {
-    return Util.fromLEUnsigned(script[slen - TYPE_OFFSET: slen - TYPE_OFFSET + PROTO_TYPE_LEN]);
-  }
+    static const SigHashType SIG_HASH_ALL = SigHash.ALL | SigHash.FORKID;
+    static const SigHashType SIG_HASH_SINGLE = SigHash.SINGLE | SigHash.FORKID;
 
-  static function getProtoVersion(bytes script, int slen): int {
-      return Util.fromLEUnsigned(script[slen - VERSION_OFFSET: slen - VERSION_OFFSET + PROTO_VERSION_LEN]);
-  }
+    static const int PROTO_HEADER_OFFSET = ProtoHeader.HEADER_LEN + DATA_VERSION_LEN;
+
 }

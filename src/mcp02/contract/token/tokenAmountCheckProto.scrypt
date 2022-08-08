@@ -1,0 +1,15 @@
+import "../protoHeader.scrypt";
+
+// dataPart: inputIndexArray(optional) + nSenders(4 bytes) + receiverTokenAmountArray + receiverArray + nReceivers(4 bytes) + tokenCodeHash + tokenID
+
+library AmountCheckProto {
+
+    static const int OP_PUSH_LEN = 2;
+    static const int DATA_VERSION_LEN = 5;
+
+    static const int TOKEN_ID_OFFSET = ProtoHeader.DATA_VERSION_LEN + ProtoHeader.UNIQUE_ID_LEN;
+
+    static const int TOKEN_CODE_HASH_OFFSET = TOKEN_ID_OFFSET + ProtoHeader.HASH_LEN;
+
+    static const int NRECERIVERS_OFFSET =  TOKEN_CODE_HASH_OFFSET + 4;
+}

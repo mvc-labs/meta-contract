@@ -1,4 +1,4 @@
-import * as BN from '../../bn.js'
+import * as BN from '../../bn.js/index.js'
 import * as mvc from '../../mvc'
 import { ContractAdapter } from '../../common/ContractAdapter'
 import {

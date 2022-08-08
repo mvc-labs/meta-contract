@@ -1,7 +1,7 @@
-import ProtoHeader = require('../../src/mcp02/deployments/protoheader')
-import Common = require('../../src/mcp02/deployments/common')
+import ProtoHeader = require('../../src/mcp03/deployments/protoheader')
+import Common = require('../../src/mcp03/deployments/common')
 import { mvc } from 'mvc-scryptlib'
-import TokenProto = require('../../src/mcp02/deployments/tokenProto')
+import TokenProto = require('../../src/mcp03/deployments/tokenProto')
 
 const tokenVersion = Common.getUInt32Buf(1)
 const tokenType = Common.getUInt32Buf(1)

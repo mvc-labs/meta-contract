@@ -1,4 +1,4 @@
-import * as BN from '../../bn.js'
+import * as BN from '../../bn.js/index.js'
 import * as mvc from '../../mvc'
 import * as TokenUtil from '../../common/tokenUtil'
 const NFT_ID_LEN = 36

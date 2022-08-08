@@ -168,8 +168,9 @@ async function sendTx(tx) {
 }
 
 function compileContract(fileName, options) {
-  const filePath = path.join(__dirname, 'src/mcp02/contracts', fileName)
-  const out = path.join(__dirname, 'src/mcp02/deployments/fixture/autoGen')
+  const filePath = path.join(__dirname, 'src/mcp02/contract', fileName)
+  // const out = path.join(__dirname, 'src/mcp02/deployments/fixture/autoGen')
+  const out = path.join(__dirname, 'src/mcp02/contract-desc')
 
   const result = compileContractImpl(
     filePath,

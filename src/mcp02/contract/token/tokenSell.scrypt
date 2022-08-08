@@ -1,0 +1,18 @@
+import "../protoheader.scrypt";
+
+contract TokenSell {
+
+    Ripemd160 bsvRecAddr;
+    int bsvRecAmount;
+
+    public function unlock(
+        SigHashPreimage txPreimage
+    ) {
+        require(Tx.checkPreimageSigHashType(txPreimage, ProtoHeader.SIG_HASH_SINGLE));
+
+        bytes outputScript = Utils.buildPublicKeyHashScript(this.bsvRecAddr);
+        bytes output = Utils.buildOutput(outputScript, this.bsvRecAmount);
+
+        require(hash256(output) == SigHash.hashOutputs(txPreimage));
+    }
+}
