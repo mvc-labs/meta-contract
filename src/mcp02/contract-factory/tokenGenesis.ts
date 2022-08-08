@@ -30,14 +30,15 @@ import { TokenFactory } from './token'
 const genesisTokenIDTxid = '0000000000000000000000000000000000000000000000000000000000000000'
 export class TokenGenesis extends ContractAdapter {
   private constuctParams: {
-    pubKey: mvc.PublicKey
+    // pubKey: mvc.PublicKey
   }
   private _formatedDataPart: ftProto.FormatedDataPart
 
-  constructor(constuctParams: { pubKey: mvc.PublicKey }) {
+  // constructor(constuctParams: { pubKey: mvc.PublicKey }) {
+  constructor(constuctParams: {}) {
     let desc = require('../contract-desc/tokenGenesis_desc.json')
     let ClassObj = buildContractClass(desc)
-    let contract = new ClassObj(new PubKey(toHex(constuctParams.pubKey)))
+    let contract = new ClassObj()
     super(contract)
 
     this.constuctParams = constuctParams
@@ -137,12 +138,12 @@ export class TokenGenesisFactory {
    * @param {number} decimalNum the token amount decimal number
    * @returns
    */
-  public static createContract(issuerPubKey: mvc.PublicKey) {
-    return new TokenGenesis({ pubKey: issuerPubKey })
+  public static createContract() {
+    return new TokenGenesis({})
   }
 
   public static getDummyInstance() {
-    let contract = this.createContract(dummyPk)
+    let contract = this.createContract()
     contract.setFormatedDataPart({})
     return contract
   }

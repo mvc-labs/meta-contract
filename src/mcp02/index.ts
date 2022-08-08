@@ -14,6 +14,7 @@ import {
   PLACE_HOLDER_PUBKEY,
   PLACE_HOLDER_SIG,
 } from '../common/utils'
+import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
 import {
   TokenTransferCheckFactory,
   TOKEN_TRANSFER_TYPE,
@@ -28,7 +29,7 @@ type Utxo = {
   txId: string
   outputIndex: number
   satoshis: number
-  address?: string | mvc.Address
+  address: mvc.Address
 }
 
 type GenesisOptions = {
@@ -179,14 +180,12 @@ export class FtManager {
     // validate params
     // ...
 
-    let utxoInfo = await this._pretreatUtxos()
-
-    // if (changeAddress) {
-    //   changeAddress = new mvc.Address(changeAddress, this.network)
-    // } else {
-    changeAddress = utxoInfo.utxos[0].address
-    // }
-
+    let utxoInfo = await this._pretreatUtxos(utxos)
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxoInfo.utxos[0].address
+    }
     let genesisPrivateKey = new mvc.PrivateKey(genesisWif)
     let genesisPublicKey = genesisPrivateKey.toPublicKey()
 
@@ -198,12 +197,11 @@ export class FtManager {
       utxos: utxoInfo.utxos,
       utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
       changeAddress: changeAddress as mvc.Address,
-      // opreturnData,
-      genesisPublicKey,
+      opreturnData,
+      // genesisPublicKey,
     })
 
     // let txHex = txComposer.getRawHex()
-
     // if (!noBroadcast) {
     //   await this.api.broadcast(txHex)
     // }
@@ -262,6 +260,33 @@ export class FtManager {
     return { utxos, utxoPrivateKeys }
   }
 
+  /**
+   * Estimate the cost of genesis
+   * @param opreturnData
+   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @returns
+   */
+  public async getGenesisEstimateFee({
+    opreturnData,
+    utxoMaxCount = 10,
+  }: {
+    opreturnData?: any
+    utxoMaxCount?: number
+  }) {
+    const p2pkhInputNum = utxoMaxCount
+    const sizeOfTokenGenesis = TokenGenesisFactory.getLockingScriptSize()
+    let stx = new SizeTransaction(this.feeb, this.dustCalculator)
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx.addP2PKHInput()
+    }
+    stx.addOutput(sizeOfTokenGenesis)
+    if (opreturnData) {
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+    }
+    stx.addP2PKHOutput()
+    return stx.getFee()
+  }
+
   private async _genesis({
     tokenName,
     tokenSymbol,
@@ -270,7 +295,6 @@ export class FtManager {
     utxoPrivateKeys,
     changeAddress,
     opreturnData,
-    genesisPublicKey,
   }: {
     tokenName: string
     tokenSymbol: string
@@ -279,8 +303,60 @@ export class FtManager {
     utxoPrivateKeys?: mvc.PrivateKey[]
     changeAddress?: mvc.Address
     opreturnData?: any
-    genesisPublicKey: mvc.PublicKey
-  }) {}
+  }) {
+    //create genesis contract
+    let genesisContract = TokenGenesisFactory.createContract()
+    genesisContract.setFormatedDataPart({
+      tokenName,
+      tokenSymbol,
+      decimalNum,
+      address: this.purse.address,
+    })
+    let estimateSatoshis = await this.getGenesisEstimateFee({
+      opreturnData,
+      utxoMaxCount: utxos.length,
+    })
+    const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    if (balance < estimateSatoshis) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_BSV,
+        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
+      )
+    }
+    const txComposer = new TxComposer()
+    const p2pkhInputIndexs = utxos.map((utxo) => {
+      const inputIndex = txComposer.appendP2PKHInput(utxo)
+      txComposer.addSigHashInfo({
+        inputIndex,
+        address: utxo.address.toString(),
+        sighashType,
+        contractType: CONTRACT_TYPE.P2PKH,
+      })
+      return inputIndex
+    })
+
+    const genesisOutputIndex = txComposer.appendOutput({
+      lockingScript: genesisContract.lockingScript,
+      satoshis: this.getDustThreshold(genesisContract.lockingScript.toBuffer().length),
+    })
+
+    //If there is opReturn, add it to the second output
+    if (opreturnData) {
+      txComposer.appendOpReturnOutput(opreturnData)
+    }
+
+    txComposer.appendChangeOutput(changeAddress, this.feeb)
+    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+      p2pkhInputIndexs.forEach((inputIndex) => {
+        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+        txComposer.unlockP2PKHInput(privateKey, inputIndex)
+      })
+    }
+
+    this._checkTxFeeRate(txComposer)
+
+    return { txComposer }
+  }
 
   public async transfer({
     codehash,
@@ -1002,7 +1078,7 @@ export class FtManager {
     // this._checkTxFeeRate(txComposer)
 
     // return { transferCheckTxComposer, txComposer }
-    return {txComposer: undefined, transferCheckTxComposer: undefined}
+    return { txComposer: undefined, transferCheckTxComposer: undefined }
   }
 
   private _calTransferEstimateFee({
