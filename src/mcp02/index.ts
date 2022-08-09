@@ -9,13 +9,7 @@ import { Prevouts } from '../common/Prevouts'
 import { TxComposer } from '../tx-composer'
 import { TokenFactory } from './contract-factory/token'
 import { ContractUtil } from './contractUtil'
-import {
-  getTxInputProof,
-  getTxOutputProof,
-  getUInt32Buf,
-  loadDescription,
-} from './deployments/common'
-const jsonDescr = loadDescription('../contract-desc/txUtil_desc.json')
+const jsonDescr = require("./contract-desc/txUtil_desc.json")
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
 
 import {
@@ -32,7 +26,6 @@ import {
 import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
 import { SizeTransaction } from '../common/SizeTransaction'
-import { getEmptyTxOutputProof } from './deployments/common'
 const Signature = mvc.crypto.Signature
 const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
@@ -1184,7 +1177,7 @@ export class FtManager {
         const amountCheckTx = transferCheckTxComposer.getTx()
         const amountCheckOutputIndex = 0
         const amountCheckTxOutputProofInfo = new TxOutputProof(
-          getTxOutputProof(amountCheckTx, amountCheckOutputIndex)
+          TokenUtil.getTxOutputProof(amountCheckTx, amountCheckOutputIndex)
         )
         const amountCheckScriptBuf = amountCheckTx.outputs[amountCheckOutputIndex].script.toBuffer()
 
@@ -1195,14 +1188,14 @@ export class FtManager {
         // const prevTokenAmount = TokenProto.getTokenAmount(scriptBuf)
 
         const tokenTx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
-        const inputRes = getTxInputProof(tokenTx, prevTokenInputIndex)
+        const inputRes = TokenUtil.getTxInputProof(tokenTx, prevTokenInputIndex)
         const tokenTxInputProof = new TxInputProof(inputRes[0])
         const tokenTxHeader = inputRes[1]
         const prevTokenTxOutputProof = new TxOutputProof(
-          getTxOutputProof(ftUtxo.prevTokenTx, ftUtxo.prevTokenOutputIndex)
+          TokenUtil.getTxOutputProof(ftUtxo.prevTokenTx, ftUtxo.prevTokenOutputIndex)
         )
 
-        const tokenTxOutputProof = getTxOutputProof(tokenTx, ftUtxo.outputIndex)
+        const tokenTxOutputProof = TokenUtil.getTxOutputProof(tokenTx, ftUtxo.outputIndex)
         tokenTxHeaderArray = Buffer.concat([
           tokenTxHeaderArray,
           Buffer.from(tokenTxOutputProof.txHeader.toHex(), 'hex'),
@@ -1210,7 +1203,7 @@ export class FtManager {
         const hashProofBuf = Buffer.from(tokenTxOutputProof.hashProof.toHex(), 'hex')
         tokenTxHashProofArray = Buffer.concat([
           tokenTxHashProofArray,
-          getUInt32Buf(hashProofBuf.length),
+          TokenUtil.getUInt32Buf(hashProofBuf.length),
           hashProofBuf,
         ])
         tokenSatoshiBytesArray = Buffer.concat([
@@ -1219,7 +1212,7 @@ export class FtManager {
         ])
 
         // unlockFromContract
-        const contractTxOutputProof = new TxOutputProof(getEmptyTxOutputProof())
+        const contractTxOutputProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
 
         tokenContract.setDataPart(toHex(dataPart))
         const unlockingContract = tokenContract.unlock({
