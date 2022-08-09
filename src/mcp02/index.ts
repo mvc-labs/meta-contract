@@ -182,9 +182,9 @@ export class FtManager {
     let scriptBuf = tokenContract.lockingScript.toBuffer()
     genesis = ftProto.getQueryGenesis(scriptBuf)
     codehash = tokenContract.getCodeHash()
-    sensibleId = toHex(TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex))
+    // sensibleId = toHex(TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex))
 
-    return { codehash, genesis, sensibleId }
+    return { codehash, genesis }
   }
 
   /**
@@ -240,18 +240,17 @@ export class FtManager {
     })
 
     let txHex = txComposer.getRawHex()
-    // if (!noBroadcast) {
-    //   await this.api.broadcast(txHex)
-    // }
+    if (!noBroadcast) {
+      await this.api.broadcast(txHex)
+    }
 
-    let { codehash, genesis, sensibleId } = this.getCodehashAndGensisByTx(txComposer.getTx())
+    let { codehash, genesis } = this.getCodehashAndGensisByTx(txComposer.getTx())
     return {
       txHex,
       txid: txComposer.getTxId(),
       tx: txComposer.getTx(),
       codehash,
       genesis,
-      sensibleId,
     }
   }
 
