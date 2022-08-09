@@ -24,5 +24,5 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.js", "src/**/*.json"],
-  "exclude": ["src/index.browser.ts", "dist", "node_modules"]
+  "exclude": ["src/index.browser.ts", "dist", "node_modules", "src/**/deployments/*.ts", "src/mcp03/**/*.ts"]
 }
