@@ -4,6 +4,7 @@ import { API_TARGET, API_NET, mvc, Api } from '..'
 import { FEEB } from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
+import * as $ from '../common/argumentCheck'
 import { Prevouts } from '../common/Prevouts'
 import { TxComposer } from '../tx-composer'
 import { TokenFactory } from './contract-factory/token'
@@ -23,16 +24,56 @@ import {
   PLACE_HOLDER_PUBKEY,
   PLACE_HOLDER_SIG,
 } from '../common/utils'
+import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
 import {
   TokenTransferCheckFactory,
   TOKEN_TRANSFER_TYPE,
 } from './contract-factory/tokenTransferCheck'
 import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
-import { SizeTransaction } from '@/common/SizeTransaction'
+import { SizeTransaction } from '../common/SizeTransaction'
 import { getEmptyTxOutputProof } from '@/mcp03/contract-factory'
 const Signature = mvc.crypto.Signature
+const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
+
+ContractUtil.init()
+
+function checkParamGenesis(genesis) {
+  $.checkArgument(_.isString(genesis), 'Invalid Argument: genesis should be a string')
+  $.checkArgument(genesis.length == 40, `Invalid Argument: genesis.length must be 40`)
+}
+
+function checkParamCodehash(codehash) {
+  $.checkArgument(_.isString(codehash), 'Invalid Argument: codehash should be a string')
+  $.checkArgument(codehash.length == 40, `Invalid Argument: codehash.length must be 40`)
+  $.checkArgument(
+    codehash == ContractUtil.tokenCodeHash,
+    `a valid codehash should be ${ContractUtil.tokenCodeHash}, but the provided is ${codehash} `
+  )
+}
+
+type Utxo = {
+  txId: string
+  outputIndex: number
+  satoshis: number
+  address: mvc.Address
+}
+
+type GenesisOptions = {
+  tokenName: string
+  tokenSymbol: string
+  decimalNum: number
+  genesisWif: string
+}
+
+type ParamUtxo = {
+  txId: string
+  outputIndex: number
+  satoshis: number
+  wif?: string
+  address?: string | mvc.Address
+}
 
 type Purse = {
   privateKey: mvc.PrivateKey
@@ -42,7 +83,7 @@ type Purse = {
 type Mcp02Options = {
   network?: API_NET
   apiTarget?: API_TARGET
-  purse: string
+  purse?: string
   feeb?: number
   dustLimitFactor?: number
   dustAmount?: number
@@ -61,7 +102,7 @@ type ParamFtUtxo = {
   wif?: string
 }
 
-export type FtUtxo = {
+type FtUtxo = {
   txId: string
   outputIndex: number
   satoshis?: number
@@ -107,11 +148,8 @@ export class FtManager {
   constructor({
     network = API_NET.MAIN,
     apiTarget = API_TARGET.MVC,
-    purse: wif,
-    // dustLimitFactor = 300,
-    // dustAmount,
+    purse,
     feeb = FEEB,
-
     dustLimitFactor = 300,
     dustAmount,
   }: Mcp02Options) {
@@ -120,11 +158,13 @@ export class FtManager {
     this._api = new Api(network, apiTarget)
 
     // 初始化钱包
-    const privateKey = mvc.PrivateKey.fromWIF(wif)
-    const address = privateKey.toAddress(network)
-    this.purse = {
-      privateKey,
-      address,
+    if (purse) {
+      const privateKey = mvc.PrivateKey.fromWIF(purse)
+      const address = privateKey.toAddress(network)
+      this.purse = {
+        privateKey,
+        address,
+      }
     }
 
     // 初始化零地址
@@ -137,52 +177,214 @@ export class FtManager {
     this.feeb = feeb
   }
 
-  public async genesis({ tokenName, tokenSymbol, decimalNum, genesisWif }: GenesisOptions) {
-    let utxoInfo = await this._pretreatUtxos()
-
-    // if (changeAddress) {
-    //   changeAddress = new mvc.Address(changeAddress, this.network)
-    // } else {
-    const changeAddress = utxoInfo.utxos[0].address
+  /**
+   * Get codehash and genesis from genesis tx.
+   * @param genesisTx genesis tx
+   * @param genesisOutputIndex (Optional) outputIndex - default value is 0.
+   * @returns
+   */
+  public getCodehashAndGensisByTx(genesisTx: mvc.Transaction, genesisOutputIndex: number = 0) {
+    //calculate genesis/codehash
+    let genesis: string, codehash: string, sensibleId: string
+    let genesisTxId = genesisTx.id
+    let genesisLockingScriptBuf = genesisTx.outputs[genesisOutputIndex].script.toBuffer()
+    const dataPartObj: any = ftProto.parseDataPart(genesisLockingScriptBuf)
+    // dataPartObj.sensibleID = {
+    //   txid: genesisTxId,
+    //   index: genesisOutputIndex,
     // }
+    dataPartObj.address = this.purse.address
+    genesisLockingScriptBuf = ftProto.updateScript(genesisLockingScriptBuf, dataPartObj)
 
-    let genesisPrivateKey = new mvc.PrivateKey(genesisWif)
-    let genesisPublicKey = genesisPrivateKey.toPublicKey()
+    let tokenContract = TokenFactory.createContract(
+      this.transferCheckCodeHashArray,
+      this.unlockContractCodeHashArray
+    )
 
-    // let { txComposer } = await this._genesis({
-    await this._genesis({
+    tokenContract.setFormatedDataPart({
+      // rabinPubKeyHashArrayHash: toHex(this.rabinPubKeyHashArrayHash),
+      // sensibleID: {
+      //   txid: genesisTxId,
+      //   index: genesisOutputIndex,
+      // },
+      genesisHash: toHex(TokenUtil.getScriptHashBuf(genesisLockingScriptBuf)),
+    })
+
+    let scriptBuf = tokenContract.lockingScript.toBuffer()
+    genesis = ftProto.getQueryGenesis(scriptBuf)
+    codehash = tokenContract.getCodeHash()
+    // sensibleId = toHex(TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex))
+
+    return { codehash, genesis }
+  }
+
+  /**
+   * Create a transaction for genesis
+   * @param tokenName token name, limited to 20 bytes
+   * @param tokenSymbol the token symbol, limited to 10 bytes
+   * @param decimalNum the decimal number, range 0-255
+   * @param utxos (Optional) specify mvc utxos
+   * @param changeAddress (Optional) specify mvc changeAddress
+   * @param opreturnData (Optional) append an opReturn output
+   * @param genesisWif the private key of the token genesiser
+   * @param noBroadcast (Optional) whether not to broadcast the transaction, the default is false
+   * @returns
+   */
+  public async genesis({
+    tokenName,
+    tokenSymbol,
+    decimalNum,
+    utxos,
+    changeAddress,
+    opreturnData,
+    noBroadcast = false,
+  }: {
+    tokenName: string
+    tokenSymbol: string
+    decimalNum: number
+    utxos?: ParamUtxo[]
+    changeAddress?: string | mvc.Address
+    opreturnData?: any
+    noBroadcast?: boolean
+  }) {
+    // TODO 检查必要参数
+    // validate params
+    $.checkArgument(
+      _.isString(tokenName) && Buffer.from(tokenName).length <= 20,
+      `tokenName should be a string and not be larger than 20 bytes`
+    )
+
+    $.checkArgument(
+      _.isString(tokenSymbol) && Buffer.from(tokenSymbol).length <= 10,
+      'tokenSymbol should be a string and not be larger than 10 bytes'
+    )
+
+    $.checkArgument(
+      _.isNumber(decimalNum) && decimalNum >= 0 && decimalNum <= 255,
+      'decimalNum should be a number and must be between 0 and 255'
+    )
+
+    let utxoInfo = await this._pretreatUtxos(utxos)
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxoInfo.utxos[0].address
+    }
+
+    let { txComposer } = await this._genesis({
       tokenName,
       tokenSymbol,
       decimalNum,
       utxos: utxoInfo.utxos,
       utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
       changeAddress: changeAddress as mvc.Address,
-      // opreturnData,
-      genesisPublicKey,
+      opreturnData,
     })
 
-    // let txHex = txComposer.getRawHex()
+    let txHex = txComposer.getRawHex()
+    if (!noBroadcast) {
+      await this.api.broadcast(txHex)
+    }
 
-    // if (!noBroadcast) {
-    //   await this.api.broadcast(txHex)
-    // }
-
-    // let { codehash, genesis, sensibleId } = this.getCodehashAndGensisByTx(txComposer.getTx())
-    // return {
-    //   txHex,
-    //   txid: txComposer.getTxId(),
-    //   tx: txComposer.getTx(),
-    //   codehash,
-    //   genesis,
-    //   sensibleId,
-    // }
+    let { codehash, genesis } = this.getCodehashAndGensisByTx(txComposer.getTx())
+    return {
+      txHex,
+      txid: txComposer.getTxId(),
+      tx: txComposer.getTx(),
+      codehash,
+      genesis,
+    }
   }
 
-  public async issue() {
-    return this.mint()
+  public async issue(options: {
+    genesis: string
+    codehash: string
+    sensibleId: string
+    genesisWif: string
+    receiverAddress: string | mvc.Address
+    tokenAmount: string | BN
+    allowIncreaseIssues: boolean
+    utxos?: ParamUtxo[]
+    changeAddress?: string | mvc.Address
+    opreturnData?: any
+    noBroadcast?: boolean
+  }) {
+    return this.mint(options)
   }
 
-  public async mint() {}
+  public async mint({
+    genesis,
+    codehash,
+    sensibleId,
+    genesisWif,
+    receiverAddress,
+    tokenAmount,
+    allowIncreaseIssues = true,
+    utxos,
+    changeAddress,
+    opreturnData,
+    noBroadcast = false,
+  }: {
+    genesis: string
+    codehash: string
+    sensibleId: string
+    genesisWif: string
+    receiverAddress: string | mvc.Address
+    tokenAmount: string | BN
+    allowIncreaseIssues: boolean
+    utxos?: ParamUtxo[]
+    changeAddress?: string | mvc.Address
+    opreturnData?: any
+    noBroadcast?: boolean
+  }) {
+    checkParamGenesis(genesis)
+    checkParamCodehash(codehash)
+    $.checkArgument(sensibleId, 'sensibleId is required')
+    $.checkArgument(genesisWif, 'genesisWif is required')
+    $.checkArgument(receiverAddress, 'receiverAddress is required')
+    $.checkArgument(tokenAmount, 'tokenAmount is required')
+
+    let utxoInfo = await this._pretreatUtxos(utxos)
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxoInfo.utxos[0].address
+    }
+    let genesisPrivateKey = new mvc.PrivateKey(genesisWif)
+    let genesisPublicKey = genesisPrivateKey.toPublicKey()
+    receiverAddress = new mvc.Address(receiverAddress, this.network)
+    tokenAmount = new BN(tokenAmount.toString())
+  }
+
+  private async _issue({
+    genesis,
+    codehash,
+    sensibleId,
+    receiverAddress,
+    tokenAmount,
+    allowIncreaseIssues = true,
+    utxos,
+    utxoPrivateKeys,
+    changeAddress,
+    opreturnData,
+    genesisPrivateKey,
+    genesisPublicKey,
+  }: {
+    genesis: string
+    codehash: string
+    sensibleId: string
+    receiverAddress: mvc.Address
+    tokenAmount: BN
+    allowIncreaseIssues: boolean
+    utxos?: Utxo[]
+    utxoPrivateKeys?: mvc.PrivateKey[]
+    changeAddress?: mvc.Address
+    opreturnData?: any
+    noBroadcast?: boolean
+    genesisPrivateKey?: mvc.PrivateKey
+    genesisPublicKey: mvc.PublicKey
+  }) {}
+
   public async merge() {}
 
   private async _pretreatUtxos(
@@ -221,6 +423,33 @@ export class FtManager {
     return { utxos, utxoPrivateKeys }
   }
 
+  /**
+   * Estimate the cost of genesis
+   * @param opreturnData
+   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @returns
+   */
+  public async getGenesisEstimateFee({
+    opreturnData,
+    utxoMaxCount = 10,
+  }: {
+    opreturnData?: any
+    utxoMaxCount?: number
+  }) {
+    const p2pkhInputNum = utxoMaxCount
+    const sizeOfTokenGenesis = TokenGenesisFactory.getLockingScriptSize()
+    let stx = new SizeTransaction(this.feeb, this.dustCalculator)
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx.addP2PKHInput()
+    }
+    stx.addOutput(sizeOfTokenGenesis)
+    if (opreturnData) {
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+    }
+    stx.addP2PKHOutput()
+    return stx.getFee()
+  }
+
   private async _genesis({
     tokenName,
     tokenSymbol,
@@ -229,7 +458,6 @@ export class FtManager {
     utxoPrivateKeys,
     changeAddress,
     opreturnData,
-    genesisPublicKey,
   }: {
     tokenName: string
     tokenSymbol: string
@@ -238,8 +466,60 @@ export class FtManager {
     utxoPrivateKeys?: mvc.PrivateKey[]
     changeAddress?: mvc.Address
     opreturnData?: any
-    genesisPublicKey: mvc.PublicKey
-  }) {}
+  }) {
+    //create genesis contract
+    let genesisContract = TokenGenesisFactory.createContract()
+    genesisContract.setFormatedDataPart({
+      tokenName,
+      tokenSymbol,
+      decimalNum,
+      address: this.purse.address,
+    })
+    let estimateSatoshis = await this.getGenesisEstimateFee({
+      opreturnData,
+      utxoMaxCount: utxos.length,
+    })
+    const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    if (balance < estimateSatoshis) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_BSV,
+        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
+      )
+    }
+    const txComposer = new TxComposer()
+    const p2pkhInputIndexs = utxos.map((utxo) => {
+      const inputIndex = txComposer.appendP2PKHInput(utxo)
+      txComposer.addSigHashInfo({
+        inputIndex,
+        address: utxo.address.toString(),
+        sighashType,
+        contractType: CONTRACT_TYPE.P2PKH,
+      })
+      return inputIndex
+    })
+
+    const genesisOutputIndex = txComposer.appendOutput({
+      lockingScript: genesisContract.lockingScript,
+      satoshis: this.getDustThreshold(genesisContract.lockingScript.toBuffer().length),
+    })
+
+    //If there is opReturn, add it to the second output
+    if (opreturnData) {
+      txComposer.appendOpReturnOutput(opreturnData)
+    }
+
+    txComposer.appendChangeOutput(changeAddress, this.feeb)
+    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+      p2pkhInputIndexs.forEach((inputIndex) => {
+        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+        txComposer.unlockP2PKHInput(privateKey, inputIndex)
+      })
+    }
+
+    this._checkTxFeeRate(txComposer)
+
+    return { txComposer }
+  }
 
   public async transfer({
     codehash,
@@ -1038,7 +1318,8 @@ export class FtManager {
     }
     this._checkTxFeeRate(txComposer)
 
-    return { transferCheckTxComposer, txComposer }
+    // return { transferCheckTxComposer, txComposer }
+    return { txComposer: undefined, transferCheckTxComposer: undefined }
   }
 
   private _calTransferEstimateFee({

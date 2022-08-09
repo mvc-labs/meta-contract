@@ -1,4 +1,4 @@
-export const PROTO_FLAG = Buffer.from('sensible')
+export const PROTO_FLAG = Buffer.from('metacontract')
 export const PROTO_FLAG_LEN = PROTO_FLAG.length
 export const PROTO_TYPE_LEN = 4
 export const PROTO_TYPE_OFFSET = PROTO_FLAG_LEN + PROTO_TYPE_LEN

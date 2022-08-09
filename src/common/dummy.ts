@@ -1,4 +1,4 @@
-import { SIGNER_NUM } from '../bcp02/contract-proto/token.proto'
+import { SIGNER_NUM } from '../mcp02/contract-proto/token.proto'
 import { BN } from '../bn.js'
 import * as mvc from '../mvc'
 import * as TokenUtil from './tokenUtil'

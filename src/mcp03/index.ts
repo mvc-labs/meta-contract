@@ -10,6 +10,28 @@ import { TxComposer } from '../tx-composer'
 import { CONTRACT_TYPE } from '../common/utils'
 import { TokenGenesisFactory } from './contract-factories/token-genesis-factory'
 
+type Utxo = {
+  txId: string
+  outputIndex: number
+  satoshis: number
+  address?: string | mvc.Address
+}
+
+type GenesisOptions = {
+  tokenName: string
+  tokenSymbol: string
+  decimalNum: number
+  genesisWif: string
+}
+
+type ParamUtxo = {
+  txId: string
+  outputIndex: number
+  satoshis: number
+  wif?: string
+  address?: string | mvc.Address
+}
+
 type Purse = {
   privateKey: mvc.PrivateKey
   address: mvc.Address
