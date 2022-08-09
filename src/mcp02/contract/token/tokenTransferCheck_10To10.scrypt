@@ -1,0 +1,131 @@
+import "../txUtil.scrypt";
+import "tokenProto.scrypt";
+import "tokenAmountCheckProto.scrypt";
+import "../backtrace.scrypt";
+
+contract TokenTransferCheck {
+
+    static const int MAX_INPUT = 10;
+    static const int MAX_OUTPUT = 10;
+
+    /**
+     * @function unlock
+     * @param txPreimage {SigHashPreimage} preimage of tx.
+     * @param prevouts {bytes} previous outputs.
+     * @param tokenScript {bytes} the one of input token contracts's locking script
+     * @param tokenTxHeaderArray {bytes} the tx header in input token tx's output proof 
+     * @param tokenTxHashProofArray {bytes} the hash proof in input token tx's output proof 
+     * @param tokenSatoshiBytesArray {bytes} the satoshis in input token tx's output proof 
+     * @param inputTokenAddressArray {bytes} the address array of input token utxos
+     * @param inputTokenAmountArray {bytes} the amount array of input token utxos
+     * @param tokenOutputSatoshis {int} token output satoshis
+     * @param changeSatoshis {int} change satoshis
+     * @param changeAddress {bytes} change address
+     * @param opReturnScript {bytes} the opreturn data in this tx
+    */
+    public function unlock(
+        SigHashPreimage txPreimage,
+        bytes prevouts,
+        bytes tokenScript,
+        bytes tokenTxHeaderArray,
+        bytes tokenTxHashProofArray,
+        bytes tokenSatoshiBytesArray,
+        bytes inputTokenAddressArray,
+        bytes inputTokenAmountArray,
+        int tokenOutputSatoshis,
+        int changeSatoshis,
+        Ripemd160 changeAddress,
+        bytes opReturnScript) {
+
+        // check prevouts
+        require(hash256(prevouts) == SigHash.hashPrevouts(txPreimage));
+
+        bytes thisScript = SigHash.scriptCode(txPreimage);
+        int thisScriptLen = len(thisScript);
+
+        // verify tokenScript
+        int tokenScriptLen = len(tokenScript);
+        require(thisScript[thisScriptLen - AmountCheckProto.TOKEN_ID_OFFSET : thisScriptLen - AmountCheckProto.TOKEN_ID_OFFSET + ProtoHeader.UNIQUE_ID_LEN] == TokenProto.getTokenID(tokenScript, tokenScriptLen));
+        bytes tokenScriptCode = TokenProto.getScriptCode(tokenScript, tokenScriptLen);
+        require(thisScript[thisScriptLen - AmountCheckProto.TOKEN_CODE_HASH_OFFSET : thisScriptLen - AmountCheckProto.TOKEN_ID_OFFSET] == hash160(tokenScriptCode));
+        require(TokenProto.checkDataLen(tokenScript, tokenScriptLen));
+
+        // get receiver data
+        int nReceivers = Utils.fromLEUnsigned(thisScript[thisScriptLen -  AmountCheckProto.NRECERIVERS_OFFSET: thisScriptLen - AmountCheckProto.TOKEN_CODE_HASH_OFFSET]);
+        require(nReceivers > 0);
+
+        int addressLen = nReceivers * ProtoHeader.ADDRESS_LEN;
+        int pos = thisScriptLen - AmountCheckProto.NRECERIVERS_OFFSET - addressLen;
+        bytes receiverArray = thisScript[pos : pos + addressLen];
+
+        int amountLen = nReceivers * ProtoHeader.AMOUNT_LEN;
+        pos -= amountLen;
+        bytes receiverTokenAmountArray = thisScript[pos : pos + amountLen];
+        int nSenders = Utils.fromLEUnsigned(thisScript[pos - 4 : pos]);
+
+        // check token inputs
+        int sumInputToken = 0;
+        int hashProofPos = 0;
+        require(nSenders <= MAX_INPUT);
+        // max support loop num input token
+        loop (MAX_INPUT) : i {
+            if (i < nSenders) {
+                bytes tokenOutpoint = prevouts[i * 36 : (i + 1) * 36];
+                bytes tokenTxHeader = tokenTxHeaderArray[i * TxUtil.TX_HEADER_LEN : (i + 1) * TxUtil.TX_HEADER_LEN];
+
+                // get new token input script data
+                bytes address = inputTokenAddressArray[i * 20 : (i + 1) * 20];
+                int amount = Utils.fromLEUnsigned(inputTokenAmountArray[i * 8 : (i + 1) * 8]);
+                bytes newTokenScript = TokenProto.getNewTokenScript(tokenScript, tokenScriptLen, address, amount);
+
+                int hashProofLen = Utils.fromLEUnsigned(tokenTxHashProofArray[hashProofPos: hashProofPos + 4]);
+                bytes hashProof = tokenTxHashProofArray[hashProofPos + 4: hashProofPos + 4 + hashProofLen];
+                hashProofPos += 4 + hashProofLen;
+
+                // verify token inputs's script code
+                bytes satoshiBytes = tokenSatoshiBytesArray[i * 8: (i + 1) * 8];
+                bytes scriptHash = sha256(newTokenScript);
+                TxOutputProof proof = {tokenTxHeader, hashProof, satoshiBytes, scriptHash};
+                TxUtil.verifyTxOutput(proof, tokenOutpoint);
+
+                sumInputToken = sumInputToken + amount;
+            }
+        }
+
+        // check the outputs
+        bytes outputs = b'';
+        // max support loop num receiver, you can change this num, but will cause the contrac size increase. you can customize your output
+        int sumOutputToken = 0;
+        require(nReceivers <= MAX_OUTPUT);
+        loop (MAX_OUTPUT) : i {
+            if (i < nReceivers) {
+                bytes address = receiverArray[i * ProtoHeader.ADDRESS_LEN : (i + 1) * ProtoHeader.ADDRESS_LEN];
+                int tokenAmount = Utils.fromLEUnsigned(receiverTokenAmountArray[i * ProtoHeader.AMOUNT_LEN : (i + 1) * ProtoHeader.AMOUNT_LEN]);
+                require(tokenAmount > 0);
+                sumOutputToken = sumOutputToken + tokenAmount;
+                bytes outputScript = TokenProto.getNewTokenScript(tokenScript, tokenScriptLen, address, tokenAmount);
+                bytes output = Utils.buildOutput(outputScript, tokenOutputSatoshis);
+                outputs = outputs + output;
+            }
+        }
+        require(sumInputToken == sumOutputToken);
+
+        // op_false op_return output
+        // optional
+        if (len(opReturnScript) > 0) {
+            require(opReturnScript[0 : 2] == b'006a');
+            bytes opReturnOutput = Utils.buildOutput(opReturnScript, 0);
+            outputs = outputs + opReturnOutput;
+        }
+
+        // bsv change output
+        bytes changeOutput = TxUtil.genBsvOutput(changeSatoshis, changeAddress);
+        outputs = outputs + changeOutput;
+
+        bytes hashOutputs = hash256(outputs);
+        require(hashOutputs == SigHash.hashOutputs(txPreimage));
+
+        // check preimage ocs
+        require(Tx.checkPreimageSigHashTypeOCS(txPreimage, ProtoHeader.SIG_HASH_ALL));
+    }
+}
