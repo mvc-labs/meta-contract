@@ -9,7 +9,7 @@ import { Prevouts } from '../common/Prevouts'
 import { TxComposer } from '../tx-composer'
 import { TokenFactory } from './contract-factory/token'
 import { ContractUtil } from './contractUtil'
-const jsonDescr = require("./contract-desc/txUtil_desc.json")
+const jsonDescr = require('./contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
 
 import {
@@ -296,7 +296,7 @@ export class FtManager {
     genesisWif: string
     receiverAddress: string | mvc.Address
     tokenAmount: string | BN
-    allowIncreaseIssues: boolean
+    allowIncreaseMints: boolean
     utxos?: ParamUtxo[]
     changeAddress?: string | mvc.Address
     opreturnData?: any
@@ -312,7 +312,7 @@ export class FtManager {
     genesisWif,
     receiverAddress,
     tokenAmount,
-    allowIncreaseIssues = true,
+    allowIncreaseMints = true,
     utxos,
     changeAddress,
     opreturnData,
@@ -324,7 +324,7 @@ export class FtManager {
     genesisWif: string
     receiverAddress: string | mvc.Address
     tokenAmount: string | BN
-    allowIncreaseIssues: boolean
+    allowIncreaseMints: boolean
     utxos?: ParamUtxo[]
     changeAddress?: string | mvc.Address
     opreturnData?: any
@@ -347,6 +347,28 @@ export class FtManager {
     let genesisPublicKey = genesisPrivateKey.toPublicKey()
     receiverAddress = new mvc.Address(receiverAddress, this.network)
     tokenAmount = new BN(tokenAmount.toString())
+
+    let { txComposer } = await this._mint({
+      genesis,
+      codehash,
+      sensibleId,
+      receiverAddress,
+      tokenAmount,
+      allowIncreaseMints,
+      utxos: utxoInfo.utxos,
+      utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
+      changeAddress,
+      opreturnData,
+      genesisPrivateKey,
+      genesisPublicKey,
+    })
+
+    let txHex = txComposer.getRawHex()
+    if (!noBroadcast) {
+      await this.api.broadcast(txHex)
+    }
+
+    return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
   }
 
   private async _mint({
@@ -355,7 +377,7 @@ export class FtManager {
     sensibleId,
     receiverAddress,
     tokenAmount,
-    allowIncreaseIssues = true,
+    allowIncreaseMints = true,
     utxos,
     utxoPrivateKeys,
     changeAddress,
@@ -368,7 +390,7 @@ export class FtManager {
     sensibleId: string
     receiverAddress: mvc.Address
     tokenAmount: BN
-    allowIncreaseIssues: boolean
+    allowIncreaseMints: boolean
     utxos?: Utxo[]
     utxoPrivateKeys?: mvc.PrivateKey[]
     changeAddress?: mvc.Address
@@ -376,7 +398,219 @@ export class FtManager {
     noBroadcast?: boolean
     genesisPrivateKey?: mvc.PrivateKey
     genesisPublicKey: mvc.PublicKey
-  }) {}
+  }) {
+    let { genesisContract, genesisTxId, genesisOutputIndex, genesisUtxo } =
+      await this._prepareMintUtxo({ sensibleId, genesisPublicKey })
+
+    let balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    let estimateSatoshis = await this._calMintEstimateFee({
+      genesisUtxoSatoshis: genesisUtxo.satoshis,
+      opreturnData,
+      allowIncreaseMints,
+      utxoMaxCount: utxos.length,
+    })
+    if (balance < estimateSatoshis) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_BSV,
+        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
+      )
+    }
+
+    let newGenesisContract = genesisContract.clone()
+    newGenesisContract.setFormatedDataPart({
+      sensibleID: {
+        txid: genesisTxId,
+        index: genesisOutputIndex,
+      },
+    })
+
+    let tokenContract = TokenFactory.createContract(
+      this.transferCheckCodeHashArray,
+      this.unlockContractCodeHashArray
+    )
+    tokenContract.setFormatedDataPart(
+      Object.assign({}, newGenesisContract.getFormatedDataPart(), {
+        tokenAddress: toHex(receiverAddress.hashBuffer),
+        tokenAmount,
+        genesisHash: newGenesisContract.getScriptHash(),
+      })
+    )
+
+    const txComposer = new TxComposer()
+
+    //The first input is the genesis contract
+    const genesisInputIndex = txComposer.appendInput(genesisUtxo)
+    txComposer.addSigHashInfo({
+      inputIndex: genesisInputIndex,
+      address: genesisPublicKey.toAddress(this.network).toString(),
+      sighashType,
+      contractType: CONTRACT_TYPE.BCP02_TOKEN_GENESIS,
+    })
+
+    const p2pkhInputIndexs = utxos.map((utxo) => {
+      const inputIndex = txComposer.appendP2PKHInput(utxo)
+      txComposer.addSigHashInfo({
+        inputIndex,
+        address: utxo.address.toString(),
+        sighashType,
+        contractType: CONTRACT_TYPE.P2PKH,
+      })
+      return inputIndex
+    })
+
+    //If increase issues is allowed, add a new issue contract as the first output
+    let newGenesisOutputIndex = -1
+    if (allowIncreaseMints) {
+      newGenesisOutputIndex = txComposer.appendOutput({
+        lockingScript: newGenesisContract.lockingScript,
+        satoshis: this.getDustThreshold(newGenesisContract.lockingScript.toBuffer().length),
+      })
+    }
+
+    //The following output is the Token
+    const tokenOutputIndex = txComposer.appendOutput({
+      lockingScript: tokenContract.lockingScript,
+      satoshis: this.getDustThreshold(tokenContract.lockingScript.toBuffer().length),
+    })
+
+    //If there is opReturn, add it to the output
+    let opreturnScriptHex = ''
+    if (opreturnData) {
+      const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
+      opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
+    }
+
+    //The first round of calculations get the exact size of the final transaction, and then change again
+    //Due to the change, the script needs to be unlocked again in the second round
+    //let the fee to be exact in the second round
+    for (let c = 0; c < 2; c++) {
+      txComposer.clearChangeOutput()
+      const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
+
+      let unlockResult = genesisContract.unlock({
+        txPreimage: txComposer.getInputPreimage(genesisInputIndex),
+        sig: new Sig(
+          genesisPrivateKey
+            ? toHex(txComposer.getTxFormatSig(genesisPrivateKey, genesisInputIndex))
+            : PLACE_HOLDER_SIG
+        ),
+        rabinMsg: rabinData.rabinMsg,
+        rabinPaddingArray: rabinData.rabinPaddingArray,
+        rabinSigArray: rabinData.rabinSigArray,
+        rabinPubKeyIndexArray,
+        rabinPubKeyVerifyArray,
+        rabinPubKeyHashArray: this.rabinPubKeyHashArray,
+        genesisSatoshis:
+          newGenesisOutputIndex != -1 ? txComposer.getOutput(newGenesisOutputIndex).satoshis : 0,
+        tokenScript: new Bytes(txComposer.getOutput(tokenOutputIndex).script.toHex()),
+        tokenSatoshis: txComposer.getOutput(tokenOutputIndex).satoshis,
+        changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
+        changeSatoshis:
+          changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0,
+        opReturnScript: new Bytes(opreturnScriptHex),
+      })
+
+      // if (this.debug && genesisPrivateKey && c == 1) {
+      //   let ret = unlockResult.verify({
+      //     tx: txComposer.tx,
+      //     inputIndex: genesisInputIndex,
+      //     inputSatoshis: txComposer.getInput(genesisInputIndex).output.satoshis,
+      //   })
+      //   if (ret.success == false) throw ret
+      // }
+
+      txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as mvc.Script)
+    }
+
+    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+      p2pkhInputIndexs.forEach((inputIndex) => {
+        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+        txComposer.unlockP2PKHInput(privateKey, inputIndex)
+      })
+    }
+
+    this._checkTxFeeRate(txComposer)
+    return { txComposer }
+  }
+
+  private async _prepareMintUtxo({
+    sensibleId,
+    genesisPublicKey,
+  }: {
+    sensibleId: string
+    genesisPublicKey: mvc.PublicKey
+  }) {
+    let genesisContract = TokenGenesisFactory.createContract(genesisPublicKey)
+
+    //Looking for UTXO for issue
+    let { genesisTxId, genesisOutputIndex } = parseSensibleID(sensibleId)
+    let genesisUtxo = await this._getMintUtxo(
+      genesisContract.getCodeHash(),
+      genesisTxId,
+      genesisOutputIndex
+    )
+    if (!genesisUtxo) {
+      throw new CodeError(ErrCode.EC_FIXED_TOKEN_SUPPLY, 'token supply is fixed')
+    }
+
+    let txHex = await this.api.getRawTxData(genesisUtxo.txId)
+    const tx = new mvc.Transaction(txHex)
+    let preTxId = tx.inputs[0].prevTxId.toString('hex')
+    let preOutputIndex = tx.inputs[0].outputIndex
+    let preTxHex = await this.api.getRawTxData(preTxId)
+    genesisUtxo.satotxInfo = {
+      txId: genesisUtxo.txId,
+      outputIndex: genesisUtxo.outputIndex,
+      txHex,
+      preTxId,
+      preOutputIndex,
+      preTxHex,
+    }
+
+    let output = tx.outputs[genesisUtxo.outputIndex]
+    genesisUtxo.satoshis = output.satoshis
+    genesisUtxo.lockingScript = output.script
+    genesisContract.setFormatedDataPartFromLockingScript(genesisUtxo.lockingScript)
+
+    return {
+      genesisContract,
+      genesisTxId,
+      genesisOutputIndex,
+      genesisUtxo,
+    }
+  }
+
+  private async _calMintEstimateFee({
+    genesisUtxoSatoshis,
+    opreturnData,
+    allowIncreaseMints = true,
+    utxoMaxCount = 10,
+  }: {
+    genesisUtxoSatoshis: number
+    opreturnData?: any
+    allowIncreaseMints: boolean
+    utxoMaxCount?: number
+  }) {
+    let p2pkhInputNum = utxoMaxCount
+
+    let stx = new SizeTransaction(this.feeb, this.dustCalculator)
+    stx.addInput(TokenGenesisFactory.calUnlockingScriptSize(opreturnData), genesisUtxoSatoshis)
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx.addP2PKHInput()
+    }
+
+    if (allowIncreaseMints) {
+      stx.addOutput(TokenGenesisFactory.getLockingScriptSize())
+    }
+
+    stx.addOutput(TokenFactory.getLockingScriptSize())
+    if (opreturnData) {
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+    }
+    stx.addP2PKHOutput()
+
+    return stx.getFee()
+  }
 
   public async merge() {}
 
