@@ -27,12 +27,16 @@ contract TokenTransferCheck {
         SigHashPreimage txPreimage,
         bytes prevouts,
         bytes tokenScript,
+        
+        // token
         bytes tokenTxHeaderArray,
         bytes tokenTxHashProofArray,
         bytes tokenSatoshiBytesArray,
         bytes inputTokenAddressArray,
         bytes inputTokenAmountArray,
         int tokenOutputSatoshis,
+
+        // same
         int changeSatoshis,
         Ripemd160 changeAddress,
         bytes opReturnScript) {

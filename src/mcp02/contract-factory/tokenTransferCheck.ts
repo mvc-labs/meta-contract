@@ -123,50 +123,57 @@ export class TokenTransferCheck extends ContractAdapter {
 
   public unlock({
     txPreimage,
-    tokenScript,
     prevouts,
-    rabinMsgArray,
-    rabinPaddingArray,
-    rabinSigArray,
-    rabinPubKeyIndexArray,
-    rabinPubKeyVerifyArray,
-    rabinPubKeyHashArray,
+    tokenScript,
+
+    tokenTxHeaderArray,
+    tokenTxHashProofArray,
+    tokenSatoshiBytesArray,
+
     inputTokenAddressArray,
     inputTokenAmountArray,
-    receiverSatoshiArray,
+    // receiverSatoshiArray,
+
+    tokenOutputSatoshis,
+
     changeSatoshis,
     changeAddress,
     opReturnScript,
   }: {
     txPreimage: SigHashPreimage
-    tokenScript: Bytes
     prevouts: Bytes
-    rabinMsgArray: Bytes
-    rabinPaddingArray: Bytes
-    rabinSigArray: Bytes
-    rabinPubKeyIndexArray: number[]
-    rabinPubKeyVerifyArray: Int[]
-    rabinPubKeyHashArray: Bytes
+    tokenScript: Bytes
+
+    tokenTxHeaderArray: Bytes
+    tokenTxHashProofArray: Bytes
+    tokenSatoshiBytesArray: Bytes
+
     inputTokenAddressArray: Bytes
     inputTokenAmountArray: Bytes
-    receiverSatoshiArray: Bytes
+    // receiverSatoshiArray: Bytes
+    tokenOutputSatoshis: number
+
     changeSatoshis: Int
     changeAddress: Ripemd160
     opReturnScript: Bytes
   }) {
     return this._contract.unlock(
       txPreimage,
-      tokenScript,
       prevouts,
-      rabinMsgArray,
-      rabinPaddingArray,
-      rabinSigArray,
-      rabinPubKeyIndexArray,
-      rabinPubKeyVerifyArray,
-      rabinPubKeyHashArray,
+      tokenScript,
+
+      // token
+      tokenTxHeaderArray,
+      tokenTxHashProofArray,
+      tokenSatoshiBytesArray,
+
       inputTokenAddressArray,
       inputTokenAmountArray,
-      receiverSatoshiArray,
+      // receiverSatoshiArray,
+
+      tokenOutputSatoshis,
+
+      // same
       changeSatoshis,
       changeAddress,
       opReturnScript

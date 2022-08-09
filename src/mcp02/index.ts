@@ -1,4 +1,4 @@
-import { Bytes, Int, PubKey, Ripemd160, Sig, toHex } from '../scryptlib'
+import { Bytes, Int, PubKey, Ripemd160, Sig, toHex, buildTypeClasses } from '../scryptlib'
 import { CodeError, ErrCode } from '../common/error'
 import { API_TARGET, API_NET, mvc, Api } from '..'
 import { FEEB } from './constants'
@@ -8,6 +8,15 @@ import { Prevouts } from '../common/Prevouts'
 import { TxComposer } from '../tx-composer'
 import { TokenFactory } from './contract-factory/token'
 import { ContractUtil } from './contractUtil'
+import {
+  getTxInputProof,
+  getTxOutputProof,
+  getUInt32Buf,
+  loadDescription,
+} from './deployments/common'
+const jsonDescr = loadDescription('./contract-desc/txUtil_desc.json')
+const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
+
 import {
   CONTRACT_TYPE,
   P2PKH_UNLOCK_SIZE,
@@ -21,6 +30,7 @@ import {
 import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
 import { SizeTransaction } from '@/common/SizeTransaction'
+import { getEmptyTxOutputProof } from '@/mcp03/contract-factory'
 const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 
@@ -72,6 +82,10 @@ export type FtUtxo = {
   preTokenAddress?: mvc.Address
   preTokenAmount?: BN
   preLockingScript?: mvc.Script
+
+  prevTokenTx?: any
+  prevTokenInputIndex?: any
+  prevTokenOutputIndex?: any
 
   publicKey?: mvc.PublicKey
 }
@@ -485,13 +499,14 @@ export class FtManager {
     //Choose a transfer plan
     let inputLength = tokenInputArray.length
     let outputLength = tokenOutputArray.length
-    let tokenTransferType = TokenTransferCheckFactory.getOptimumType(inputLength, outputLength)
-    if (tokenTransferType == TOKEN_TRANSFER_TYPE.UNSUPPORT) {
-      throw new CodeError(
-        ErrCode.EC_TOO_MANY_FT_UTXOS,
-        'Too many token-utxos, should merge them to continue.'
-      )
-    }
+    // let tokenTransferType = TokenTransferCheckFactory.getOptimumType(inputLength, outputLength)
+    // if (tokenTransferType == TOKEN_TRANSFER_TYPE.UNSUPPORT) {
+    //   throw new CodeError(
+    //     ErrCode.EC_TOO_MANY_FT_UTXOS,
+    //     'Too many token-utxos, should merge them to continue.'
+    //   )
+    // }
+    let tokenTransferType = TOKEN_TRANSFER_TYPE.IN_3_OUT_3
 
     return {
       tokenInputArray,
@@ -571,6 +586,10 @@ export class FtManager {
       ftUtxo.satoshis = tx.outputs[ftUtxo.outputIndex].satoshis
       ftUtxo.lockingScript = tx.outputs[ftUtxo.outputIndex].script
 
+      // 新增字段 prevTokenInputIndex, prevTokenOutputIndex
+      ftUtxo.prevTokenOutputIndex = input.outputIndex
+      ftUtxo.prevTokenInputIndex = input.sequenceNumber // ??
+
       if (!cachedHexs[preTxId]) {
         cachedHexs[preTxId] = {
           waitingRes: this.api.getRawTxData(preTxId),
@@ -590,7 +609,7 @@ export class FtManager {
       let dataPartObj = ftProto.parseDataPart(
         preTx.outputs[v.satotxInfo.preOutputIndex].script.toBuffer()
       )
-      v.preTokenAmount = dataPartObj.tokenAmount
+      v.preTokenAmount = new BN(dataPartObj.tokenAmount.toString())
       if (dataPartObj.tokenAddress == '0000000000000000000000000000000000000000') {
         v.preTokenAddress = this.zeroAddress
       } else {
@@ -600,11 +619,14 @@ export class FtManager {
         )
       }
       v.preLockingScript = preTx.outputs[v.satotxInfo.preOutputIndex].script
+
+      // 新增字段 prevTokenTx,
+      v.prevTokenTx = preTx
     })
 
-    ftUtxos.forEach((v) => {
-      v.preTokenAmount = new BN(v.preTokenAmount.toString())
-    })
+    // ftUtxos.forEach((v) => {
+    //   v.preTokenAmount = new BN(v.preTokenAmount.toString())
+    // })
 
     return ftUtxos
   }
@@ -696,6 +718,7 @@ export class FtManager {
 
     //create routeCheck contract
     let tokenTransferCheckContract = TokenTransferCheckFactory.createContract(tokenTransferType)
+
     tokenTransferCheckContract.setFormatedDataPart({
       nSenders: tokenInputArray.length,
       receiverTokenAmountArray: tokenOutputArray.map((v) => v.tokenAmount),
@@ -729,6 +752,7 @@ export class FtManager {
       middleChangeAddress,
       this.feeb
     )
+
     let unsignSigPlaceHolderSize = 0
     if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
       transferCheck_p2pkhInputIndexs.forEach((inputIndex) => {
@@ -862,6 +886,10 @@ export class FtManager {
         unsignSigPlaceHolderSize
       )
 
+      let tokenTxHeaderArray = Buffer.alloc(0)
+      let tokenTxHashProofArray = Buffer.alloc(0)
+      let tokenSatoshiBytesArray = Buffer.alloc(0)
+
       ftUtxoInputIndexs.forEach((inputIndex, idx) => {
         let ftUtxo = ftUtxos[idx]
         let senderPrivateKey = ftPrivateKeys[idx]
@@ -873,18 +901,64 @@ export class FtManager {
           this.transferCheckCodeHashArray,
           this.unlockContractCodeHashArray
         )
+        const amountCheckTx = transferCheckTxComposer.getTx()
+        const amountCheckOutputIndex = 0
+        const amountCheckTxOutputProofInfo = new TxOutputProof(
+          getTxOutputProof(amountCheckTx, amountCheckOutputIndex)
+        )
+        const amountCheckScriptBuf = amountCheckTx.outputs[amountCheckOutputIndex].script.toBuffer()
+
+        const prevTokenInputIndex = ftUtxo.prevTokenInputIndex // ???
+        const prevTokenAddress = new Bytes(toHex(ftUtxo.preTokenAddress.hashBuffer))
+        // const prevTokenAddress = new Bytes(TokenProto.getTokenAddress(scriptBuf).toString('hex'))
+        const prevTokenAmount = new Int(ftUtxo.preTokenAmount.toString(10))
+        // const prevTokenAmount = TokenProto.getTokenAmount(scriptBuf)
+
+        const tokenTx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
+        const inputRes = getTxInputProof(tokenTx, prevTokenInputIndex)
+        const tokenTxInputProof = new TxInputProof(inputRes[0])
+        const tokenTxHeader = inputRes[1]
+        const prevTokenTxOutputProof = new TxOutputProof(
+          getTxOutputProof(ftUtxo.prevTokenTx, ftUtxo.prevTokenOutputIndex)
+        )
+
+        const tokenTxOutputProof = getTxOutputProof(tokenTx, ftUtxo.outputIndex)
+        tokenTxHeaderArray = Buffer.concat([
+          tokenTxHeaderArray,
+          Buffer.from(tokenTxOutputProof.txHeader.toHex(), 'hex'),
+        ])
+        const hashProofBuf = Buffer.from(tokenTxOutputProof.hashProof.toHex(), 'hex')
+        tokenTxHashProofArray = Buffer.concat([
+          tokenTxHashProofArray,
+          getUInt32Buf(hashProofBuf.length),
+          hashProofBuf,
+        ])
+        tokenSatoshiBytesArray = Buffer.concat([
+          tokenSatoshiBytesArray,
+          Buffer.from(tokenTxOutputProof.satoshiBytes.toHex(), 'hex'),
+        ])
+
+        // unlockFromContract
+        const contractTxOutputProof = new TxOutputProof(getEmptyTxOutputProof())
 
         tokenContract.setDataPart(toHex(dataPart))
         const unlockingContract = tokenContract.unlock({
           txPreimage: txComposer.getInputPreimage(inputIndex),
-          tokenInputIndex: inputIndex,
           prevouts: new Bytes(prevouts.toHex()),
 
-          checkInputIndex: transferCheckInputIndex,
-          checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
-          nReceivers: tokenOutputLen,
-          prevTokenAddress: new Bytes(toHex(ftUtxo.preTokenAddress.hashBuffer)),
-          prevTokenAmount: new Int(ftUtxo.preTokenAmount.toString(10)),
+          tokenInputIndex: inputIndex,
+          amountCheckHashIndex: 0,
+          amountCheckInputIndex: txComposer.getTx().inputs.length - 1,
+          amountCheckTxOutputProofInfo,
+          amountCheckScript: new Bytes(amountCheckScriptBuf.toString('hex')),
+
+          prevTokenInputIndex,
+          prevTokenAddress,
+          prevTokenAmount,
+          tokenTxHeader,
+          tokenTxInputProof,
+          prevTokenTxOutputProof,
+
           senderPubKey: new PubKey(
             ftUtxo.publicKey ? toHex(ftUtxo.publicKey.toBuffer()) : PLACE_HOLDER_PUBKEY
           ),
@@ -893,6 +967,14 @@ export class FtManager {
               ? toHex(txComposer.getTxFormatSig(senderPrivateKey, inputIndex))
               : PLACE_HOLDER_SIG
           ),
+
+          contractInputIndex: transferCheckInputIndex,
+          contractTxOutputProof,
+
+          // checkInputIndex: transferCheckInputIndex,
+          // checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
+          // nReceivers: tokenOutputLen,
+
           operation: ftProto.OP_TRANSFER,
         })
         // if (this.debug && senderPrivateKey) {
@@ -908,14 +990,24 @@ export class FtManager {
         txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
       })
 
+      const tokenOutputSatoshis = txComposer.getOutput(0).satoshis
+
       let unlockingContract = tokenTransferCheckContract.unlock({
         txPreimage: txComposer.getInputPreimage(transferCheckInputIndex),
-        tokenScript: new Bytes(inputTokenScript.toHex()),
         prevouts: new Bytes(prevouts.toHex()),
+        tokenScript: new Bytes(inputTokenScript.toHex()),
+
+        tokenTxHeaderArray: new Bytes(tokenTxHeaderArray.toString('hex')),
+        tokenTxHashProofArray: new Bytes(tokenTxHashProofArray.toString('hex')),
+        tokenSatoshiBytesArray: new Bytes(tokenSatoshiBytesArray.toString('hex')),
 
         inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
         inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
-        receiverSatoshiArray: new Bytes(toHex(outputSatoshiArray)),
+        // receiverSatoshiArray: new Bytes(toHex(outputSatoshiArray)),
+
+        tokenOutputSatoshis,
+
+        // same
         changeSatoshis: new Int(
           changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0
         ),

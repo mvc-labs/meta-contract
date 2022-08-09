@@ -15,8 +15,8 @@ import { inputSatoshis, dummyTxId } from '../../scrypt_helper'
 
 import { privateKey, privateKey2 } from '../../privateKey'
 
-import TokenProto = require('../../src/mcp03/deployments/tokenProto')
-import Common = require('../../src/mcp03/deployments/common')
+import TokenProto = require('../../src/mcp02/deployments/tokenProto')
+import Common = require('../../src/mcp02/deployments/common')
 import Utils = require('./utils')
 
 const addInput = Common.addInput
@@ -274,12 +274,16 @@ function unlockTransferCheck(
     new SigHashPreimage(toHex(preimage)),
     new Bytes(prevouts.toString('hex')),
     new Bytes(tokenScriptBuf.toString('hex')),
+
     new Bytes(tokenTxHeaderArray.toString('hex')),
     new Bytes(tokenTxHashProofArray.toString('hex')),
     new Bytes(tokenTxSatoshisBytesArray.toString('hex')),
+
     new Bytes(inputTokenAddressArray.toString('hex')),
     new Bytes(inputTokenAmountArray.toString('hex')),
+
     tokenOutputSatoshis,
+
     changeSatoshi,
     new Ripemd160(address1.hashBuffer.toString('hex')),
     new Bytes('')

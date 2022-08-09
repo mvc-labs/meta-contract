@@ -79,6 +79,85 @@ export class Token extends ContractAdapter {
 
   public unlock({
     txPreimage,
+    prevouts,
+    tokenInputIndex,
+    amountCheckHashIndex,
+    amountCheckInputIndex,
+    amountCheckTxOutputProofInfo,
+    amountCheckScript,
+
+    prevTokenInputIndex,
+    prevTokenAddress,
+    prevTokenAmount,
+    tokenTxHeader,
+    tokenTxInputProof,
+    prevTokenTxOutputProof,
+
+    senderPubKey,
+    senderSig,
+
+    contractInputIndex,
+    contractTxOutputProof,
+    operation,
+  }: {
+    txPreimage: SigHashPreimage
+    prevouts: Bytes
+    tokenInputIndex: number
+    amountCheckHashIndex: number
+    amountCheckInputIndex: number
+    amountCheckTxOutputProofInfo: any // TODO:
+    amountCheckScript: Bytes
+    prevTokenInputIndex: number
+    prevTokenAddress: Bytes
+    prevTokenAmount: Int
+    tokenTxHeader: any
+    tokenTxInputProof: any
+    prevTokenTxOutputProof: any
+    senderPubKey?: PubKey // only transfer need
+    senderSig?: Sig // only transfer need
+    contractInputIndex: number
+    contractTxOutputProof: any
+    operation: ftProto.FT_OP_TYPE
+  }) {
+    if (operation != ftProto.FT_OP_TYPE.TRANSFER) {
+      senderPubKey = new PubKey('')
+      senderSig = new Sig('')
+    }
+
+    return this._contract.unlock(
+      txPreimage,
+      prevouts,
+
+      // amountCheck
+      tokenInputIndex,
+      amountCheckHashIndex,
+      amountCheckInputIndex,
+      amountCheckTxOutputProofInfo,
+      amountCheckScript,
+
+      // token
+      prevTokenInputIndex,
+      prevTokenAddress,
+      prevTokenAmount,
+      tokenTxHeader,
+      tokenTxInputProof,
+      prevTokenTxOutputProof,
+
+      // sig data
+      senderPubKey,
+      senderSig,
+
+      // contract
+      contractInputIndex,
+      contractTxOutputProof,
+
+      // op
+      operation
+    ) as FunctionCall
+  }
+
+  public unlockOld({
+    txPreimage,
     tokenInputIndex,
     prevouts,
     rabinMsg,
