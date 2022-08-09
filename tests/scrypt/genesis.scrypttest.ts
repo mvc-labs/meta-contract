@@ -18,7 +18,7 @@ describe('Test genesis contract unlock In Javascript', () => {
     ft.api.authorize({ authorization: metaSvAuthorization })
 
     let res = await ft.genesis({
-      genesisWif: CoffeeShop.wif,
+      // genesisWif: CoffeeShop.wif,
       tokenName: 'COFFEE COIN',
       tokenSymbol: 'CC',
       decimalNum: 3,
