@@ -15,7 +15,7 @@ import {
   getUInt32Buf,
   loadDescription,
 } from './deployments/common'
-const jsonDescr = loadDescription('./contract-desc/txUtil_desc.json')
+const jsonDescr = loadDescription('../contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
 
 import {
@@ -32,7 +32,7 @@ import {
 import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
 import { SizeTransaction } from '../common/SizeTransaction'
-import { getEmptyTxOutputProof } from '@/mcp03/contract-factory'
+import { getEmptyTxOutputProof } from './deployments/common'
 const Signature = mvc.crypto.Signature
 const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
@@ -356,7 +356,7 @@ export class FtManager {
     tokenAmount = new BN(tokenAmount.toString())
   }
 
-  private async _issue({
+  private async _mint({
     genesis,
     codehash,
     sensibleId,

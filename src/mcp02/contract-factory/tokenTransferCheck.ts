@@ -297,23 +297,24 @@ export class TokenTransferCheckFactory {
       receiverSatoshiArray = Buffer.concat([receiverSatoshiArray, Buffer.alloc(8)])
     }
 
-    let unlockedContract = contract.unlock({
-      txPreimage: new SigHashPreimage(toHex(preimage)),
-      tokenScript: new Bytes(tokenContractInstance.lockingScript.toHex()),
-      prevouts: new Bytes(toHex(prevouts)),
-      rabinMsgArray: new Bytes(toHex(checkRabinMsgArray)),
-      rabinPaddingArray: new Bytes(toHex(checkRabinPaddingArray)),
-      rabinSigArray: new Bytes(toHex(checkRabinSigArray)),
-      rabinPubKeyIndexArray,
-      rabinPubKeyVerifyArray: rabinPubKeyArray,
-      rabinPubKeyHashArray: new Bytes(toHex(dummyRabinPubKeyHashArray)),
-      inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
-      inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
-      receiverSatoshiArray: new Bytes(toHex(receiverSatoshiArray)),
-      changeSatoshis: new Int(1000),
-      changeAddress: new Ripemd160(toHex(dummyAddress.hashBuffer)),
-      opReturnScript: new Bytes(opreturnScriptHex),
-    })
-    return (unlockedContract.toScript() as mvc.Script).toBuffer().length
+    return 1000
+    // let unlockedContract = contract.unlock({
+    //   txPreimage: new SigHashPreimage(toHex(preimage)),
+    //   tokenScript: new Bytes(tokenContractInstance.lockingScript.toHex()),
+    //   prevouts: new Bytes(toHex(prevouts)),
+    //   rabinMsgArray: new Bytes(toHex(checkRabinMsgArray)),
+    //   rabinPaddingArray: new Bytes(toHex(checkRabinPaddingArray)),
+    //   rabinSigArray: new Bytes(toHex(checkRabinSigArray)),
+    //   rabinPubKeyIndexArray,
+    //   rabinPubKeyVerifyArray: rabinPubKeyArray,
+    //   rabinPubKeyHashArray: new Bytes(toHex(dummyRabinPubKeyHashArray)),
+    //   inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
+    //   inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
+    //   receiverSatoshiArray: new Bytes(toHex(receiverSatoshiArray)),
+    //   changeSatoshis: new Int(1000),
+    //   changeAddress: new Ripemd160(toHex(dummyAddress.hashBuffer)),
+    //   opReturnScript: new Bytes(opreturnScriptHex),
+    // })
+    // return (unlockedContract.toScript() as mvc.Script).toBuffer().length
   }
 }

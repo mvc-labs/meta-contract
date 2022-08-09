@@ -298,27 +298,17 @@ export class TokenFactory {
       })
     )
 
-    let unlockedContract = contract.unlock({
-      txPreimage: new SigHashPreimage(toHex(preimage)),
-      tokenInputIndex,
-      prevouts: new Bytes(toHex(prevouts)),
-      rabinMsg: new Bytes(toHex(rabinMsg)),
-      rabinPaddingArray,
-      rabinSigArray,
-      rabinPubKeyIndexArray,
-      rabinPubKeyVerifyArray: rabinPubKeyArray,
-      rabinPubKeyHashArray: new Bytes(toHex(dummyRabinPubKeyHashArray)),
-      checkInputIndex: routeCheckInputIndex,
-      checkScriptTx: new Bytes(routeCheckTx.serialize(true)),
-      nReceivers: tokenOutputLen,
-      prevTokenAddress: new Bytes(toHex(dummyAddress.hashBuffer)),
-      prevTokenAmount: new Int('1000000000'),
-      senderPubKey: new PubKey(toHex(dummyPk)),
-      senderSig: new Sig(toHex(sig)),
-      lockContractInputIndex: 0,
-      lockContractTx: new Bytes('00'),
-      operation: ftProto.FT_OP_TYPE.TRANSFER,
-    })
-    return (unlockedContract.toScript() as mvc.Script).toBuffer().length
+    return 1000
+    // let unlockedContract = contract.unlock({
+    //   txPreimage: new SigHashPreimage(toHex(preimage)),
+    //   prevouts: new Bytes(toHex(prevouts)),
+    //   tokenInputIndex,
+    //   prevTokenAddress: new Bytes(toHex(dummyAddress.hashBuffer)),
+    //   prevTokenAmount: new Int('1000000000'),
+    //   senderPubKey: new PubKey(toHex(dummyPk)),
+    //   senderSig: new Sig(toHex(sig)),
+    //   operation: ftProto.FT_OP_TYPE.TRANSFER,
+    // })
+    // return (unlockedContract.toScript() as mvc.Script).toBuffer().length
   }
 }
