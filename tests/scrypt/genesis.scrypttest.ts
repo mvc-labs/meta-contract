@@ -24,6 +24,7 @@ describe('Test genesis contract unlock In Javascript', () => {
       decimalNum: 3,
     })
 
+    // txid: c4313f614fd4e17715d2aae02d90fc4ad7c87ed027d1a98825a34ee4e6466b59
     console.log(res)
   })
 

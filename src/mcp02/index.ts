@@ -4,6 +4,7 @@ import { API_TARGET, API_NET, mvc, Api } from '..'
 import { FEEB } from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
+import * as $ from '../common/argumentCheck'
 import { Prevouts } from '../common/Prevouts'
 import { TxComposer } from '../tx-composer'
 import { TokenFactory } from './contract-factory/token'
@@ -23,9 +24,37 @@ import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
 import { SizeTransaction } from '../common/SizeTransaction'
 const Signature = mvc.crypto.Signature
+const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 
 ContractUtil.init()
+
+function checkParamGenesis(genesis) {
+  $.checkArgument(
+    _.isString(genesis),
+    "Invalid Argument: genesis should be a string"
+  );
+  $.checkArgument(
+    genesis.length == 40,
+    `Invalid Argument: genesis.length must be 40`
+  );
+}
+
+function checkParamCodehash(codehash) {
+  $.checkArgument(
+    _.isString(codehash),
+    "Invalid Argument: codehash should be a string"
+  );
+  $.checkArgument(
+    codehash.length == 40,
+    `Invalid Argument: codehash.length must be 40`
+  );
+  $.checkArgument(
+    codehash == ContractUtil.tokenCodeHash,
+    `a valid codehash should be ${ContractUtil.tokenCodeHash}, but the provided is ${codehash} `
+  );
+}
+
 type Utxo = {
   txId: string
   outputIndex: number
@@ -75,7 +104,7 @@ type ParamFtUtxo = {
   wif?: string
 }
 
-export type FtUtxo = {
+type FtUtxo = {
   txId: string
   outputIndex: number
   satoshis?: number
@@ -206,7 +235,6 @@ export class FtManager {
     utxos,
     changeAddress,
     opreturnData,
-    genesisWif,
     noBroadcast = false,
   }: {
     tokenName: string
@@ -215,12 +243,24 @@ export class FtManager {
     utxos?: ParamUtxo[]
     changeAddress?: string | mvc.Address
     opreturnData?: any
-    genesisWif: string | mvc.PrivateKey
     noBroadcast?: boolean
   }) {
     // TODO 检查必要参数
     // validate params
-    // ...
+    $.checkArgument(
+      _.isString(tokenName) && Buffer.from(tokenName).length <= 20,
+      `tokenName should be a string and not be larger than 20 bytes`
+    )
+
+    $.checkArgument(
+      _.isString(tokenSymbol) && Buffer.from(tokenSymbol).length <= 10,
+      'tokenSymbol should be a string and not be larger than 10 bytes'
+    )
+
+    $.checkArgument(
+      _.isNumber(decimalNum) && decimalNum >= 0 && decimalNum <= 255,
+      'decimalNum should be a number and must be between 0 and 255'
+    )
 
     let utxoInfo = await this._pretreatUtxos(utxos)
     if (changeAddress) {
@@ -254,11 +294,99 @@ export class FtManager {
     }
   }
 
-  public async issue() {
-    return this.mint()
+  public async issue(options: {
+    genesis: string
+    codehash: string
+    sensibleId: string
+    genesisWif: string
+    receiverAddress: string | mvc.Address
+    tokenAmount: string | BN
+    allowIncreaseIssues: boolean
+    utxos?: ParamUtxo[]
+    changeAddress?: string | mvc.Address
+    opreturnData?: any
+    noBroadcast?: boolean
+  }) {
+    return this.mint(options)
   }
 
-  public async mint() {}
+  public async mint({
+    genesis,
+    codehash,
+    sensibleId,
+    genesisWif,
+    receiverAddress,
+    tokenAmount,
+    allowIncreaseIssues = true,
+    utxos,
+    changeAddress,
+    opreturnData,
+    noBroadcast = false,
+  }: {
+    genesis: string
+    codehash: string
+    sensibleId: string
+    genesisWif: string
+    receiverAddress: string | mvc.Address
+    tokenAmount: string | BN
+    allowIncreaseIssues: boolean
+    utxos?: ParamUtxo[]
+    changeAddress?: string | mvc.Address
+    opreturnData?: any
+    noBroadcast?: boolean
+  }) {
+    checkParamGenesis(genesis);
+    checkParamCodehash(codehash);
+    $.checkArgument(sensibleId, "sensibleId is required");
+    $.checkArgument(genesisWif, "genesisWif is required");
+    $.checkArgument(receiverAddress, "receiverAddress is required");
+    $.checkArgument(tokenAmount, "tokenAmount is required");
+
+    let utxoInfo = await this._pretreatUtxos(utxos);
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network);
+    } else {
+      changeAddress = utxoInfo.utxos[0].address;
+    }
+    let genesisPrivateKey = new mvc.PrivateKey(genesisWif);
+    let genesisPublicKey = genesisPrivateKey.toPublicKey();
+    receiverAddress = new mvc.Address(receiverAddress, this.network);
+    tokenAmount = new BN(tokenAmount.toString());
+
+
+  }
+
+  private async _issue({
+    genesis,
+    codehash,
+    sensibleId,
+    receiverAddress,
+    tokenAmount,
+    allowIncreaseIssues = true,
+    utxos,
+    utxoPrivateKeys,
+    changeAddress,
+    opreturnData,
+    genesisPrivateKey,
+    genesisPublicKey,
+  }: {
+    genesis: string;
+    codehash: string;
+    sensibleId: string;
+    receiverAddress: mvc.Address;
+    tokenAmount: BN;
+    allowIncreaseIssues: boolean;
+    utxos?: Utxo[];
+    utxoPrivateKeys?: mvc.PrivateKey[];
+    changeAddress?: mvc.Address;
+    opreturnData?: any;
+    noBroadcast?: boolean;
+    genesisPrivateKey?: mvc.PrivateKey;
+    genesisPublicKey: mvc.PublicKey;
+  }) {
+
+  }
+
   public async merge() {}
 
   private async _pretreatUtxos(
