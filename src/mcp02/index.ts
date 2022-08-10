@@ -26,6 +26,7 @@ import {
 import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
 import { SizeTransaction } from '../common/SizeTransaction'
+import { FungibleTokenUnspent } from '@/api'
 const Signature = mvc.crypto.Signature
 const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
@@ -44,6 +45,16 @@ function checkParamCodehash(codehash) {
     codehash == ContractUtil.tokenCodeHash,
     `a valid codehash should be ${ContractUtil.tokenCodeHash}, but the provided is ${codehash} `
   )
+}
+
+function parseSensibleID(sensibleID: string) {
+  let sensibleIDBuf = Buffer.from(sensibleID, 'hex')
+  let genesisTxId = sensibleIDBuf.slice(0, 32).reverse().toString('hex')
+  let genesisOutputIndex = sensibleIDBuf.readUIntLE(32, 4)
+  return {
+    genesisTxId,
+    genesisOutputIndex,
+  }
 }
 
 type Utxo = {
@@ -106,12 +117,15 @@ type FtUtxo = {
 
   satotxInfo?: {
     txId?: string
+    tx?: any
     outputIndex?: number
     txHex?: string
     preTxId?: string
     preOutputIndex?: number
     preTxHex?: string
   }
+
+  tx?: any
 
   preTokenAddress?: mvc.Address
   preTokenAmount?: BN
@@ -286,7 +300,7 @@ export class FtManager {
       tx: txComposer.getTx(),
       codehash,
       genesis,
-      sensibleId
+      sensibleId,
     }
   }
 
@@ -600,6 +614,51 @@ export class FtManager {
       genesisTxId,
       genesisOutputIndex,
       genesisUtxo,
+    }
+  }
+
+  private async _getMintUtxo(
+    codehash: string,
+    genesisTxId: string,
+    genesisOutputIndex: number
+  ): Promise<FtUtxo> {
+    let unspent: FungibleTokenUnspent
+    let firstGenesisTxHex = await this.api.getRawTxData(genesisTxId)
+    let firstGenesisTx = new mvc.Transaction(firstGenesisTxHex)
+
+    let scriptBuffer = firstGenesisTx.outputs[genesisOutputIndex].script.toBuffer()
+    let originGenesis = ftProto.getQueryGenesis(scriptBuffer)
+    let genesisUtxos = await this.api.getFungibleTokenUnspents(
+      codehash,
+      originGenesis,
+      this.zeroAddress.toString()
+    )
+
+    unspent = genesisUtxos.find((v) => v.txId == genesisTxId && v.outputIndex == genesisOutputIndex)
+
+    if (!unspent) {
+      let _dataPartObj = ftProto.parseDataPart(scriptBuffer)
+      _dataPartObj.sensibleID = {
+        txid: genesisTxId,
+        index: genesisOutputIndex,
+      }
+      let newScriptBuf = ftProto.updateScript(scriptBuffer, _dataPartObj)
+      let issueGenesis = ftProto.getQueryGenesis(newScriptBuf)
+      let issueUtxos = await this.api.getFungibleTokenUnspents(
+        codehash,
+        issueGenesis,
+        this.zeroAddress.toString()
+      )
+      if (issueUtxos.length > 0) {
+        unspent = issueUtxos[0]
+      }
+    }
+
+    if (unspent) {
+      return {
+        txId: unspent.txId,
+        outputIndex: unspent.outputIndex,
+      }
     }
   }
 
