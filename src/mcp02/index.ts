@@ -220,6 +220,8 @@ export class FtManager {
     let scriptBuf = tokenContract.lockingScript.toBuffer()
     genesis = ftProto.getQueryGenesis(scriptBuf)
     codehash = tokenContract.getCodeHash()
+
+    // console.log('codePart', tokenContract.dataPart.toBuffer().toString('hex'))
     sensibleId = toHex(TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex))
 
     return { codehash, genesis, sensibleId }
@@ -257,8 +259,8 @@ export class FtManager {
     // TODO 检查必要参数
     // validate params
     $.checkArgument(
-      _.isString(tokenName) && Buffer.from(tokenName).length <= 20,
-      `tokenName should be a string and not be larger than 20 bytes`
+      _.isString(tokenName) && Buffer.from(tokenName).length <= 40,
+      `tokenName should be a string and not be larger than 40 bytes`
     )
 
     $.checkArgument(

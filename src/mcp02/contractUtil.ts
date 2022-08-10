@@ -71,6 +71,7 @@ export class ContractUtil {
     let tokenContract = TokenFactory.getDummyInstance()
     tokenContract.setDataPart('')
     let scriptBuf = tokenContract.lockingScript.toBuffer()
+    // console.log('scriptBuf', scriptBuf.toString('hex'))
     this.tokenCodeHash = toHex(mvc.crypto.Hash.sha256ripemd160(scriptBuf))
   }
 }
