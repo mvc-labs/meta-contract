@@ -10,7 +10,7 @@ import {
   TokenUnlockContractCheckFactory,
   TOKEN_UNLOCK_TYPE,
 } from './contract-factory/tokenUnlockContractCheck'
-import BN = require('../bn.js')
+// import BN = require('../bn.js')
 
 function getTokenTransferCheckCodeHashArray(): string[] {
   let contractArray = [

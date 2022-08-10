@@ -23,7 +23,7 @@ export type FormatedDataPart = {
   sensibleID?: SensibleID
   protoVersion?: number
   protoType?: proto.PROTO_TYPE
-  address?: mvc.Address
+  address?: string
   genesisTxid?: string
 }
 
@@ -215,8 +215,7 @@ export function newDataPart({
 
   const addressBuf = Buffer.alloc(20, 0)
   if (address) {
-    // addressBuf = address.hashBuffer
-    addressBuf.write(address.hashBuffer.toString('hex'), 'hex')
+    addressBuf.write(address, 'hex')
   }
 
   const buffValue = Buffer.alloc(8, 0)
