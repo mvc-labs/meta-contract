@@ -75,30 +75,40 @@ export class TokenGenesis extends ContractAdapter {
 
   public unlock({
     txPreimage,
+    pubKey,
     sig,
-    rabinMsg,
-    rabinPaddingArray,
-    rabinSigArray,
-    rabinPubKeyIndexArray,
-    rabinPubKeyVerifyArray,
-    rabinPubKeyHashArray,
-    genesisSatoshis,
     tokenScript,
+
+    // GenesisTx Input Proof
+    genesisTxHeader,
+    prevInputIndex,
+    genesisTxInputProof,
+
+    // Prev GenesisTx Output Proof
+    prevGenesisTxHeader,
+    prevTxOutputHashProof,
+    prevTxOutputSatoshiBytes,
+
+    genesisSatoshis,
     tokenSatoshis,
     changeAddress,
     changeSatoshis,
     opReturnScript,
   }: {
     txPreimage: SigHashPreimage
+    pubKey: mvc.PublicKey
     sig: Sig
-    rabinMsg: Bytes
-    rabinPaddingArray: Bytes[]
-    rabinSigArray: Int[]
-    rabinPubKeyIndexArray: number[]
-    rabinPubKeyVerifyArray: Int[]
-    rabinPubKeyHashArray: Bytes
-    genesisSatoshis: number
     tokenScript: Bytes
+
+    genesisTxHeader: Bytes
+    prevInputIndex: number
+    genesisTxInputProof: Bytes
+
+    prevGenesisTxHeader: Bytes
+    prevTxOutputHashProof: Bytes
+    prevTxOutputSatoshiBytes: Bytes
+
+    genesisSatoshis: number
     tokenSatoshis: number
     changeAddress: Ripemd160
     changeSatoshis: number
@@ -106,15 +116,19 @@ export class TokenGenesis extends ContractAdapter {
   }) {
     return this._contract.unlock(
       txPreimage,
+      pubKey,
       sig,
-      rabinMsg,
-      rabinPaddingArray,
-      rabinSigArray,
-      rabinPubKeyIndexArray,
-      rabinPubKeyVerifyArray,
-      rabinPubKeyHashArray,
-      genesisSatoshis,
       tokenScript,
+
+      genesisTxHeader,
+      prevInputIndex,
+      genesisTxInputProof,
+
+      prevGenesisTxHeader,
+      prevTxOutputHashProof,
+      prevTxOutputSatoshiBytes,
+
+      genesisSatoshis,
       tokenSatoshis,
       changeAddress,
       changeSatoshis,
@@ -175,22 +189,24 @@ export class TokenGenesisFactory {
       rabinPubKeyVerifyArray.push(new Int(dummyRabinPubKey.toString(10)))
     }
 
-    let unlockResult = contract.unlock({
-      txPreimage: new SigHashPreimage(toHex(preimage)),
-      sig: new Sig(toHex(sig)),
-      rabinMsg: new Bytes(toHex(rabinMsg)),
-      rabinPaddingArray,
-      rabinSigArray,
-      rabinPubKeyIndexArray,
-      rabinPubKeyVerifyArray,
-      rabinPubKeyHashArray: new Bytes(toHex(dummyRabinPubKeyHashArray)),
-      genesisSatoshis: 1000,
-      tokenScript: new Bytes(tokenContract.lockingScript.toHex()),
-      tokenSatoshis: 1000,
-      changeAddress: new Ripemd160(toHex(dummyAddress.hashBuffer)),
-      changeSatoshis: 1000,
-      opReturnScript: new Bytes(opreturnScriptHex),
-    })
-    return (unlockResult.toScript() as mvc.Script).toBuffer().length
+    return 1000
+
+    // let unlockResult = contract.unlock({
+    //   txPreimage: new SigHashPreimage(toHex(preimage)),
+    //   sig: new Sig(toHex(sig)),
+    //   rabinMsg: new Bytes(toHex(rabinMsg)),
+    //   rabinPaddingArray,
+    //   rabinSigArray,
+    //   rabinPubKeyIndexArray,
+    //   rabinPubKeyVerifyArray,
+    //   rabinPubKeyHashArray: new Bytes(toHex(dummyRabinPubKeyHashArray)),
+    //   genesisSatoshis: 1000,
+    //   tokenScript: new Bytes(tokenContract.lockingScript.toHex()),
+    //   tokenSatoshis: 1000,
+    //   changeAddress: new Ripemd160(toHex(dummyAddress.hashBuffer)),
+    //   changeSatoshis: 1000,
+    //   opReturnScript: new Bytes(opreturnScriptHex),
+    // })
+    // return (unlockResult.toScript() as mvc.Script).toBuffer().length
   }
 }

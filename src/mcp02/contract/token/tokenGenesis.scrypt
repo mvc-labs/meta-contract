@@ -9,6 +9,7 @@ contract TokenGenesis {
         PubKey pubKey,
         Sig sig,
         bytes tokenScript,
+        
         // genesisTx input proof
         bytes genesisTxHeader,
         int prevInputIndex,
@@ -17,6 +18,7 @@ contract TokenGenesis {
         bytes prevGenesisTxHeader,
         bytes prevTxOutputHashProof,
         bytes prevTxOutputSatoshiBytes,
+
         // output
         int genesisSatoshis,
         int tokenSatoshis,

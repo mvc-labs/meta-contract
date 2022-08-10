@@ -479,6 +479,21 @@ export class FtManager {
       const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
       opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
     }
+    const prevInputIndex = 0 // TODO: 0?
+    const genesisTx = genesisUtxo.tx as mvc.Transaction
+    const inputRes = TokenUtil.getTxInputProof(genesisTx, prevInputIndex)
+    const genesisTxInputProof = new TxInputProof(inputRes[0])
+    const genesisTxHeader = inputRes[1] as Bytes // TODO:
+
+    // Find a valid preGenesisTx
+
+    const genesisTxInput = genesisTx.inputs[prevInputIndex]
+    const preGenesisOutputIndex = genesisTxInput.outputIndex
+    const preGenesisTxId = genesisTxInput.prevTxId.toString('hex')
+    const preGenesisTxHex = await this.api.getRawTxData(preGenesisTxId)
+    const preGenesisTx = new mvc.Transaction(preGenesisTxHex)
+
+    const prevOutputProof = TokenUtil.getTxOutputProof(preGenesisTx, preGenesisOutputIndex)
 
     //The first round of calculations get the exact size of the final transaction, and then change again
     //Due to the change, the script needs to be unlocked again in the second round
@@ -489,20 +504,26 @@ export class FtManager {
 
       let unlockResult = genesisContract.unlock({
         txPreimage: txComposer.getInputPreimage(genesisInputIndex),
+        pubKey: genesisPublicKey,
         sig: new Sig(
           genesisPrivateKey
             ? toHex(txComposer.getTxFormatSig(genesisPrivateKey, genesisInputIndex))
             : PLACE_HOLDER_SIG
         ),
-        rabinMsg: rabinData.rabinMsg,
-        rabinPaddingArray: rabinData.rabinPaddingArray,
-        rabinSigArray: rabinData.rabinSigArray,
-        rabinPubKeyIndexArray,
-        rabinPubKeyVerifyArray,
-        rabinPubKeyHashArray: this.rabinPubKeyHashArray,
+        tokenScript: new Bytes(txComposer.getOutput(tokenOutputIndex).script.toHex()),
+
+        // GenesisTx Input Proof
+        genesisTxHeader,
+        prevInputIndex,
+        genesisTxInputProof,
+
+        // Prev GenesisTx Output Proof
+        prevGenesisTxHeader: prevOutputProof.txHeader,
+        prevTxOutputHashProof: prevOutputProof.hashProof,
+        prevTxOutputSatoshiBytes: prevOutputProof.satoshiBytes,
+
         genesisSatoshis:
           newGenesisOutputIndex != -1 ? txComposer.getOutput(newGenesisOutputIndex).satoshis : 0,
-        tokenScript: new Bytes(txComposer.getOutput(tokenOutputIndex).script.toHex()),
         tokenSatoshis: txComposer.getOutput(tokenOutputIndex).satoshis,
         changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
         changeSatoshis:
@@ -540,7 +561,7 @@ export class FtManager {
     sensibleId: string
     genesisPublicKey: mvc.PublicKey
   }) {
-    let genesisContract = TokenGenesisFactory.createContract(genesisPublicKey)
+    let genesisContract = TokenGenesisFactory.createContract()
 
     //Looking for UTXO for issue
     let { genesisTxId, genesisOutputIndex } = parseSensibleID(sensibleId)
@@ -565,6 +586,7 @@ export class FtManager {
       preTxId,
       preOutputIndex,
       preTxHex,
+      tx,
     }
 
     let output = tx.outputs[genesisUtxo.outputIndex]
@@ -707,6 +729,7 @@ export class FtManager {
       utxoMaxCount: utxos.length,
     })
     const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+
     if (balance < estimateSatoshis) {
       throw new CodeError(
         ErrCode.EC_INSUFFICIENT_BSV,
@@ -1424,7 +1447,7 @@ export class FtManager {
         const tokenTx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
         const inputRes = TokenUtil.getTxInputProof(tokenTx, prevTokenInputIndex)
         const tokenTxInputProof = new TxInputProof(inputRes[0])
-        const tokenTxHeader = inputRes[1]
+        const tokenTxHeader = inputRes[1] as Bytes // TODO:
         const prevTokenTxOutputProof = new TxOutputProof(
           TokenUtil.getTxOutputProof(ftUtxo.prevTokenTx, ftUtxo.prevTokenOutputIndex)
         )

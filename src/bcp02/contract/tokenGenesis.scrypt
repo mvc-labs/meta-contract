@@ -9,12 +9,15 @@ contract TokenGenesis {
   public function unlock(
     SigHashPreimage txPreimage,
     Sig sig,
+
+    // rabin
     bytes rabinMsg,
     bytes[RabinUtil.ORACLE_VERIFY_NUM] rabinPaddingArray,
     int[RabinUtil.ORACLE_VERIFY_NUM] rabinSigArray,
     int[RabinUtil.ORACLE_VERIFY_NUM] rabinPubKeyIndexArray,
     int[RabinUtil.ORACLE_VERIFY_NUM] rabinPubKeyArray,
     bytes rabinPubKeyHashArray,
+    
     int genesisSatoshis,
     bytes tokenScript,
     int tokenSatoshis,

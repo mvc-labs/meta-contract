@@ -105,18 +105,18 @@ export class Token extends ContractAdapter {
     tokenInputIndex: number
     amountCheckHashIndex: number
     amountCheckInputIndex: number
-    amountCheckTxOutputProofInfo: any // TODO:
+    amountCheckTxOutputProofInfo: Bytes
     amountCheckScript: Bytes
     prevTokenInputIndex: number
     prevTokenAddress: Bytes
     prevTokenAmount: Int
-    tokenTxHeader: any
-    tokenTxInputProof: any
-    prevTokenTxOutputProof: any
+    tokenTxHeader: Bytes
+    tokenTxInputProof: Bytes
+    prevTokenTxOutputProof: Bytes
     senderPubKey?: PubKey // only transfer need
     senderSig?: Sig // only transfer need
     contractInputIndex: number
-    contractTxOutputProof: any
+    contractTxOutputProof: Bytes
     operation: ftProto.FT_OP_TYPE
   }) {
     if (operation != ftProto.FT_OP_TYPE.TRANSFER) {
