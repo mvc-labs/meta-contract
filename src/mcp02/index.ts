@@ -182,10 +182,10 @@ export class FtManager {
     let genesisTxId = genesisTx.id
     let genesisLockingScriptBuf = genesisTx.outputs[genesisOutputIndex].script.toBuffer()
     const dataPartObj: any = ftProto.parseDataPart(genesisLockingScriptBuf)
-    // dataPartObj.sensibleID = {
-    //   txid: genesisTxId,
-    //   index: genesisOutputIndex,
-    // }
+    dataPartObj.sensibleID = {
+      txid: genesisTxId,
+      index: genesisOutputIndex,
+    }
     dataPartObj.address = this.purse.address
     genesisLockingScriptBuf = ftProto.updateScript(genesisLockingScriptBuf, dataPartObj)
 
@@ -196,19 +196,19 @@ export class FtManager {
 
     tokenContract.setFormatedDataPart({
       // rabinPubKeyHashArrayHash: toHex(this.rabinPubKeyHashArrayHash),
-      // sensibleID: {
-      //   txid: genesisTxId,
-      //   index: genesisOutputIndex,
-      // },
+      sensibleID: {
+        txid: genesisTxId,
+        index: genesisOutputIndex,
+      },
       genesisHash: toHex(TokenUtil.getScriptHashBuf(genesisLockingScriptBuf)),
     })
 
     let scriptBuf = tokenContract.lockingScript.toBuffer()
     genesis = ftProto.getQueryGenesis(scriptBuf)
     codehash = tokenContract.getCodeHash()
-    // sensibleId = toHex(TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex))
+    sensibleId = toHex(TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex))
 
-    return { codehash, genesis }
+    return { codehash, genesis, sensibleId }
   }
 
   /**
@@ -279,13 +279,14 @@ export class FtManager {
       await this.api.broadcast(txHex)
     }
 
-    let { codehash, genesis } = this.getCodehashAndGensisByTx(txComposer.getTx())
+    let { codehash, genesis, sensibleId } = this.getCodehashAndGensisByTx(txComposer.getTx())
     return {
       txHex,
       txid: txComposer.getTxId(),
       tx: txComposer.getTx(),
       codehash,
       genesis,
+      sensibleId
     }
   }
 
