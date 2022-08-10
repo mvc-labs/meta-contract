@@ -26,7 +26,7 @@ import {
 import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
 import { SizeTransaction } from '../common/SizeTransaction'
-import { FungibleTokenUnspent } from '@/api'
+import { FungibleTokenUnspent } from '../api'
 const Signature = mvc.crypto.Signature
 const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
@@ -200,7 +200,6 @@ export class FtManager {
       txid: genesisTxId,
       index: genesisOutputIndex,
     }
-    dataPartObj.address = this.purse.address
     genesisLockingScriptBuf = ftProto.updateScript(genesisLockingScriptBuf, dataPartObj)
 
     let tokenContract = TokenFactory.createContract(
@@ -215,6 +214,7 @@ export class FtManager {
         index: genesisOutputIndex,
       },
       genesisHash: toHex(TokenUtil.getScriptHashBuf(genesisLockingScriptBuf)),
+      address: this.purse.address.hashBuffer.toString('hex'),
     })
 
     let scriptBuf = tokenContract.lockingScript.toBuffer()
@@ -341,7 +341,7 @@ export class FtManager {
     genesisWif: string
     receiverAddress: string | mvc.Address
     tokenAmount: string | BN
-    allowIncreaseMints: boolean
+    allowIncreaseMints?: boolean
     utxos?: ParamUtxo[]
     changeAddress?: string | mvc.Address
     opreturnData?: any
@@ -784,7 +784,7 @@ export class FtManager {
       tokenName,
       tokenSymbol,
       decimalNum,
-      address: this.purse.address,
+      address: this.purse.address.hashBuffer.toString('hex'),
     })
     let estimateSatoshis = await this.getGenesisEstimateFee({
       opreturnData,
