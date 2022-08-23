@@ -103,11 +103,11 @@
     ],
     "stateProps": [],
     "buildType": "debug",
-    "file": "file:///Users/leiwenwei/dev/meta-contract/tests/contracts/txUtil.scrypt",
+    "file": "file:///Users/ivan/Codes/blockchain/meta-contract/tests/contracts/txUtil.scrypt",
     "asm": "",
     "hex": "",
     "sources": [
-        "/Users/leiwenwei/dev/meta-contract/tests/contracts/txUtil.scrypt"
+        "/Users/ivan/Codes/blockchain/meta-contract/tests/contracts/txUtil.scrypt"
     ],
     "sourceMap": []
 }

@@ -45,6 +45,7 @@ export class ContractUtil {
   static transferCheckCodeHashArray: Bytes[]
   static unlockContractCodeHashArray: Bytes[]
   static tokenCodeHash: string
+  static tokenGenesisCodeHash: string
   public static init(config?: ContractConfig) {
     if (config) {
       this.transferCheckCodeHashArray = config.transferCheckCodeHashArray.map((v) => new Bytes(v))
@@ -71,7 +72,10 @@ export class ContractUtil {
     let tokenContract = TokenFactory.getDummyInstance()
     tokenContract.setDataPart('')
     let scriptBuf = tokenContract.lockingScript.toBuffer()
-    // console.log('scriptBuf', scriptBuf.toString('hex'))
-    this.tokenCodeHash = toHex(mvc.crypto.Hash.sha256ripemd160(scriptBuf))
+    let genesisContract = TokenGenesisFactory.getDummyInstance()
+    genesisContract.setDataPart('')
+    this.tokenGenesisCodeHash = genesisContract.getCodeHash()
+    // this.tokenCodeHash = toHex(mvc.crypto.Hash.sha256ripemd160(scriptBuf))
+    this.tokenCodeHash = tokenContract.getCodeHash()
   }
 }

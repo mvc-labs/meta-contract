@@ -5,11 +5,10 @@ const NFT_ID_LEN = 36
 const NFT_CODE_HASH_LEN = 20
 const NFT_ID_OFFSET = 0 + NFT_ID_LEN
 const NFT_CODE_HASH_OFFSET = NFT_ID_OFFSET + NFT_CODE_HASH_LEN
-// opreturn + inputTokenIndexArray + nSenders(4 bytes) + receiverTokenAmountArray + receiverArray + nReceivers(4 bytes) + tokenCodeHash + tokenID
+//opreturn nSenders(4 bytes) + receiverTokenAmountArray + receiverArray + nReceivers(4 bytes) + tokenCodeHash + tokenID
 
 export type FormatedDataPart = {
-  inputTokenIndexArray?: number[]
-  nSender?: number
+  nSenders?: number
   receiverTokenAmountArray?: BN[]
   receiverArray?: mvc.Address[]
   nReceivers?: number
@@ -18,14 +17,7 @@ export type FormatedDataPart = {
 }
 
 export function newDataPart(dataPart: FormatedDataPart): Buffer {
-  let inputTokenIndexArrayBuf = Buffer.alloc(0)
-  dataPart.inputTokenIndexArray.forEach((tokenIndex) => {
-    inputTokenIndexArrayBuf = Buffer.concat([
-      inputTokenIndexArrayBuf,
-      TokenUtil.getUInt32Buf(tokenIndex),
-    ])
-  })
-
+  let nSendersBuf = TokenUtil.getUInt32Buf(dataPart.nSenders)
   let receiverTokenAmountArrayBuf = Buffer.alloc(0)
   dataPart.receiverTokenAmountArray.forEach((tokenAmount) => {
     receiverTokenAmountArrayBuf = Buffer.concat([
@@ -40,15 +32,12 @@ export function newDataPart(dataPart: FormatedDataPart): Buffer {
   let nReceiversBuf = TokenUtil.getUInt32Buf(dataPart.nReceivers)
   let tokenCodeHashBuf = Buffer.from(dataPart.tokenCodeHash, 'hex')
   let tokenIDBuf = Buffer.from(dataPart.tokenID, 'hex')
-
-  const buf = Buffer.concat([
-    inputTokenIndexArrayBuf,
+  return Buffer.concat([
+    nSendersBuf,
     receiverTokenAmountArrayBuf,
     recervierArrayBuf,
     nReceiversBuf,
     tokenCodeHashBuf,
     tokenIDBuf,
   ])
-
-  return TokenUtil.buildScriptData(buf)
 }

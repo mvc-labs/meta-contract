@@ -67,7 +67,6 @@ export class Token extends ContractAdapter {
 
   public setFormatedDataPart(dataPart: ftProto.FormatedDataPart): void {
     this._formatedDataPart = Object.assign({}, this._formatedDataPart, dataPart)
-    this._formatedDataPart.genesisFlag = ftProto.GENESIS_FLAG.FALSE
     this._formatedDataPart.protoVersion = ftProto.PROTO_VERSION
     this._formatedDataPart.protoType = PROTO_TYPE.FT
     super.setDataPart(toHex(ftProto.newDataPart(this._formatedDataPart)))
@@ -109,7 +108,7 @@ export class Token extends ContractAdapter {
     amountCheckScript: Bytes
     prevTokenInputIndex: number
     prevTokenAddress: Bytes
-    prevTokenAmount: Int
+    prevTokenAmount: BigInt
     tokenTxHeader: Bytes
     tokenTxInputProof: Bytes
     prevTokenTxOutputProof: Bytes
@@ -253,7 +252,9 @@ export class TokenFactory {
       ContractUtil.transferCheckCodeHashArray,
       ContractUtil.unlockContractCodeHashArray
     )
-    contract.setFormatedDataPart({})
+    // contract.setFormatedDataPart({})
+    contract.setDataPart('')
+
     return contract
   }
 
@@ -268,6 +269,7 @@ export class TokenFactory {
     tokenInputLen: number,
     tokenOutputLen: number
   ) {
+    return 1000 // TODO:!!
     let contract = this.getDummyInstance()
     const preimage = getPreimage(dummyTx, contract.lockingScript.toASM(), 1)
     const sig = Buffer.from(PLACE_HOLDER_SIG, 'hex')

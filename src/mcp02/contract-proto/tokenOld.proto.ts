@@ -1,12 +1,9 @@
-import * as BN from '../../bn.js'
+import * as BN from '../../bn.js/index.js'
 import * as mvc from '../../mvc'
 import * as proto from '../../common/protoheader'
 import * as Utils from '../../common/utils'
 import { toHex } from '../../scryptlib'
-import { buildScriptData } from '../../common/tokenUtil'
 export const PROTO_VERSION = 1
-export const SIGNER_NUM = 5
-export const SIGNER_VERIFY_NUM = 3
 
 export type SensibleID = {
   txid: string
@@ -22,6 +19,9 @@ export type FormatedDataPart = {
   sensibleID?: SensibleID
   protoVersion?: number
   protoType?: proto.PROTO_TYPE
+  address?: string
+  genesisTxid?: string
+  genesisFlag?: number
 }
 
 // <op_pushdata> + <type specific data> + <proto header> + <data_len(4 bytes)> + <version(1 bytes)>
@@ -37,32 +37,32 @@ export type FormatedDataPart = {
 // token version // 4
 // token type // 4
 // protp flag // 12
-/**
- * 对应上面10个参数
- * */
-const TOKEN_NAME_LEN = 40
-const TOKEN_SYMBOL_LEN = 20
-const DECIMAL_NUM_LEN = 1
-const TOKEN_ADDRESS_LEN = 20
-const TOKEN_AMOUNT_LEN = 8
+const TOKEN_ID_LEN = 20
+const GENESIS_TX_ID_LEN = 36
+const RABIN_PUBKEY_HASH_ARRAY_HASH_LEN = 20
 const GENESIS_HASH_LEN = 20
-const SENSIBLE_ID_LEN = 36 // genesis txid
-// proto.PROTO_VERSION_LEN
-// proto.PROTO_TYPE_LEN
-// proto.PROTO_FLAG_LEN
+const TOKEN_AMOUNT_LEN = 8
+const TOKEN_ADDRESS_LEN = 20
+const DECIMAL_NUM_LEN = 1
+const GENESIS_FLAG_LEN = 1
+const TOKEN_SYMBOL_LEN = 10
+const TOKEN_NAME_LEN = 40
 
-const GENESISTX_ID_OFFSET = SENSIBLE_ID_LEN + proto.getHeaderLen()
-const GENESIS_HASH_OFFSET = GENESISTX_ID_OFFSET + GENESIS_HASH_LEN
+const GENESIS_TX_ID_OFFSET = GENESIS_TX_ID_LEN + proto.getHeaderLen()
+const RABIN_PUBKEY_HASH_ARRAY_HASH_OFFSET = GENESIS_TX_ID_OFFSET + RABIN_PUBKEY_HASH_ARRAY_HASH_LEN
+const GENESIS_HASH_OFFSET = RABIN_PUBKEY_HASH_ARRAY_HASH_OFFSET + GENESIS_HASH_LEN
 const TOKEN_AMOUNT_OFFSET = GENESIS_HASH_OFFSET + TOKEN_AMOUNT_LEN
 const TOKEN_ADDRESS_OFFSET = TOKEN_AMOUNT_OFFSET + TOKEN_ADDRESS_LEN
 const DECIMAL_NUM_OFFSET = TOKEN_ADDRESS_OFFSET + DECIMAL_NUM_LEN
-const TOKEN_SYMBOL_OFFSET = DECIMAL_NUM_OFFSET + TOKEN_SYMBOL_LEN
+const GENESIS_FLAG_OFFSET = DECIMAL_NUM_OFFSET + GENESIS_FLAG_LEN
+const TOKEN_SYMBOL_OFFSET = GENESIS_FLAG_OFFSET + TOKEN_SYMBOL_LEN
 const TOKEN_NAME_OFFSET = TOKEN_SYMBOL_OFFSET + TOKEN_NAME_LEN
 
-const OP_PUSH_LEN = 2
 const TOKEN_HEADER_LEN = TOKEN_NAME_OFFSET
-const DATA_LEN = TOKEN_HEADER_LEN + OP_PUSH_LEN
 
+export const GENESIS_TOKEN_ID = Buffer.alloc(TOKEN_ID_LEN, 0)
+export const EMPTY_ADDRESS = Buffer.alloc(TOKEN_ADDRESS_LEN, 0)
+export const nonGenesisFlag = Buffer.alloc(1, 0)
 export const OP_TRANSFER = 1
 export const OP_UNLOCK_FROM_CONTRACT = 2
 
@@ -98,11 +98,11 @@ export function getTokenID(script: Buffer) {
 }
 
 export function getSensibleID(script0: Buffer) {
-  if (script0.length < GENESISTX_ID_OFFSET) return { txid: '', index: 0 }
+  if (script0.length < GENESIS_TX_ID_OFFSET) return { txid: '', index: 0 }
   let script = Buffer.from(script0)
   let sensibleIDBuf = script.slice(
-    script.length - GENESISTX_ID_OFFSET,
-    script.length - GENESISTX_ID_OFFSET + SENSIBLE_ID_LEN
+    script.length - GENESIS_TX_ID_OFFSET,
+    script.length - GENESIS_TX_ID_OFFSET + GENESIS_TX_ID_LEN
   )
   let txid = sensibleIDBuf.slice(0, 32).reverse().toString('hex') //reverse会改变原对象
   let index = sensibleIDBuf.readUIntLE(32, 4)
@@ -110,11 +110,19 @@ export function getSensibleID(script0: Buffer) {
   return sensibleID
 }
 
+export function getRabinPubKeyHashArrayHash(script: Buffer) {
+  return script
+    .slice(
+      script.length - RABIN_PUBKEY_HASH_ARRAY_HASH_OFFSET,
+      script.length - RABIN_PUBKEY_HASH_ARRAY_HASH_OFFSET + RABIN_PUBKEY_HASH_ARRAY_HASH_LEN
+    )
+    .toString('hex')
+}
+
 export function getGenesisHash(script: Buffer) {
   return script
     .slice(
       script.length - GENESIS_HASH_OFFSET,
-      // script.length - GENESIS_HASH_OFFSET + GENESISTX_ID_OFFSET
       script.length - GENESIS_HASH_OFFSET + GENESIS_HASH_LEN
     )
     .toString('hex')
@@ -133,6 +141,11 @@ export function getTokenAddress(script: Buffer): string {
 export function getDecimalNum(script: Buffer): number {
   if (script.length < DECIMAL_NUM_OFFSET) return 0
   return script.readUIntLE(script.length - DECIMAL_NUM_OFFSET, DECIMAL_NUM_LEN)
+}
+
+export function getGenesisFlag(script: Buffer): number {
+  if (script.length < GENESIS_FLAG_OFFSET) return 0
+  return script.readUIntLE(script.length - GENESIS_FLAG_OFFSET, GENESIS_FLAG_LEN)
 }
 
 export function getTokenSymbol(script: Buffer): string {
@@ -156,7 +169,10 @@ export function getTokenName(script: Buffer): string {
 }
 
 export function getContractCode(script: Buffer): Buffer {
-  return script.slice(0, script.length - DATA_LEN)
+  return script.slice(
+    0,
+    script.length - TOKEN_HEADER_LEN - Utils.getVarPushdataHeader(TOKEN_HEADER_LEN).length
+  )
 }
 
 export function getContractCodeHash(script: Buffer) {
@@ -179,31 +195,16 @@ export function getNewTokenScript(scriptBuf: Buffer, address: Buffer, tokenAmoun
   return newScript
 }
 
-export const getTxIdBuf = function (txid: string) {
-  const buf = Buffer.from(txid, 'hex').reverse()
-  return buf
-}
-
-export const getUInt32Buf = function (index: number) {
-  const buf = Buffer.alloc(4, 0)
-  buf.writeUInt32LE(index)
-  return buf
-}
-
-export const genGenesisTxid = function (txid: string, index: number) {
-  return Buffer.concat([getTxIdBuf(txid), getUInt32Buf(index)]).toString('hex')
-}
-
 export function newDataPart({
   tokenName,
   tokenSymbol,
   decimalNum,
-  tokenAddress,
-  tokenAmount,
   genesisHash,
-  sensibleID,
-  protoVersion,
+  address,
+  // bufferValue = 总为8位0
+  genesisTxid,
   protoType,
+  protoVersion,
 }: FormatedDataPart): Buffer {
   const tokenNameBuf = Buffer.alloc(TOKEN_NAME_LEN, 0)
   if (tokenName) {
@@ -220,25 +221,21 @@ export function newDataPart({
     decimalBuf.writeUInt8(decimalNum)
   }
 
-  let tokenAmountBuf = Buffer.alloc(TOKEN_AMOUNT_LEN, 0)
-  if (tokenAmount) {
-    tokenAmountBuf = tokenAmount
-      .toBuffer({ endian: 'little', size: TOKEN_AMOUNT_LEN })
-      .slice(0, TOKEN_AMOUNT_LEN)
+  const addressBuf = Buffer.alloc(20, 0)
+  if (address) {
+    addressBuf.write(address, 'hex')
   }
+
+  const buffValue = Buffer.alloc(8, 0)
 
   const genesisHashBuf = Buffer.alloc(GENESIS_HASH_LEN, 0)
   if (genesisHash) {
     genesisHashBuf.write(genesisHash, 'hex')
   }
 
-  // TODO 同样是36位,只是换了个名字叫 genesis txid
-  let sensibleIDBuf = Buffer.alloc(SENSIBLE_ID_LEN, 0)
-  if (sensibleID) {
-    const txidBuf = Buffer.from(sensibleID.txid, 'hex').reverse()
-    const indexBuf = Buffer.alloc(4, 0)
-    indexBuf.writeUInt32LE(sensibleID.index)
-    sensibleIDBuf = Buffer.concat([txidBuf, indexBuf])
+  const genesisTxidBuf = Buffer.alloc(GENESIS_HASH_LEN, 0)
+  if (genesisTxid) {
+    genesisTxidBuf.write(genesisTxid)
   }
 
   const protoTypeBuf = Buffer.alloc(proto.PROTO_TYPE_LEN, 0)
@@ -251,45 +248,37 @@ export function newDataPart({
     protoVersionBuf.writeUInt32LE(protoVersion)
   }
 
-  let tokenAddressBuf = Buffer.alloc(TOKEN_ADDRESS_LEN, 0)
-  if (tokenAddress) {
-    tokenAddressBuf = Buffer.from(tokenAddress, 'hex')
-  }
-  const buf = Buffer.concat([
-    // 新版结构变化
+  /**
+    TOKEN_NAME,
+    TOKEN_SYMBOL,
+    DECIMAL_NUM,
+    address1.hashBuffer,
+    buffValue,
+    genesisHash,
+    genesisTxidBuf,
+    tokenVersion, = protoVersion
+    tokenType,  = protoType
+    PROTO_FLAG,
+   */
+  return Buffer.concat([
     tokenNameBuf,
     tokenSymbolBuf,
     decimalBuf,
-    tokenAddressBuf, // 就是 issuer 的 hashBuffer
-    tokenAmountBuf,
+    addressBuf,
+    buffValue,
     genesisHashBuf,
-    sensibleIDBuf, // 就是genesisTxidBuf
+    genesisTxidBuf,
     protoVersionBuf,
     protoTypeBuf,
     proto.PROTO_FLAG,
-
-    // 旧版做法
-    // tokenNameBuf,
-    // tokenSymbolBuf,
-    // genesisFlagBuf,
-    // decimalBuf,
-    // tokenAddressBuf,
-    // tokenAmountBuf,
-    // genesisHashBuf,
-    // rabinPubKeyHashArrayHashBuf,
-    // sensibleIDBuf,
-    // protoVersionBuf,
-    // protoTypeBuf,
-    // proto.PROTO_FLAG,
   ])
-
-  return buildScriptData(buf)
 }
 
 export function parseDataPart(scriptBuf: Buffer): FormatedDataPart {
   let tokenName = getTokenName(scriptBuf)
   let tokenSymbol = getTokenSymbol(scriptBuf)
   let decimalNum = getDecimalNum(scriptBuf)
+  let genesisFlag = getGenesisFlag(scriptBuf)
   let tokenAddress = getTokenAddress(scriptBuf)
   let tokenAmount = getTokenAmount(scriptBuf)
   let genesisHash = getGenesisHash(scriptBuf)
@@ -300,6 +289,7 @@ export function parseDataPart(scriptBuf: Buffer): FormatedDataPart {
     tokenName,
     tokenSymbol,
     decimalNum,
+    genesisFlag,
     tokenAddress,
     tokenAmount,
     genesisHash,
@@ -326,8 +316,8 @@ export function getQueryGenesis(script: Buffer): string {
 export function getQuerySensibleID(script0: Buffer): string {
   let script = Buffer.from(script0)
   let sensibleIDBuf = script.slice(
-    script.length - GENESISTX_ID_OFFSET,
-    script.length - GENESISTX_ID_OFFSET + SENSIBLE_ID_LEN
+    script.length - GENESIS_TX_ID_OFFSET,
+    script.length - GENESIS_TX_ID_OFFSET + GENESIS_TX_ID_LEN
   )
   return toHex(sensibleIDBuf)
 }

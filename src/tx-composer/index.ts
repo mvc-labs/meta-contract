@@ -1,17 +1,20 @@
 import * as mvc from '../mvc'
 import { CONTRACT_TYPE, dumpTx, SigHashInfo } from '../common/utils'
 import { getPreimage, signTx, toHex, Sig } from '../scryptlib'
+
 const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 const P2PKH_UNLOCK_SIZE = 1 + 1 + 71 + 1 + 33
 const P2PKH_DUST_AMOUNT = 1
 const MIN_FEE_AMOUNT = 56
+const TX_VERSION = 10
 export class TxComposer {
   tx: mvc.Transaction
   sigHashList: SigHashInfo[] = []
   changeOutputIndex: number = -1
   constructor(tx?: mvc.Transaction) {
     this.tx = tx || new mvc.Transaction()
+    this.tx.version = TX_VERSION
   }
 
   toObject() {
@@ -190,10 +193,16 @@ export class TxComposer {
   }
 
   getTxFormatSig(privateKey: mvc.PrivateKey, inputIndex: number, sigtype = sighashType) {
+    // console.log({
+    //   inputIndex,
+    //   sigtype,
+    //   pk: privateKey.toString(),
+    //   satoshis: this.getInput(inputIndex).output.satoshis,
+    // })
     let sig: Sig = signTx(
       this.tx,
       privateKey,
-      this.getInput(inputIndex).output.script.toASM(),
+      this.getInput(inputIndex).output.script,
       this.getInput(inputIndex).output.satoshis,
       inputIndex,
       sigtype
@@ -204,7 +213,7 @@ export class TxComposer {
   getInputPreimage(inputIndex: number, sigtype = sighashType) {
     return getPreimage(
       this.tx,
-      this.getInput(inputIndex).output.script.toASM(),
+      this.getInput(inputIndex).output.script,
       this.getInput(inputIndex).output.satoshis,
       inputIndex,
       sigtype

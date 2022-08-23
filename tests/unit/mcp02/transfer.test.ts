@@ -4,7 +4,14 @@ import { FtManager, Wallet, API_NET, API_TARGET } from '../../../src'
 let wallet: Wallet
 let wallet2: Wallet
 let ftManager: FtManager
+let sensibleId = 'b5f7ebcad420ff6c57d4a29d157cf8eec3ee9b2f5c001060949f66382d84691000000000'
+let mintTxId: string
+let genesis = 'bcbcdd9e34b74ebf60e48e28fcc3aa9dc9159781'
+let codehash = '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04'
+// let codehash = 'a771584dc693966b8d98ff3e02d906f840416f49'
+// let genesis = '39a4da6b72901545f4560822bd752a95e8727e5f'
 
+jest.setTimeout(30000)
 beforeAll(async () => {
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
   const feeb = 0.5
@@ -21,10 +28,47 @@ beforeAll(async () => {
     feeb: feeb,
   })
   ftManager.api.authorize({ authorization: process.env.METASV_BEARER })
+
+  // 创世并铸造
+  // const currentDate = new Date().getHours() + ':' + new Date().getMinutes()
+  // const tokenName = 'Mint - ' + currentDate
+  // const tokenSymbol = 'HelloWorld'
+  // const decimalNum = 8
+  // const genesisResult = await ftManager.genesis({
+  //   tokenName,
+  //   tokenSymbol,
+  //   decimalNum,
+  // })
+  // codehash = genesisResult.codehash
+  // genesis = genesisResult.genesis
+  // sensibleId = genesisResult.sensibleId
+  // let { txid } = await ftManager.mint({
+  //   sensibleId,
+  //   genesisWif: process.env.WIF,
+  //   receiverAddress: wallet.address,
+  //   tokenAmount: '460',
+  // })
+  // mintTxId = txid
+  // console.log(mintTxId)
 })
 
 describe('转账', () => {
-  it('正常转账', async () => {
+  it('正常初始化', async () => {
     expect(ftManager).toHaveProperty('transfer')
+  })
+
+  it('正常转账', async () => {
+    let { txid: transferTxId } = await ftManager.transfer({
+      genesis,
+      codehash,
+      receivers: [
+        {
+          amount: '46',
+          address: wallet.address.toString(),
+        },
+      ],
+      senderWif: process.env.WIF,
+    })
+    expect(transferTxId).toHaveLength(64)
   })
 })

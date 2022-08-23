@@ -223,6 +223,7 @@ export class TokenTransferCheckFactory {
     })
     return contract
   }
+
   public static calLockingScriptSize(checkType: TOKEN_TRANSFER_TYPE): number {
     let contract = this.getDummyInstance(checkType)
     return contract.lockingScript.toBuffer().length
@@ -235,6 +236,7 @@ export class TokenTransferCheckFactory {
     tokenOutputLen: number,
     opreturnData: any
   ): number {
+    return 1000 // TODO:!!!
     let opreturnScriptHex = ''
     if (opreturnData) {
       let script = mvc.Script.buildSafeDataOut(opreturnData)

@@ -109,9 +109,12 @@
     ],
     "stateProps": [],
     "buildType": "debug",
-    "file": "",
+    "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/backtrace.scrypt",
     "asm": "",
     "hex": "",
-    "sources": [],
+    "sources": [
+        "/Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/backtrace.scrypt",
+        "/Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/txUtil.scrypt"
+    ],
     "sourceMap": []
 }

@@ -54,7 +54,6 @@ export class TokenGenesis extends ContractAdapter {
   public setFormatedDataPart(dataPart: ftProto.FormatedDataPart): void {
     this._formatedDataPart = Object.assign({}, this._formatedDataPart, dataPart)
     this._formatedDataPart.genesisHash = ''
-    this._formatedDataPart.genesisFlag = ftProto.GENESIS_FLAG.TRUE
     this._formatedDataPart.protoVersion = ftProto.PROTO_VERSION
     this._formatedDataPart.protoType = PROTO_TYPE.FT
     super.setDataPart(toHex(ftProto.newDataPart(this._formatedDataPart)))
@@ -96,7 +95,7 @@ export class TokenGenesis extends ContractAdapter {
     opReturnScript,
   }: {
     txPreimage: SigHashPreimage
-    pubKey: mvc.PublicKey
+    pubKey: PubKey
     sig: Sig
     tokenScript: Bytes
 
@@ -158,7 +157,8 @@ export class TokenGenesisFactory {
 
   public static getDummyInstance() {
     let contract = this.createContract()
-    contract.setFormatedDataPart({})
+    // contract.setFormatedDataPart({}) // TODO:
+    contract.setDataPart('')
     return contract
   }
   public static calLockingScriptSize() {
@@ -175,21 +175,9 @@ export class TokenGenesisFactory {
     }
     let contract = this.getDummyInstance()
     let tokenContract = TokenFactory.getDummyInstance()
-    const preimage = getPreimage(dummyTx, contract.lockingScript.toASM(), 1)
-    const sig = Buffer.from(PLACE_HOLDER_SIG, 'hex')
-    const rabinMsg = dummyPayload
-    const rabinPaddingArray = []
-    const rabinSigArray: Int[] = []
-    const rabinPubKeyIndexArray = []
-    const rabinPubKeyVerifyArray: Int[] = []
-    for (let i = 0; i < ftProto.SIGNER_VERIFY_NUM; i++) {
-      rabinPaddingArray.push(new Bytes(dummyPadding))
-      rabinSigArray.push(new Int(BN.fromString(dummySigBE, 16).toString(10)))
-      rabinPubKeyIndexArray.push(i)
-      rabinPubKeyVerifyArray.push(new Int(dummyRabinPubKey.toString(10)))
-    }
+    // const preimage = getPreimage(dummyTx, contract.lockingScript.toASM(), 1) // TODO: fix dummy
 
-    return 1000
+    return 10000
 
     // let unlockResult = contract.unlock({
     //   txPreimage: new SigHashPreimage(toHex(preimage)),

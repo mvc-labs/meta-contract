@@ -47,6 +47,7 @@ export class BrowserNet {
       xhr.send()
     }
   }
+
   static httpGet(url: string, params: any, cb?: Function, config?: any) {
     let str = ''
     let cnt = 0

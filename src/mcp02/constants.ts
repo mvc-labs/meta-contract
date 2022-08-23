@@ -33,7 +33,7 @@ export const FEEB = 0.5
 // export const TOKEN_SYMBOL_LEN = 20
 // export const TOKEN_NAME_LEN = 40
 
-// export const TX_VERSION = 10
+export const TX_VERSION = 10
 // export const SIG_HASH_ALL = mvc.crypto.Signature.SIGHASH_ALL | mvc.crypto.Signature.SIGHASH_FORKID
 // export const SIG_HASH_SINGLE =
 //   mvc.crypto.Signature.SIGHASH_SINGLE | mvc.crypto.Signature.SIGHASH_FORKID

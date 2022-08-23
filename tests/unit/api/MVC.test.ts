@@ -2,17 +2,22 @@ import { API_NET } from '../../../src/api'
 import { MVC } from '../../../src/api/MVC'
 import 'dotenv/config'
 
+let MVCAPI: MVC
+let address: string
+
+beforeAll(async () => {
+  MVCAPI = new MVC(API_NET.MAIN)
+  MVCAPI.authorize({ authorization: process.env.METASV_BEARER })
+
+  address = process.env.ADDRESS
+})
+
 describe('MetaSV MVC API测试', () => {
   it('正常初始化', async () => {
-    const MVCAPI = new MVC(API_NET.MAIN)
-
     expect(MVCAPI).toBeInstanceOf(MVC)
   })
 
   it('获取地址余额', async () => {
-    const MVCAPI = new MVC(API_NET.MAIN)
-    MVCAPI.authorize({ authorization: process.env.METASV_BEARER })
-
     const address = process.env.ADDRESS
     const res1 = await MVCAPI.getBalance(address)
     console.log(`账号1余额 - balance: ${res1.balance} - pendingBalance: ${res1.pendingBalance}`)
@@ -24,7 +29,13 @@ describe('MetaSV MVC API测试', () => {
     expect(res1.balance + res1.pendingBalance).toBeGreaterThan(0)
   })
 
-  it.todo('获取地址UTXOs')
+  it('获取地址UTXOs', async () => {
+    const utxos = await MVCAPI.getUnspents(address)
+
+    expect(utxos.length).toBeGreaterThan(0)
+
+    console.log({ utxos })
+  })
   it.todo('广播')
   it.todo('通过txid获取tx信息')
   it.todo('获取FT信息')

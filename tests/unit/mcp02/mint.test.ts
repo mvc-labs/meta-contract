@@ -7,6 +7,7 @@ let ftManager: FtManager
 let codehash: string
 let genesis: string
 let sensibleId: string
+let genesisTxId: string
 
 beforeAll(async () => {
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
@@ -25,7 +26,8 @@ beforeAll(async () => {
   })
   ftManager.api.authorize({ authorization: process.env.METASV_BEARER })
 
-  const tokenName = '测试FT'
+  const currentDate = new Date().getHours() + ':' + new Date().getMinutes()
+  const tokenName = 'Mint - ' + currentDate
   const tokenSymbol = 'HelloWorld'
   const decimalNum = 8
 
@@ -35,8 +37,10 @@ beforeAll(async () => {
     decimalNum,
   })
   codehash = genesisResult.codehash
-  sensibleId = genesisResult.sensibleId
   genesis = genesisResult.genesis
+  genesisTxId = genesisResult.txid
+  sensibleId = genesisResult.sensibleId
+  // sensibleId = '46c29cbdb9d44ebf35cfca98e769652fb930cf995f838409ec4eb2ca9b33b6f600000000'
 })
 
 describe('FT 铸造测试', () => {
@@ -44,17 +48,36 @@ describe('FT 铸造测试', () => {
     expect(ftManager).toBeInstanceOf(FtManager)
   })
 
+  jest.setTimeout(10000)
   it('正常铸造', async () => {
     let { txid } = await ftManager.mint({
-      genesis,
-      codehash,
       sensibleId,
       genesisWif: process.env.WIF,
       receiverAddress: wallet.address,
       tokenAmount: '100',
-      allowIncreaseMints: true,
     })
 
+    expect(txid).toHaveLength(64)
+
     console.log({ txid })
+  })
+
+  jest.setTimeout(20000)
+  it('连续铸造，拥有同样的sensibleId、Genesis、CodeHash', async () => {
+    console.log({ sensibleId })
+    let { txid: firstTxId } = await ftManager.mint({
+      sensibleId,
+      genesisWif: process.env.WIF,
+      receiverAddress: wallet.address,
+      tokenAmount: '200',
+    })
+    let { txid: secondTxId } = await ftManager.mint({
+      sensibleId,
+      genesisWif: process.env.WIF,
+      receiverAddress: wallet.address,
+      tokenAmount: '300',
+    })
+
+    // let res = await ftManager.api.getFungibleTokenBalance()
   })
 })

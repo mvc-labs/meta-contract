@@ -1,10 +1,11 @@
-export const PROTO_FLAG = Buffer.from('metacontract')
-export const PROTO_FLAG_LEN = PROTO_FLAG.length
+export const PROTO_FLAG = Buffer.from('metacontract') // 12
+export const PROTO_FLAG_LEN = PROTO_FLAG.length // 12
 export const PROTO_TYPE_LEN = 4
-export const PROTO_TYPE_OFFSET = PROTO_FLAG_LEN + PROTO_TYPE_LEN
+export const PROTO_TYPE_OFFSET = PROTO_FLAG_LEN + PROTO_TYPE_LEN // 12 + 4 = 16
 export const PROTO_VERSION_LEN = 4
-export const PROTO_VERSION_OFFSET = PROTO_TYPE_OFFSET + PROTO_VERSION_LEN
-export const HEADER_LEN = PROTO_VERSION_OFFSET
+export const PROTO_VERSION_OFFSET = PROTO_TYPE_OFFSET + PROTO_VERSION_LEN // 16 + 4 = 20
+export const PROTO_SURFIX = 5
+export const HEADER_LEN = PROTO_VERSION_OFFSET + PROTO_SURFIX // 20 + 5 = 25
 
 export enum PROTO_TYPE {
   FT = 1,

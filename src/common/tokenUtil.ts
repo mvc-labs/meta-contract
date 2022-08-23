@@ -129,6 +129,25 @@ export const getEmptyTxOutputProof = function () {
   return data
 }
 
+export const buildScriptData = function (data: Buffer) {
+  let res = Buffer.concat([data, getUInt32Buf(0), getUInt8Buf(255)])
+  const pushDataLen = getOpPushDataLen(res.length)
+  res.writeUInt32LE(pushDataLen + data.length, data.length)
+  return res
+}
+
+export const getOpPushDataLen = function (dataLen: number) {
+  if (dataLen <= 75) {
+    return 1
+  } else if (dataLen <= 255) {
+    return 2
+  } else if (dataLen <= 65535) {
+    return 3
+  } else {
+    return 5
+  }
+}
+
 export function getTxidInfo(tx: mvc.Transaction) {
   const writer: any = new mvc.encoding.BufferWriter()
   writer.writeUInt32LE(tx.version)
