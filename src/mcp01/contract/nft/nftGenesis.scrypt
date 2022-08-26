@@ -112,7 +112,7 @@ contract NftGenesis {
         // check sig
         bytes senderAddress = NftProto.getNftAddress(genesisScript, genesisScriptLen);
         require(senderAddress == hash160(pubKey));
-        // require(checkSig(sig, pubKey));
+        require(checkSig(sig, pubKey));
 
         require(Tx.checkPreimageSigHashType(txPreimage, ProtoHeader.SIG_HASH_ALL));
 

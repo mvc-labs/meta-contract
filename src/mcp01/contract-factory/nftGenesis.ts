@@ -61,7 +61,6 @@ export class NftGenesis extends ContractAdapter {
 
   public setFormatedDataPartFromLockingScript(script: mvc.Script) {
     let dataPart = nftProto.parseDataPart(script.toBuffer())
-    console.log(dataPart)
     this.setFormatedDataPart(dataPart)
   }
 
