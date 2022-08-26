@@ -198,7 +198,7 @@ export class NftManager {
   }) {
     const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
     receiverAddress = new mvc.Address(receiverAddress, this.network)
-    const txComposer = await this.createTransferTx({
+    const { txComposer } = await this.createTransferTx({
       utxos,
       utxoPrivateKeys,
       genesis,
@@ -208,10 +208,10 @@ export class NftManager {
       receiverAddress,
     })
 
-    // let txHex = txComposer.getRawHex()
-    // await this.api.broadcast(txHex)
+    let txHex = txComposer.getRawHex()
+    await this.api.broadcast(txHex)
 
-    // return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
+    return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
   }
 
   // 构建创世合约
@@ -384,11 +384,15 @@ export class NftManager {
       const amountCheckScrypt = new Bytes(amountCheckScriptBuf.toString('hex'))
       const privateKey = this.purse.privateKey
       const publicKey = privateKey.toPublicKey()
+      // const genesisScript = nftInput.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
+      //   ? new Bytes(nftInput.preLockingScript.toHex())
+      //   : new Bytes(Buffer.alloc(0).toString('hex'))
+      const genesisScript = new Bytes(nftInput.preLockingScript.toHex())
 
-      console.log({
-        nftIndex: nftInputIndex,
-        nftInput: txComposer.getInput(nftInputIndex),
-      })
+      // console.log({
+      //   genesisScript,
+      //   ls: nftInput.preLockingScript.toHex(),
+      // })
 
       const unlockingContract = nftContract.unlock({
         txPreimage: txComposer.getInputPreimage(nftInputIndex),
@@ -399,9 +403,7 @@ export class NftManager {
         nftTxHeader,
         nftTxInputProof,
         prevNftTxProof,
-        genesisScript: nftInput.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
-          ? new Bytes(nftInput.preLockingScript.toHex())
-          : new Bytes(''),
+        genesisScript,
 
         contractInputIndex,
         contractTxProof,

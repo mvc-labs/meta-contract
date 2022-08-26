@@ -4,10 +4,10 @@ import { NftManager, Wallet, API_NET, API_TARGET } from '../../../src'
 let wallet: Wallet
 let wallet2: Wallet
 let nftManager: NftManager
-let sensibleId = '4ed27df9620f4f515bb6201f05d2161ffdea24efa746c641684b8aadf9a1c29500000000'
+let sensibleId = '2e4c6155ead72bb2e5d33c0e7b24c87c8be4864d7d235dad7b0445514a843e2a00000000'
 let mintTxId: string
-let genesis = 'b4b730eb541a8f5fe765b515a4cb50b04166cd12'
-let codehash = '62de3500752a71955c836b21d9fd94bc90fe24c2'
+let genesis = '413460e744000157926178c5b87724051b9ebfc3'
+let codehash = 'd80d955b2bbbe4309e9df982fa37646963f61cf1'
 // let codehash = 'a771584dc693966b8d98ff3e02d906f840416f49'
 // let genesis = '39a4da6b72901545f4560822bd752a95e8727e5f'
 
@@ -61,7 +61,7 @@ describe('转账', () => {
     let res = await nftManager.transfer({
       genesis,
       codehash,
-      tokenIndex: '2',
+      tokenIndex: '1',
       senderWif: wallet.privateKey.toWIF(),
       receiverAddress: wallet.address.toString(),
     })
