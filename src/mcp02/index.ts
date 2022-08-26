@@ -38,6 +38,16 @@ import * as ftProto from './contract-proto/token.proto'
 import { DustCalculator } from '../common/DustCalculator'
 import { SizeTransaction } from '../common/SizeTransaction'
 import { FungibleTokenUnspent } from '../api'
+import {
+  addChangeOutput,
+  addContractInput,
+  addContractOutput,
+  addP2PKHInputs,
+  checkFeeRate,
+  getGenesisIdentifiers,
+  prepareUtxos,
+  unlockP2PKHInputs,
+} from '../common/mcpUtils'
 const Signature = mvc.crypto.Signature
 const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
@@ -224,48 +234,7 @@ export class FtManager {
     // 初始化费率
     this.feeb = feeb
 
-    this.debug = true
-  }
-
-  /**
-   * Get codehash and genesis from genesis tx.
-   * @param genesisTx genesis tx
-   * @param genesisOutputIndex (Optional) outputIndex - default value is 0.
-   * @returns
-   */
-  public getCodehashAndGensisByTx(genesisTx: mvc.Transaction, genesisOutputIndex: number = 0) {
-    //calculate genesis/codehash
-    let genesis: string, codehash: string, sensibleId: string
-    let genesisTxId = genesisTx.id
-    let genesisLockingScriptBuf = genesisTx.outputs[genesisOutputIndex].script.toBuffer()
-
-    const dataPartObj: any = ftProto.parseDataPart(genesisLockingScriptBuf)
-    dataPartObj.sensibleID = {
-      txid: genesisTxId,
-      index: genesisOutputIndex,
-    }
-    genesisLockingScriptBuf = ftProto.updateScript(genesisLockingScriptBuf, dataPartObj)
-
-    let tokenContract = TokenFactory.createContract(
-      this.transferCheckCodeHashArray,
-      this.unlockContractCodeHashArray
-    )
-    tokenContract.setFormatedDataPart({
-      sensibleID: {
-        txid: genesisTxId,
-        index: genesisOutputIndex,
-      },
-      genesisHash: toHex(TokenUtil.getScriptHashBuf(genesisLockingScriptBuf)),
-      tokenAddress: toHex(this.purse.address.hashBuffer),
-    })
-
-    let scriptBuf = tokenContract.lockingScript.toBuffer()
-    genesis = ftProto.getQueryGenesis(scriptBuf)
-    codehash = tokenContract.getCodeHash()
-    sensibleId = toHex(TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex))
-    console.log({ genesisTxId, genesis, codehash, sensibleId })
-
-    return { codehash, genesis, sensibleId }
+    this.debug = false
   }
 
   /**
@@ -314,7 +283,7 @@ export class FtManager {
       'decimalNum should be a number and must be between 0 and 255'
     )
 
-    let utxoInfo = await this._pretreatUtxos(utxos)
+    const utxoInfo = await prepareUtxos(this.purse, this.api, this.network)
     if (changeAddress) {
       changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
@@ -336,7 +305,14 @@ export class FtManager {
       await this.api.broadcast(txHex)
     }
 
-    let { codehash, genesis, sensibleId } = this.getCodehashAndGensisByTx(txComposer.getTx())
+    let { codehash, genesis, sensibleId } = getGenesisIdentifiers({
+      genesisTx: txComposer.getTx(),
+      purse: this.purse,
+      transferCheckCodeHashArray: this.transferCheckCodeHashArray,
+      unlockContractCodeHashArray: this.unlockContractCodeHashArray,
+      type: 'ft',
+    })
+
     return {
       txHex,
       txid: txComposer.getTxId(),
@@ -395,7 +371,7 @@ export class FtManager {
     $.checkArgument(receiverAddress, 'receiverAddress is required')
     $.checkArgument(tokenAmount, 'tokenAmount is required')
 
-    let utxoInfo = await this._pretreatUtxos(utxos)
+    const utxoInfo = await prepareUtxos(this.purse, this.api, this.network)
     if (changeAddress) {
       changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
@@ -495,41 +471,57 @@ export class FtManager {
     )
 
     const txComposer = new TxComposer()
-    txComposer.getTx().version = TX_VERSION
 
     //The first input is the genesis contract
-    const genesisInputIndex = txComposer.appendInput(genesisUtxo)
-    txComposer.addSigHashInfo({
-      inputIndex: genesisInputIndex,
-      address: genesisPublicKey.toAddress(this.network).toString(),
-      sighashType,
-      contractType: CONTRACT_TYPE.BCP02_TOKEN_GENESIS,
-    })
+    // const genesisInputIndex = txComposer.appendInput(genesisUtxo)
+    // txComposer.addSigHashInfo({
+    //   inputIndex: genesisInputIndex,
+    //   address: genesisPublicKey.toAddress(this.network).toString(),
+    //   sighashType,
+    //   contractType: CONTRACT_TYPE.BCP02_TOKEN_GENESIS,
+    // })
+    const genesisInputIndex = addContractInput(
+      txComposer,
+      genesisUtxo as any,
+      genesisPublicKey.toAddress(this.network).toString(),
+      CONTRACT_TYPE.BCP02_TOKEN_GENESIS
+    )
 
-    const p2pkhInputIndexs = utxos.map((utxo) => {
-      const inputIndex = txComposer.appendP2PKHInput(utxo)
-      txComposer.addSigHashInfo({
-        inputIndex,
-        address: utxo.address.toString(),
-        sighashType,
-        contractType: CONTRACT_TYPE.P2PKH,
-      })
-      return inputIndex
-    })
+    // const p2pkhInputIndexs = utxos.map((utxo) => {
+    //   const inputIndex = txComposer.appendP2PKHInput(utxo)
+    //   txComposer.addSigHashInfo({
+    //     inputIndex,
+    //     address: utxo.address.toString(),
+    //     sighashType,
+    //     contractType: CONTRACT_TYPE.P2PKH,
+    //   })
+    //   return inputIndex
+    // })
+    const p2pkhInputIndexs = addP2PKHInputs(txComposer, utxos)
 
     //If increase issues is allowed, add a new issue contract as the first output
     let newGenesisOutputIndex = -1
     if (allowIncreaseMints) {
-      newGenesisOutputIndex = txComposer.appendOutput({
-        lockingScript: newGenesisContract.lockingScript,
-        satoshis: this.getDustThreshold(newGenesisContract.lockingScript.toBuffer().length),
+      // newGenesisOutputIndex = txComposer.appendOutput({
+      //   lockingScript: newGenesisContract.lockingScript,
+      //   satoshis: this.getDustThreshold(newGenesisContract.lockingScript.toBuffer().length),
+      // })
+      newGenesisOutputIndex = addContractOutput({
+        txComposer,
+        contract: newGenesisContract,
+        dustCalculator: this.dustCalculator,
       })
     }
 
     //The following output is the Token
-    const tokenOutputIndex = txComposer.appendOutput({
-      lockingScript: tokenContract.lockingScript,
-      satoshis: this.getDustThreshold(tokenContract.lockingScript.toBuffer().length),
+    // const tokenOutputIndex = txComposer.appendOutput({
+    //   lockingScript: tokenContract.lockingScript,
+    //   satoshis: this.getDustThreshold(tokenContract.lockingScript.toBuffer().length),
+    // })
+    const tokenOutputIndex = addContractOutput({
+      txComposer,
+      contract: tokenContract,
+      dustCalculator: this.dustCalculator,
     })
 
     //If there is opReturn, add it to the output
@@ -551,7 +543,6 @@ export class FtManager {
     const preGenesisTxId = genesisTxInput.prevTxId.toString('hex')
     const preGenesisTxHex = await this.api.getRawTxData(preGenesisTxId)
     const preGenesisTx = new mvc.Transaction(preGenesisTxHex)
-    preGenesisTx.version = TX_VERSION
 
     const prevOutputProof = TokenUtil.getTxOutputProof(preGenesisTx, preGenesisOutputIndex)
 
@@ -564,6 +555,7 @@ export class FtManager {
       // TODO: 取消两轮？
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
+      console.log(genesisContract.getFormatedDataPart())
 
       let unlockResult = genesisContract.unlock({
         txPreimage: txComposer.getInputPreimage(genesisInputIndex),
@@ -602,6 +594,7 @@ export class FtManager {
         inputSatoshis: txComposer.getOutput(newGenesisOutputIndex).satoshis,
       }
       const verify = unlockResult.verify(txContext)
+      console.log({ verify })
 
       // if (this.debug && genesisPrivateKey && c == 1) {
       //   let ret = unlockResult.verify({
@@ -615,15 +608,15 @@ export class FtManager {
       txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as mvc.Script)
     }
 
-    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
-      p2pkhInputIndexs.forEach((inputIndex) => {
-        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
-        txComposer.unlockP2PKHInput(privateKey, inputIndex)
-      })
-    }
+    unlockP2PKHInputs(txComposer, p2pkhInputIndexs, utxoPrivateKeys)
+    // if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+    //   p2pkhInputIndexs.forEach((inputIndex) => {
+    //     let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+    //     txComposer.unlockP2PKHInput(privateKey, inputIndex)
+    //   })
+    // }
 
-    this._checkTxFeeRate(txComposer)
-    console.log({ second: txComposer.getOutput(tokenOutputIndex).script.toHex() })
+    checkFeeRate(txComposer, this.feeb)
     return { txComposer }
   }
 
@@ -643,7 +636,6 @@ export class FtManager {
 
     let txHex = await this.api.getRawTxData(genesisUtxo.txId)
     const tx = new mvc.Transaction(txHex)
-    tx.version = TX_VERSION
     let preTxId = tx.inputs[0].prevTxId.toString('hex')
     let preOutputIndex = tx.inputs[0].outputIndex
     let preTxHex = await this.api.getRawTxData(preTxId)
@@ -678,7 +670,6 @@ export class FtManager {
     let unspent: FungibleTokenUnspent
     let firstGenesisTxHex = await this.api.getRawTxData(genesisTxId)
     let firstGenesisTx = new mvc.Transaction(firstGenesisTxHex)
-    firstGenesisTx.version = TX_VERSION
 
     let scriptBuffer = firstGenesisTx.outputs[genesisOutputIndex].script.toBuffer()
     let originGenesis = ftProto.getQueryGenesis(scriptBuffer)
@@ -853,21 +844,12 @@ export class FtManager {
       )
     }
     const txComposer = new TxComposer()
-    txComposer.getTx().version = TX_VERSION
-    const p2pkhInputIndexs = utxos.map((utxo) => {
-      const inputIndex = txComposer.appendP2PKHInput(utxo)
-      txComposer.addSigHashInfo({
-        inputIndex,
-        address: utxo.address.toString(),
-        sighashType,
-        contractType: CONTRACT_TYPE.P2PKH,
-      })
-      return inputIndex
-    })
+    const p2pkhInputIndexs = addP2PKHInputs(txComposer, utxos)
 
-    const genesisOutputIndex = txComposer.appendOutput({
-      lockingScript: genesisContract.lockingScript,
-      satoshis: this.getDustThreshold(genesisContract.lockingScript.toBuffer().length),
+    addContractOutput({
+      txComposer,
+      contract: genesisContract,
+      dustCalculator: this.dustCalculator,
     })
 
     //If there is opReturn, add it to the second output
@@ -875,15 +857,10 @@ export class FtManager {
       txComposer.appendOpReturnOutput(opreturnData)
     }
 
-    txComposer.appendChangeOutput(changeAddress, this.feeb)
-    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
-      p2pkhInputIndexs.forEach((inputIndex) => {
-        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
-        txComposer.unlockP2PKHInput(privateKey, inputIndex)
-      })
-    }
+    addChangeOutput(txComposer, changeAddress, this.feeb)
+    unlockP2PKHInputs(txComposer, p2pkhInputIndexs, utxoPrivateKeys)
 
-    this._checkTxFeeRate(txComposer)
+    checkFeeRate(txComposer, this.feeb)
 
     return { txComposer }
   }
@@ -1205,7 +1182,6 @@ export class FtManager {
     for (let i = 0; i < ftUtxos.length; i++) {
       let ftUtxo = ftUtxos[i]
       const tx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
-      tx.version = TX_VERSION
       if (!curDataPartObj) {
         let tokenScript = tx.outputs[ftUtxo.outputIndex].script
         curDataPartObj = ftProto.parseDataPart(tokenScript.toBuffer())
@@ -1265,7 +1241,6 @@ export class FtManager {
       v.satotxInfo.preTxHex = cachedHexs[v.satotxInfo.preTxId].hex
 
       const preTx = new mvc.Transaction(v.satotxInfo.preTxHex)
-      preTx.version = TX_VERSION
       let dataPartObj = ftProto.parseDataPart(
         preTx.outputs[v.satotxInfo.preOutputIndex].script.toBuffer()
       )
@@ -1374,7 +1349,6 @@ export class FtManager {
     ftUtxos = tokenInputArray
     const defaultFtUtxo = tokenInputArray[0]
     const ftUtxoTx = new mvc.Transaction(defaultFtUtxo.satotxInfo.txHex)
-    ftUtxoTx.version = TX_VERSION
     const tokenLockingScript = ftUtxoTx.outputs[defaultFtUtxo.outputIndex].script
 
     //create routeCheck contract
@@ -1449,7 +1423,6 @@ export class FtManager {
     let transferCheckTx = transferCheckTxComposer.getTx()
 
     const txComposer = new TxComposer()
-    txComposer.getTx().version = TX_VERSION
     let prevouts = new Prevouts()
 
     let inputTokenScript: mvc.Script
@@ -1577,13 +1550,7 @@ export class FtManager {
         // const prevTokenAmount = TokenProto.getTokenAmount(scriptBuf)
 
         const tokenTx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
-        tokenTx.version = TX_VERSION
-        // console.log({
-        //   amount: prevTokenAmount.serialize(),
-        //   address: prevTokenAddress.serialize(),
-        //   inputIndex: prevTokenInputIndex,
-        //   inputIndexes: ftUtxoInputIndexs,
-        // })
+
         const inputRes = TokenUtil.getTxInputProof(tokenTx, prevTokenInputIndex)
         const tokenTxInputProof = new TxInputProof(inputRes[0])
         const tokenTxHeader = inputRes[1] as Bytes // TODO:
@@ -1611,16 +1578,7 @@ export class FtManager {
         const contractTxOutputProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
 
         tokenContract.setDataPart(toHex(dataPart))
-        // console.log({
-        //   pubkey: ftUtxo.publicKey.toHex(),
-        //   inputIndex,
-        //   pk: senderPrivateKey.toString(),
-        //   satoshis: txComposer.getInput(inputIndex).output.satoshis,
-        // })
-        // console.log({
-        //   lockingScript: toHex(txComposer.getTxFormatSig(senderPrivateKey, inputIndex)),
-        //   preImage: txComposer.getInputPreimage(inputIndex).toJSONObject(),
-        // })
+
         const unlockingContract = tokenContract.unlock({
           txPreimage: txComposer.getInputPreimage(inputIndex),
           prevouts: new Bytes(prevouts.toHex()),
@@ -1676,11 +1634,6 @@ export class FtManager {
 
       const tokenOutputSatoshis = txComposer.getOutput(0).satoshis
 
-      console.log({
-        transferCheckInputIndex,
-        preImage: txComposer.getInputPreimage(transferCheckInputIndex).toJSONObject(),
-        inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
-      })
       let sub: any = transferCheckUtxo.lockingScript
       sub = sub.subScript(0)
       const txPreimage = new SigHashPreimage(
@@ -1739,7 +1692,7 @@ export class FtManager {
         txComposer.unlockP2PKHInput(privateKey, inputIndex)
       })
     }
-    this._checkTxFeeRate(txComposer)
+    checkFeeRate(txComposer, this.feeb)
 
     return { transferCheckTxComposer, txComposer }
   }
@@ -1808,16 +1761,5 @@ export class FtManager {
 
   private getDustThreshold(size: number) {
     return this.dustCalculator.getDustThreshold(size)
-  }
-
-  private _checkTxFeeRate(txComposer: TxComposer) {
-    //Determine whether the final fee is sufficient
-    let feeRate = txComposer.getFeeRate()
-    if (feeRate < this.feeb) {
-      // throw new CodeError(
-      //   ErrCode.EC_INSUFFICIENT_BSV,
-      //   `Insufficient balance.The fee rate should not be less than ${this.feeb}, but in the end it is ${feeRate}.`
-      // )
-    }
   }
 }

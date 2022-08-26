@@ -1,0 +1,23 @@
+import "../protoHeader.scrypt";
+
+// dataPart: nftCodeHash + nftID
+
+library AmountCheckProto {
+
+    static const int OP_PUSH_LEN = 1;
+    static const int DATA_VERSION_LEN = 5;
+
+    static const int NFT_ID_OFFSET = ProtoHeader.DATA_VERSION_LEN + ProtoHeader.UNIQUE_ID_LEN;
+
+    static const int NFT_CODE_HASH_OFFSET = NFT_ID_OFFSET + ProtoHeader.HASH_LEN;
+
+    static const int DATA_OFFSET = NFT_CODE_HASH_OFFSET + OP_PUSH_LEN;
+
+    static function getNftID(bytes script, int slen): bytes {
+        return script[slen - NFT_ID_OFFSET: slen - DATA_VERSION_LEN];
+    }
+
+    static function getNftCodeHash(bytes script, int slen): bytes {
+        return script[slen - NFT_CODE_HASH_OFFSET: slen - NFT_ID_OFFSET];
+    }
+}

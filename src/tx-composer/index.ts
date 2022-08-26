@@ -193,12 +193,6 @@ export class TxComposer {
   }
 
   getTxFormatSig(privateKey: mvc.PrivateKey, inputIndex: number, sigtype = sighashType) {
-    // console.log({
-    //   inputIndex,
-    //   sigtype,
-    //   pk: privateKey.toString(),
-    //   satoshis: this.getInput(inputIndex).output.satoshis,
-    // })
     let sig: Sig = signTx(
       this.tx,
       privateKey,

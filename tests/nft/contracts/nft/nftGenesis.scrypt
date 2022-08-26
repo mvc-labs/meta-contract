@@ -1,0 +1,120 @@
+import "nftProto.scrypt";
+import "../backtrace.scrypt";
+import "../txUtil.scrypt";
+
+/**
+ * Nft contract
+ * @constructor
+*/
+contract NftGenesis {
+
+    /**
+    * @function unlock
+    * @param txPreimage {SigHashPreimage} preimage
+    * @param sig {Sig} the sig of issuer private key
+    * @param genesisSatoshis {int} the nft genesis contract output satoshis
+    * @param nftScript {bytes} the nft contract output script
+    * @param nftSatoshis {int} the nft contract output satoshis
+    * @param changeAddress {Ripemd160} the bsv change address
+    * @param changeSatoshis {int} the bsv change satoshis
+    * @param opReturnScript {bytes} the op_false op_return script, optional
+    */
+    public function unlock(
+        SigHashPreimage txPreimage,
+        // sig
+        PubKey pubKey,
+        Sig sig,
+        // genesisTx input proof
+        bytes genesisTxHeader,
+        int prevInputIndex,
+        TxInputProof genesisTxInputProof,
+        // prev genesis tx output proof
+        bytes prevGenesisTxHeader,
+        bytes prevTxOutputHashProof,
+        bytes prevTxOutputSatoshiBytes,
+        // output
+        bytes nftScript,
+        int genesisSatoshis,
+        int nftSatoshis,
+        Ripemd160 changeAddress,
+        int changeSatoshis,
+        bytes opReturnScript) {
+
+        // verify this tx's version
+        require(Utils.fromLEUnsigned(SigHash.nVersion(txPreimage)) == ProtoHeader.TX_VERSION);
+
+        // check input script oracle data
+        bytes genesisScript = SigHash.scriptCode(txPreimage);
+        int genesisScriptLen = len(genesisScript);
+
+        bytes sensibleID = NftProto.getGenesisTxid(genesisScript, genesisScriptLen);
+        int totalSupply = NftProto.getTotalSupply(genesisScript, genesisScriptLen);
+        int tokenIndex = NftProto.getTokenIndex(genesisScript, genesisScriptLen);
+        require(tokenIndex < totalSupply);
+
+        bytes thisOutpoint = SigHash.outpoint(txPreimage);
+        bool isFirst = false;
+        if (sensibleID == ProtoHeader.NULL_GENESIS_TXID) {
+            isFirst = true;
+            sensibleID = thisOutpoint;
+        }
+        require(NftProto.checkProtoHeader(genesisScript, genesisScriptLen));
+        // check opreturn
+        require(NftProto.checkDataLen(genesisScript, genesisScriptLen));
+        require(NftProto.checkOpReturn(genesisScript, genesisScriptLen));
+
+        if (!isFirst) {
+            // backtrace to genesis script
+            bytes prevGenesisScript = NftProto.getNewGenesisScript(genesisScript, genesisScriptLen, sensibleID, tokenIndex - 1);
+            bytes prevScriptHash = sha256(prevGenesisScript);
+            TxOutputProof prevGenesisTxProof = { prevGenesisTxHeader, prevTxOutputHashProof, prevTxOutputSatoshiBytes, prevScriptHash };
+            Backtrace.verify(thisOutpoint, genesisTxHeader, prevInputIndex, prevGenesisTxProof, sensibleID, genesisTxInputProof);
+        }
+
+        // check nftScript oracle data
+        int nftScriptLen = len(nftScript);
+
+        require(sensibleID == NftProto.getGenesisTxid(nftScript, nftScriptLen));
+        require(tokenIndex == NftProto.getTokenIndex(nftScript, nftScriptLen));
+        require(totalSupply == NftProto.getTotalSupply(nftScript, nftScriptLen));
+        require(NftProto.checkProtoHeader(nftScript, nftScriptLen));
+        // check opreturn
+        require(NftProto.checkDataLen(nftScript, nftScriptLen));
+        require(NftProto.checkOpReturn(nftScript, nftScriptLen));
+
+        //check genesisHash
+        bytes genesisScriptTmp = NftProto.getNewGenesisScript(genesisScript, genesisScriptLen, sensibleID, 0);
+        bytes genesisHash = hash160(genesisScriptTmp);
+        require(NftProto.getGenesisHash(nftScript, nftScriptLen) == genesisHash);
+
+        bytes genesisOutput = b'';
+        if (tokenIndex != totalSupply - 1) {
+            bytes newGenesisScript = NftProto.getNewGenesisScript(genesisScript, len(genesisScript), sensibleID, tokenIndex + 1);
+            genesisOutput = Utils.buildOutput(newGenesisScript, genesisSatoshis);
+        }
+        bytes nftOutput = Utils.buildOutput(nftScript, nftSatoshis);
+
+        // op_false op_return output
+        bytes opReturnOutput = b'';
+        if (len(opReturnScript) > 0) {
+            require(opReturnScript[: 2] == b'006a');
+            opReturnOutput = Utils.buildOutput(opReturnScript, 0);
+        }
+
+        bytes changeOutput = b'';
+        if (changeSatoshis > 0) {
+            bytes changeScript = Utils.buildPublicKeyHashScript(changeAddress);
+            changeOutput = Utils.buildOutput(changeScript, changeSatoshis);
+        }
+        bytes hashOutput = hash256(genesisOutput + nftOutput + opReturnOutput + changeOutput);
+        require(hashOutput == SigHash.hashOutputs(txPreimage));
+
+        // check sig
+        bytes senderAddress = NftProto.getNftAddress(genesisScript, genesisScriptLen);
+        require(senderAddress == hash160(pubKey));
+        require(checkSig(sig, pubKey));
+
+        require(Tx.checkPreimageSigHashType(txPreimage, ProtoHeader.SIG_HASH_ALL));
+
+    }
+}

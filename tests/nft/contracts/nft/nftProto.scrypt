@@ -1,0 +1,87 @@
+import "../protoheader.scrypt";
+
+library NftProto {
+    static int PROTO_TYPE = 3;
+    static int PROTO_VERSION = 1;
+
+    static bytes BURN_ADDRESS = b'0000000000000000000000000000000000000000';
+
+    static const int OP_TRANSFER = 1;
+    static const int OP_UNLOCK_FROM_CONTRACT = 2;
+
+    // <type specific data> + <proto header>
+    //<nft type specific data> = <meta_outpoint(36 bytes)> + <address(20 bytes)> + <totalSupply(8 bytes) + <tokenIndex(8 bytes)> + <genesisHash<20 bytes>) + <GenesisTxid(36 bytes)>
+    static const int META_OUTPOINT_LEN = 36;
+
+    static const int OP_PUSH_LEN = 2;
+
+    static int SENSIBLE_ID_OFFSET = ProtoHeader.PROTO_HEADER_OFFSET + ProtoHeader.GENESIS_TXID_LEN;
+    static int GENESIS_HASH_OFFSET = SENSIBLE_ID_OFFSET + ProtoHeader.HASH_LEN;
+    static int TOKEN_INDEX_OFFSET = GENESIS_HASH_OFFSET + ProtoHeader.AMOUNT_LEN;
+    static int TOTAL_SUPPLY_OFFSET = TOKEN_INDEX_OFFSET + ProtoHeader.AMOUNT_LEN;
+    static int NFT_ADDRESS_OFFSET = TOTAL_SUPPLY_OFFSET + ProtoHeader.ADDRESS_LEN;
+    static int META_OUTPOINT_OFFSET = NFT_ADDRESS_OFFSET + META_OUTPOINT_LEN;
+
+    static int DATA_LEN = META_OUTPOINT_OFFSET + OP_PUSH_LEN;
+
+    static function getGenesisTxid(bytes script, int slen) : bytes {
+        return script[slen - SENSIBLE_ID_OFFSET : slen - SENSIBLE_ID_OFFSET + ProtoHeader.GENESIS_TXID_LEN];
+    }
+
+    static function getGenesisHash(bytes script, int slen) : bytes {
+        return script[slen - GENESIS_HASH_OFFSET : slen - GENESIS_HASH_OFFSET + ProtoHeader.HASH_LEN];
+    }
+
+    static function getNftID(bytes script, int slen) : bytes {
+        return hash160(script[slen - TOKEN_INDEX_OFFSET : slen - ProtoHeader.PROTO_HEADER_OFFSET]);
+    }
+
+    static function getTokenIndex(bytes script, int slen) : int {
+        return Utils.fromLEUnsigned(script[slen - TOKEN_INDEX_OFFSET : slen - TOKEN_INDEX_OFFSET + ProtoHeader.AMOUNT_LEN]);
+    }
+
+    static function getTotalSupply(bytes script, int slen) : int {
+        return Utils.fromLEUnsigned(script[slen - TOTAL_SUPPLY_OFFSET : slen - TOTAL_SUPPLY_OFFSET + ProtoHeader.AMOUNT_LEN]);
+    }
+
+    static function getNftAddress(bytes script, int slen) : bytes {
+        return script[slen - NFT_ADDRESS_OFFSET : slen - NFT_ADDRESS_OFFSET + ProtoHeader.ADDRESS_LEN];
+    }
+
+    static function getScriptCode(bytes script, int slen) : bytes {
+        // contract code include op_return
+        return script[: slen - DATA_LEN];
+    }
+
+    static function getScriptData(bytes script, int slen) : bytes {
+        return script[slen - DATA_LEN:];
+    }
+
+    static function getScriptCodeHash(bytes script, int slen) : bytes {
+        return hash160(getScriptCode(script, slen));
+    }
+
+    static function getNewNftScript(bytes script, int slen, bytes address) : bytes {
+        return script[: slen - NFT_ADDRESS_OFFSET] + address + script[slen - NFT_ADDRESS_OFFSET + ProtoHeader.ADDRESS_LEN : slen];
+    }
+
+    static function getNewNftScriptData(bytes script, int slen, bytes address): bytes {
+        return script[slen - DATA_LEN: slen - NFT_ADDRESS_OFFSET] + address + script[slen - NFT_ADDRESS_OFFSET + ProtoHeader.ADDRESS_LEN : slen];
+    }
+
+    static function checkDataLen(bytes script, int slen) : bool {
+        return unpack(script[slen - DATA_LEN + 1 : slen - DATA_LEN + 2] + b'00') == DATA_LEN - OP_PUSH_LEN;
+    }
+
+    static function checkOpReturn(bytes script, int slen) : bool {
+        return script[slen - DATA_LEN - 1 : slen - DATA_LEN] == b'6a';
+    }
+
+    static function getNewGenesisScript(bytes script, int slen, bytes sensibleID, int tokenIndex) : bytes {
+        return script[: slen - TOKEN_INDEX_OFFSET] + Utils.toLEUnsigned(tokenIndex, 8) + script[slen - GENESIS_HASH_OFFSET : slen - SENSIBLE_ID_OFFSET] + sensibleID + script[slen - ProtoHeader.PROTO_HEADER_OFFSET :];
+    }
+
+    static function checkProtoHeader(bytes script, int slen) : bool {
+        return script[slen - ProtoHeader.PROTO_HEADER_OFFSET : slen - ProtoHeader.PROTO_HEADER_OFFSET + ProtoHeader.HEADER_LEN] == b'0100000003000000' + ProtoHeader.PROTO_FLAG;
+    }
+}

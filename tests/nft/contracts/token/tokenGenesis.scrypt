@@ -1,0 +1,94 @@
+import "tokenProto.scrypt";
+import "../protoheader.scrypt";
+import "../backtrace.scrypt";
+
+contract TokenGenesis {
+
+    public function unlock(
+        SigHashPreimage txPreimage,
+        PubKey pubKey,
+        Sig sig,
+        bytes tokenScript,
+        // genesisTx input proof
+        bytes genesisTxHeader,
+        int prevInputIndex,
+        TxInputProof genesisTxInputProof,
+        // prev genesis tx output proof
+        bytes prevGenesisTxHeader,
+        bytes prevTxOutputHashProof,
+        bytes prevTxOutputSatoshiBytes,
+        // output
+        int genesisSatoshis,
+        int tokenSatoshis,
+        Ripemd160 changeAddress,
+        int changeSatoshis,
+        bytes opReturnScript) {
+
+        // verify this tx's version
+        require(Utils.fromLEUnsigned(SigHash.nVersion(txPreimage)) == ProtoHeader.TX_VERSION);
+
+        // check input script oracle data
+        bytes genesisScript = SigHash.scriptCode(txPreimage);
+        int genesisScriptLen = len(genesisScript);
+
+        int tokenValue = TokenProto.getTokenAmount(genesisScript, genesisScriptLen);
+        require(tokenValue == 0);
+        require(TokenProto.getGenesisHash(genesisScript, genesisScriptLen) == b'0000000000000000000000000000000000000000');
+        bytes genesisTxid = TokenProto.getGenesisTxid(genesisScript, genesisScriptLen);
+        bool isFirst = false;
+        bytes thisOutpoint = SigHash.outpoint(txPreimage);
+        if (genesisTxid == b'000000000000000000000000000000000000000000000000000000000000000000000000') {
+            isFirst = true;
+            genesisTxid = thisOutpoint;
+        }
+        require(TokenProto.checkProtoHeader(genesisScript, genesisScriptLen));
+        // check opreturn
+        require(TokenProto.checkDataLen(genesisScript, genesisScriptLen));
+
+        if (!isFirst) {
+            // backtrace to genesis script
+            bytes prevScriptHash = sha256(genesisScript);
+            TxOutputProof prevGenesisTxProof = {prevGenesisTxHeader, prevTxOutputHashProof, prevTxOutputSatoshiBytes, prevScriptHash};
+            Backtrace.verify(thisOutpoint, genesisTxHeader, prevInputIndex, prevGenesisTxProof, genesisTxid, genesisTxInputProof);
+        }
+
+        // genesisHash
+        bytes newGenesisScript = TokenProto.getNewGenesisScript(genesisScript, genesisScriptLen, genesisTxid);
+        bytes genesisHash = hash160(newGenesisScript);
+
+        // check tokenScript data
+        int tokenScriptLen = len(tokenScript);
+
+        require(genesisTxid == TokenProto.getGenesisTxid(tokenScript, tokenScriptLen));
+        require(genesisHash == TokenProto.getGenesisHash(tokenScript, tokenScriptLen));
+        require(TokenProto.getTokenMetaData(genesisScript, genesisScriptLen) == TokenProto.getTokenMetaData(tokenScript, tokenScriptLen));
+        // check data part
+        require(TokenProto.checkDataLen(tokenScript, tokenScriptLen));
+
+        bytes genesisOutput = b'';
+        if (genesisSatoshis > 0) {
+            genesisOutput = Utils.buildOutput(newGenesisScript, genesisSatoshis);
+        }
+        bytes tokenOutput = Utils.buildOutput(tokenScript, tokenSatoshis);
+
+        // op_false op_return output
+        bytes opReturnOutput = b'';
+        if (len(opReturnScript) > 0) {
+            require(opReturnScript[0 : 2] == b'006a');
+            opReturnOutput = Utils.buildOutput(opReturnScript, 0);
+        }
+
+        // bsv change output
+        bytes changeOutput = TxUtil.genBsvOutput(changeSatoshis, changeAddress);
+
+        bytes hashOutput = hash256(genesisOutput + tokenOutput + opReturnOutput + changeOutput);
+        require(hashOutput == SigHash.hashOutputs(txPreimage));
+
+        // check sig
+        bytes senderAddress = TokenProto.getTokenAddress(genesisScript, genesisScriptLen);
+        require(senderAddress == hash160(pubKey));
+        require(checkSig(sig, pubKey));
+
+        require(Tx.checkPreimageSigHashType(txPreimage, ProtoHeader.SIG_HASH_ALL));
+    }
+}

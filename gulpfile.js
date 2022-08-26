@@ -58,6 +58,6 @@ function dev() {
 }
 
 // gulp.task("default", gulp.series("clean", "tsc", "copy_file", "browserify"));
-gulp.task('default', gulp.series('clean', 'tsc', 'copy_file'))
+gulp.task('default', gulp.series('clean', 'tsc', 'copy_file', 'browserify'))
 // gulp.task("dev", gulp.series("clean", "tsc", "copy_file", "browserify", dev));
 gulp.task('dev', gulp.series('clean', 'tsc', 'copy_file', dev))

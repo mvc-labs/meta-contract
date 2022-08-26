@@ -1,0 +1,66 @@
+import "nftProto.scrypt";
+import "../token/tokenProto.scrypt";
+import "../txUtil.scrypt";
+
+contract TokenBuyForNft {
+    Ripemd160 senderAddress;
+    bytes nftID;
+    bytes nftCodeHash;
+
+    static int nftInputIndex = 2;
+
+    static int OP_SELL = 1;
+    static int OP_REFUND_TOKEN = 2;
+
+    public function unlock(SigHashPreimage txPreimage,
+        bytes prevouts,
+        // nft
+        bytes nftScript,
+        bytes nftTxHeader,
+        bytes nftTxHashProof,
+        bytes nftTxSatoshiBytes,
+        // token
+        bytes tokenScript,
+        // sig
+        PubKey senderPubKey,
+        Sig senderSig,
+        // output
+        int tokenOutputSatoshis,
+        int nftOutputSatoshis,
+        int op) {
+
+        // check prevouts
+        require(hash256(prevouts) == SigHash.hashPrevouts(txPreimage));
+
+        bytes outputs = b'';
+        if (op == OP_SELL) {
+            // check token input
+            bytes nftOutpoint = prevouts[nftInputIndex * TxUtil.OUTPOINT_LEN : (nftInputIndex + 1) * TxUtil.OUTPOINT_LEN];
+            int nftScriptLen = len(nftScript);
+            TxOutputProof nftProof = { nftTxHeader, nftTxHashProof, nftTxSatoshiBytes, sha256(nftScript) };
+            TxUtil.verifyTxOutput(nftProof, nftOutpoint);
+
+            require(this.nftCodeHash == NftProto.getScriptCodeHash(nftScript, nftScriptLen));
+            require(this.nftID == NftProto.getNftID(nftScript, nftScriptLen));
+
+            // token
+            bytes newNftScript = NftProto.getNewNftScript(nftScript, nftScriptLen, this.senderAddress);
+            outputs = Utils.buildOutput(newNftScript, nftOutputSatoshis);
+        }
+        else {
+            // do not check token id and codeHash
+
+            // check output token address
+            require(TokenProto.getTokenAddress(tokenScript, len(tokenScript)) == this.senderAddress);
+            outputs = Utils.buildOutput(tokenScript, tokenOutputSatoshis);
+
+            // check sig
+            require(hash160(senderPubKey) == this.senderAddress);
+            require(checkSig(senderSig, senderPubKey));
+
+        }
+        require(hash256(outputs) == SigHash.hashOutputs(txPreimage));
+
+        require(Tx.checkPreimageSigHashTypeOCS(txPreimage, ProtoHeader.SIG_HASH_SINGLE));
+    }
+}

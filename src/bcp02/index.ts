@@ -1910,10 +1910,6 @@ export class SensibleFT {
         )
 
         tokenContract.setDataPart(toHex(dataPart))
-        console.log({
-          pubkey: toHex(ftUtxo.publicKey.toBuffer()),
-          prikey: toHex(txComposer.getTxFormatSig(senderPrivateKey, inputIndex)),
-        })
         const unlockingContract = tokenContract.unlock({
           txPreimage: txComposer.getInputPreimage(inputIndex),
           tokenInputIndex: inputIndex,

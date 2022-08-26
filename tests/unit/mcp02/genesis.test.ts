@@ -38,5 +38,7 @@ describe('FT 创世测试', () => {
       tokenSymbol,
       decimalNum,
     })
+
+    console.log(genesis)
   })
 })

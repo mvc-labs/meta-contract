@@ -79,12 +79,9 @@ export class Token extends ContractAdapter {
   public unlock({
     txPreimage,
     prevouts,
-    tokenInputIndex,
-    amountCheckHashIndex,
-    amountCheckInputIndex,
-    amountCheckTxOutputProofInfo,
-    amountCheckScript,
 
+    // token
+    tokenInputIndex,
     prevTokenInputIndex,
     prevTokenAddress,
     prevTokenAmount,
@@ -92,11 +89,20 @@ export class Token extends ContractAdapter {
     tokenTxInputProof,
     prevTokenTxOutputProof,
 
+    // contract
+    contractInputIndex,
+    contractTxOutputProof,
+
+    // unlockCheck
+    amountCheckHashIndex,
+    amountCheckInputIndex,
+    amountCheckTxOutputProofInfo,
+    amountCheckScript,
+
+    // sig
     senderPubKey,
     senderSig,
 
-    contractInputIndex,
-    contractTxOutputProof,
     operation,
   }: {
     txPreimage: SigHashPreimage

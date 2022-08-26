@@ -1,6 +1,9 @@
 import { toHex } from '../scryptlib'
 import * as mvc from '../mvc'
 import * as TokenUtil from './tokenUtil'
+const Signature = mvc.crypto.Signature
+
+export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
 
 export function getDustThreshold(lockingScriptSize: number) {
   return 1
