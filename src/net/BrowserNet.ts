@@ -11,41 +11,84 @@ type HttpConfig = {
   timeout?: number
   headers?: any
 }
-export class BrowserNet {
-  static _xmlRequest(reqConfig: ReqConfig, callback: Function) {
-    const { uri, method, timeout, body } = reqConfig
-    let hasCallbacked = false
-    var xhr = new XMLHttpRequest()
-    xhr.open(method, uri, true)
-    for (var id in reqConfig.headers) {
-      xhr.setRequestHeader(id, reqConfig.headers[id])
-    }
-    xhr.onload = function () {
-      if (hasCallbacked) return
-      hasCallbacked = true
-      if (xhr.status >= 200 && xhr.status <= 207) {
-        callback(null, xhr.responseText)
-      } else {
-        callback('EC_REQ_FAILED')
-      }
-    }
 
-    xhr.ontimeout = function () {
-      if (hasCallbacked) return
-      hasCallbacked = true
-      callback('EC_REQ_TIMEOUT')
-    }
-    xhr.onerror = function () {
-      if (hasCallbacked) return
-      hasCallbacked = true
-      callback('EC_REQ_FAILED')
-    }
-    xhr.timeout = timeout
-    if (method == 'POST') {
-      xhr.send(body)
-    } else {
-      xhr.send()
-    }
+enum HttpMethod {
+  GET = 'GET',
+  POST = 'POST',
+}
+
+type RequestData = {
+  uri: string
+  method: HttpMethod
+  timeout: number
+  gzip: boolean
+  headers: any
+}
+type FetchOptions = {
+  uri: string
+  method: HttpMethod
+  timeout: number
+  compress?: boolean
+  headers: any
+  body?: any
+  gzip?: boolean
+}
+export class BrowserNet {
+  // static _xmlRequest(reqConfig: ReqConfig, callback: Function) {
+  //   const { uri, method, timeout, body } = reqConfig
+  //   let hasCallbacked = false
+  //   var xhr = new XMLHttpRequest()
+  //   xhr.open(method, uri, true)
+  //   for (var id in reqConfig.headers) {
+  //     xhr.setRequestHeader(id, reqConfig.headers[id])
+  //   }
+  //   xhr.onload = function () {
+  //     if (hasCallbacked) return
+  //     hasCallbacked = true
+  //     if (xhr.status >= 200 && xhr.status <= 207) {
+  //       callback(null, xhr.responseText)
+  //     } else {
+  //       callback('EC_REQ_FAILED')
+  //     }
+  //   }
+
+  //   xhr.ontimeout = function () {
+  //     if (hasCallbacked) return
+  //     hasCallbacked = true
+  //     callback('EC_REQ_TIMEOUT')
+  //   }
+  //   xhr.onerror = function () {
+  //     if (hasCallbacked) return
+  //     hasCallbacked = true
+  //     callback('EC_REQ_FAILED')
+  //   }
+  //   xhr.timeout = timeout
+  //   if (method == 'POST') {
+  //     xhr.send(body)
+  //   } else {
+  //     xhr.send()
+  //   }
+  // }
+
+  static handleCallback = (resolve: Function, reject: Function, reqData: RequestData) => {
+    const url = reqData.uri
+    const options: FetchOptions = reqData
+    options.compress = reqData.gzip
+    delete options.uri
+    delete options.gzip
+
+    fetch(url, options)
+      .then((res: any) => {
+        if (res.status >= 200 && res.status < 300) {
+          resolve(res.json())
+        } else {
+          reject('EC_REQ_FAILED')
+        }
+      })
+      .catch((err: any) => {
+        console.log('request failed.', reqData)
+        reject(err)
+      })
   }
 
   static httpGet(url: string, params: any, cb?: Function, config?: any) {
@@ -63,37 +106,39 @@ export class BrowserNet {
     config = config || {}
     let headers = config.headers || {}
     let timeout = config.timeout || Net.timeout
-    let reqData: ReqConfig = {
+    let reqData = {
       uri: url,
-      method: 'GET',
+      method: HttpMethod.GET,
       timeout,
+      gzip: true,
       headers,
     }
-    const handlerCallback = (resolve: Function, reject: Function) => {
-      this._xmlRequest(reqData, (err: any, body: any) => {
-        if (err) {
-          reject(err)
-          return
-        }
-        if (typeof body == 'string') {
-          try {
-            body = JSON.parse(body)
-          } catch (e) {}
-        }
-        resolve(body)
-      })
-    }
+    // const handlerCallback = (resolve: Function, reject: Function) => {
+    //   this._xmlRequest(reqData, (err: any, body: any) => {
+    //     if (err) {
+    //       reject(err)
+    //       return
+    //     }
+    //     if (typeof body == 'string') {
+    //       try {
+    //         body = JSON.parse(body)
+    //       } catch (e) {}
+    //     }
+    //     resolve(body)
+    //   })
+    // }
 
     if (typeof cb === 'function') {
-      handlerCallback(
+      this.handleCallback(
         (result: any) => Utils.invokeCallback(cb, null, result),
-        (err: any) => Utils.invokeCallback(cb, err)
+        (err: any) => Utils.invokeCallback(cb, err),
+        reqData
       )
       return
     }
 
     return new Promise((resolve, reject) => {
-      handlerCallback(resolve, reject)
+      this.handleCallback(resolve, reject, reqData)
     })
   }
 
@@ -123,36 +168,38 @@ export class BrowserNet {
 
     const reqData = {
       uri: url,
-      method: 'POST',
+      method: HttpMethod.POST,
       body: postData,
       headers: headers,
       timeout: timeout,
+      gzip: true,
     }
-    const handlerCallback = (resolve: Function, reject: Function) => {
-      this._xmlRequest(reqData, (err: any, body: any) => {
-        if (err) {
-          reject(err)
-          return
-        }
-        if (typeof body == 'string') {
-          try {
-            body = JSON.parse(body)
-          } catch (e) {}
-        }
-        resolve(body)
-      })
-    }
+    // const handlerCallback = (resolve: Function, reject: Function) => {
+    //   this._xmlRequest(reqData, (err: any, body: any) => {
+    //     if (err) {
+    //       reject(err)
+    //       return
+    //     }
+    //     if (typeof body == 'string') {
+    //       try {
+    //         body = JSON.parse(body)
+    //       } catch (e) {}
+    //     }
+    //     resolve(body)
+    //   })
+    // }
 
     if (typeof cb === 'function') {
-      handlerCallback(
+      this.handleCallback(
         (result: any) => Utils.invokeCallback(cb, null, result),
-        (err: any) => Utils.invokeCallback(cb, err)
+        (err: any) => Utils.invokeCallback(cb, err),
+        reqData
       )
       return
     }
 
     return new Promise((resolve, reject) => {
-      handlerCallback(resolve, reject)
+      this.handleCallback(resolve, reject, reqData)
     })
   }
 }
