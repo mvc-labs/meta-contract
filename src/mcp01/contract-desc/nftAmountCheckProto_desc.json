@@ -27,23 +27,9 @@
     ],
     "stateProps": [],
     "buildType": "debug",
-    "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp01/contract/nft/nftAmountCheckProto.scrypt",
+    "file": "",
     "asm": "OP_1 OP_3 40 OP_5 14 OP_ADD OP_0 OP_PICK 14 OP_ADD",
     "hex": "",
-    "sources": [
-        "/Users/ivan/Codes/blockchain/meta-contract/src/mcp01/contract/nft/nftAmountCheckProto.scrypt",
-        "/Users/ivan/Codes/blockchain/meta-contract/src/mcp01/contract/protoHeader.scrypt"
-    ],
-    "sourceMap": [
-        "-1:248:51:248:56",
-        "-1:250:50:250:55",
-        "-1:251:53:251:58",
-        "0:10:38:10:66",
-        "0:10:69:10:94",
-        "0:10:38:10:94",
-        "0:12:45:12:58",
-        "0:12:45:12:58",
-        "0:12:61:12:81",
-        "0:12:45:12:81"
-    ]
+    "sources": [],
+    "sourceMap": []
 }

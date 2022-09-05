@@ -109,13 +109,13 @@ contract Nft {
 
             bytes outputs = nftOutput + opReturnOutput + changeOutput;
             bytes hashOutputs = hash256(outputs);
-            // require(hashOutputs == SigHash.hashOutputs(txPreimage));
+            require(hashOutputs == SigHash.hashOutputs(txPreimage));
 
             // checkSig
             bytes senderAddress = NftProto.getNftAddress(nftScript, nftScriptLen);
             require(senderAddress != NftProto.BURN_ADDRESS);
             require(hash160(senderPubKey) == senderAddress);
-            // require(checkSig(senderSig, senderPubKey));
+            require(checkSig(senderSig, senderPubKey));
         }
         else {
 
@@ -147,7 +147,7 @@ contract Nft {
             require(hash == this.unlockContractCodeHashArray[amountCheckHashIndex]);
         }
 
-        // require(Tx.checkPreimageSigHashType(txPreimage, ProtoHeader.SIG_HASH_ALL));
+        require(Tx.checkPreimageSigHashType(txPreimage, ProtoHeader.SIG_HASH_ALL));
         require(true);
     }
 }

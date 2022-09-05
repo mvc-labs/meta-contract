@@ -21,15 +21,9 @@
     ],
     "stateProps": [],
     "buildType": "debug",
-    "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/protoheader.scrypt",
+    "file": "",
     "asm": "OP_1 OP_3 40",
     "hex": "",
-    "sources": [
-        "/Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/protoheader.scrypt"
-    ],
-    "sourceMap": [
-        "-1:248:51:248:56",
-        "-1:250:50:250:55",
-        "-1:251:53:251:58"
-    ]
+    "sources": [],
+    "sourceMap": []
 }

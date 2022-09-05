@@ -4,10 +4,11 @@ import { NftManager, Wallet, API_NET, API_TARGET } from '../../../src'
 let wallet: Wallet
 let wallet2: Wallet
 let nftManager: NftManager
-let sensibleId = '2e4c6155ead72bb2e5d33c0e7b24c87c8be4864d7d235dad7b0445514a843e2a00000000'
+let sensibleId = '00ea9986c26490d153ad50776cd6c2b552719c981fd64a7c37709b3f98b6856c00000000'
 let mintTxId: string
-let genesis = '413460e744000157926178c5b87724051b9ebfc3'
-let codehash = 'd80d955b2bbbe4309e9df982fa37646963f61cf1'
+let genesis = '02dd3396f8ba7bce63564e673de7d61b9c65291a'
+// 87fae7840864948625f110daf3ba00ce8c95e458 a9d29bbdfb59ef2bcb3300e9b25f08dd30503a15
+let codehash = '48d6118692b459fabfc2910105f38dda0645fb57'
 // let codehash = 'a771584dc693966b8d98ff3e02d906f840416f49'
 // let genesis = '39a4da6b72901545f4560822bd752a95e8727e5f'
 
@@ -61,12 +62,13 @@ describe('转账', () => {
     let res = await nftManager.transfer({
       genesis,
       codehash,
-      tokenIndex: '1',
+      tokenIndex: '0',
       senderWif: wallet.privateKey.toWIF(),
       receiverAddress: wallet.address.toString(),
+      // noBroadcast: true,
     })
+    console.log(res.txid)
 
-    console.log(res)
-    // expect(transferTxId).toHaveLength(64)
+    expect(res.txid).toHaveLength(64)
   })
 })

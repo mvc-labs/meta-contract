@@ -18,5 +18,10 @@ export { Net } from './net'
 export { API_NET, API_TARGET, Api } from './api'
 export { OutputType, TxDecoder } from './tx-decoder'
 export { Wallet } from './wallet'
-export { NftManager } from './mcp01'
-export { FtManager } from './mcp02'
+
+// // 兼容
+import { NftManager } from './mcp01'
+import { FtManager } from './mcp02'
+const SensibleNFT = NftManager
+const SensibleFT = FtManager
+export { SensibleNFT, SensibleFT, NftManager, FtManager }

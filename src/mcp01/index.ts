@@ -38,6 +38,7 @@ import { Prevouts } from '../common/Prevouts'
 import { CodeError, ErrCode } from '../common/error'
 import { NonFungibleTokenUnspent } from '../api'
 import { SizeTransaction } from '../common/SizeTransaction'
+import { PROTO_TYPE } from '../common/protoheader'
 ContractUtil.init()
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
@@ -68,6 +69,9 @@ export type NftUtxo = {
     preTxId: string
     preOutputIndex: number
     preTxHex: string
+    preTx?: Transaction
+    txInputsCount?: number
+    preNftInputIndex?: number
   }
 
   nftAddress?: mvc.Address
@@ -207,7 +211,7 @@ export class NftManager {
     return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
   }
 
-  public async transfer({
+  public async transfer2({
     genesis,
     codehash,
     tokenIndex,
@@ -661,10 +665,6 @@ export class NftManager {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
       const txPreimage = txComposer.getInputPreimage(genesisInputIndex)
-      console.log({
-        script: txComposer.getInput(genesisInputIndex).output.script.toHex(),
-        txId: genesisUtxo.satotxInfo.txId,
-      })
 
       let unlockResult = genesisContract.unlock({
         txPreimage,
@@ -725,6 +725,7 @@ export class NftManager {
   }
 
   // ===========================================================================
+  // 老mint
 
   public async mint({
     sensibleId,
@@ -1140,5 +1141,378 @@ export class NftManager {
         `Insufficient balance.The fee rate should not be less than ${this.feeb}, but in the end it is ${feeRate}.`
       )
     }
+  }
+
+  // ===========================================================================
+  // 老transfer
+  public async transfer({
+    genesis,
+    codehash,
+    tokenIndex,
+
+    senderWif,
+    senderPrivateKey,
+
+    receiverAddress,
+    opreturnData,
+    utxos,
+    changeAddress,
+    noBroadcast = false,
+  }: {
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    senderWif?: string
+    senderPrivateKey?: string | mvc.PrivateKey
+    receiverAddress: string | mvc.Address
+    opreturnData?: any
+    utxos?: any[]
+    changeAddress?: string | mvc.Address
+    noBroadcast?: boolean
+  }): Promise<{ tx: mvc.Transaction; txid: string; txHex: string }> {
+    // checkParamGenesis(genesis)
+    // checkParamCodehash(codehash)
+
+    let senderPublicKey: mvc.PublicKey
+    if (senderWif) {
+      senderPrivateKey = new mvc.PrivateKey(senderWif)
+      senderPublicKey = senderPrivateKey.publicKey
+    } else if (senderPrivateKey) {
+      senderPrivateKey = new mvc.PrivateKey(senderPrivateKey)
+      senderPublicKey = senderPrivateKey.publicKey
+    } else {
+      throw new CodeError(ErrCode.EC_INVALID_ARGUMENT, 'senderPrivateKey should be provided!')
+    }
+
+    let nftInfo = await this._pretreatNftUtxoToTransfer(
+      tokenIndex,
+      codehash,
+      genesis,
+      senderPrivateKey as mvc.PrivateKey,
+      senderPublicKey as mvc.PublicKey
+    )
+
+    let utxoInfo = await this._pretreatUtxos(utxos)
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxoInfo.utxos[0].address
+    }
+    receiverAddress = new mvc.Address(receiverAddress, this.network)
+
+    let { txComposer } = await this._transfer({
+      genesis,
+      codehash,
+      nftUtxo: nftInfo.nftUtxo,
+      nftPrivateKey: nftInfo.nftUtxoPrivateKey,
+      receiverAddress,
+      opreturnData,
+      utxos: utxoInfo.utxos,
+      utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
+      changeAddress,
+    })
+
+    let txHex = txComposer.getRawHex()
+    if (!noBroadcast) {
+      await this.api.broadcast(txHex)
+    }
+    return { tx: txComposer.tx, txHex, txid: txComposer.tx.id }
+  }
+
+  private async _pretreatNftUtxoToTransfer(
+    tokenIndex: string,
+    codehash?: string,
+    genesis?: string,
+    senderPrivateKey?: mvc.PrivateKey,
+    senderPublicKey?: mvc.PublicKey
+  ): Promise<{ nftUtxo: NftUtxo; nftUtxoPrivateKey: mvc.PrivateKey }> {
+    if (senderPrivateKey) {
+      senderPublicKey = senderPrivateKey.toPublicKey()
+    }
+
+    let _res = await this.api.getNonFungibleTokenUnspentDetail(codehash, genesis, tokenIndex)
+    let nftUtxo: NftUtxo = {
+      txId: _res.txId,
+      outputIndex: _res.outputIndex,
+      nftAddress: new mvc.Address(_res.tokenAddress, this.network),
+      publicKey: senderPublicKey,
+    }
+
+    return { nftUtxo, nftUtxoPrivateKey: senderPrivateKey }
+  }
+
+  private async _transfer({
+    genesis,
+    codehash,
+    nftUtxo,
+    nftPrivateKey,
+    receiverAddress,
+    opreturnData,
+    utxos,
+    utxoPrivateKeys,
+    changeAddress,
+  }: {
+    genesis: string
+    codehash: string
+    nftUtxo: NftUtxo
+    nftPrivateKey?: mvc.PrivateKey
+    receiverAddress: mvc.Address
+    opreturnData?: any
+    utxos: Utxo[]
+    utxoPrivateKeys: mvc.PrivateKey[]
+    changeAddress: mvc.Address
+  }): Promise<{ txComposer: TxComposer }> {
+    nftUtxo = await this._pretreatNftUtxoToTransferOn(nftUtxo, codehash, genesis)
+
+    // let genesisScript = nftUtxo.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
+    //   ? new Bytes(nftUtxo.preLockingScript.toHex())
+    //   : new Bytes('')
+    const genesisScript = new Bytes(nftUtxo.preLockingScript.toHex())
+    let balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    let estimateSatoshis = await this._calTransferEstimateFee({
+      nftUtxoSatoshis: nftUtxo.satoshis,
+      genesisScript,
+      opreturnData,
+      utxoMaxCount: utxos.length,
+    })
+    if (balance < estimateSatoshis) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_BSV,
+        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
+      )
+    }
+
+    const nftScriptBuf = nftUtxo.lockingScript.toBuffer()
+    let dataPartObj = nftProto.parseDataPart(nftScriptBuf)
+    dataPartObj.protoType = PROTO_TYPE.NFT
+    dataPartObj.protoVersion = nftProto.PROTO_VERSION
+
+    dataPartObj.nftAddress = toHex(receiverAddress.hashBuffer)
+    const lockingScriptBuf = nftProto.updateScript(nftScriptBuf, dataPartObj)
+
+    const txComposer = new TxComposer()
+    let nftInput = nftUtxo
+
+    let prevouts = new Prevouts()
+
+    // token contract input
+    const nftInputIndex = txComposer.appendInput(nftInput)
+    prevouts.addVout(nftInput.txId, nftInput.outputIndex)
+    txComposer.addSigHashInfo({
+      inputIndex: nftInputIndex,
+      address: nftUtxo.nftAddress.toString(),
+      sighashType,
+      contractType: CONTRACT_TYPE.BCP01_NFT,
+    })
+
+    const p2pkhInputIndexs = utxos.map((utxo) => {
+      const inputIndex = txComposer.appendP2PKHInput(utxo)
+      prevouts.addVout(utxo.txId, utxo.outputIndex)
+      txComposer.addSigHashInfo({
+        inputIndex,
+        address: utxo.address.toString(),
+        sighashType,
+        contractType: CONTRACT_TYPE.P2PKH,
+      })
+      return inputIndex
+    })
+
+    //tx addOutput nft
+    const nftOutputIndex = txComposer.appendOutput({
+      lockingScript: mvc.Script.fromBuffer(lockingScriptBuf),
+      satoshis: this.getDustThreshold(lockingScriptBuf.length),
+    })
+
+    //tx addOutput OpReturn
+    let opreturnScriptHex = ''
+    if (opreturnData) {
+      const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
+      opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
+    }
+
+    //The first round of calculations get the exact size of the final transaction, and then change again
+    //Due to the change, the script needs to be unlocked again in the second round
+    //let the fee to be exact in the second round
+
+    for (let c = 0; c < 2; c++) {
+      txComposer.clearChangeOutput()
+      const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
+
+      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, codehash)
+      let dataPartObj = nftProto.parseDataPart(nftInput.lockingScript.toBuffer())
+      nftContract.setFormatedDataPart(dataPartObj)
+
+      // 准备数据
+      const prevNftInputIndex = nftUtxo.satotxInfo.preNftInputIndex
+      const nftTx = new mvc.Transaction(nftUtxo.satotxInfo.txHex)
+      const inputRes = TokenUtil.getTxInputProof(nftTx, prevNftInputIndex)
+      const nftTxInputProof = new TxInputProof(inputRes[0])
+      const nftTxHeader = inputRes[1] as Bytes
+
+      const prevNftTxProof = new TxOutputProof(
+        TokenUtil.getTxOutputProof(nftUtxo.satotxInfo.preTx, nftUtxo.satotxInfo.preOutputIndex)
+      )
+
+      const contractInputIndex = 0
+      const contractTxProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
+
+      const amountCheckOutputIndex = 0
+      // const amountCheckScriptBuf = amountCheckTx.outputs[amountCheckOutputIndex].script.toBuffer()
+      const amountCheckScriptBuf = Buffer.alloc(0)
+      const amountCheckHashIndex = 0
+      const amountCheckInputIndex = txComposer.getTx().inputs.length - 1
+      // const amountcheckTxProof = new TxOutputProof(
+      //   TokenUtil.getTxOutputProof(amountCheckTx, amountCheckOutputIndex)
+      // )
+      const amountcheckTxProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
+      const amountCheckScrypt = new Bytes(amountCheckScriptBuf.toString('hex'))
+
+      const unlockingContract = nftContract.unlock({
+        txPreimage: txComposer.getInputPreimage(nftInputIndex),
+        prevouts: new Bytes(prevouts.toHex()),
+
+        prevNftInputIndex,
+        prevNftAddress: new Bytes(toHex(nftInput.preNftAddress.hashBuffer)),
+        nftTxHeader,
+        nftTxInputProof,
+        prevNftTxProof,
+        genesisScript,
+
+        contractInputIndex,
+        contractTxProof,
+
+        amountCheckHashIndex,
+        amountCheckInputIndex,
+        amountcheckTxProof,
+        amountCheckScrypt,
+
+        senderPubKey: new PubKey(toHex(nftInput.publicKey.toBuffer())),
+        senderSig: new Sig(toHex(txComposer.getTxFormatSig(nftPrivateKey, nftInputIndex))),
+
+        receiverAddress: new Bytes(toHex(receiverAddress.hashBuffer)),
+        nftOutputSatoshis: new Int(txComposer.getOutput(nftOutputIndex).satoshis),
+        opReturnScript: new Bytes(opreturnScriptHex),
+        changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
+        changeSatoshis: new Int(
+          changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0
+        ),
+
+        operation: nftProto.NFT_OP_TYPE.TRANSFER,
+      })
+
+      // if (this.debug && nftPrivateKey) {
+      let txContext = {
+        tx: txComposer.tx,
+        inputIndex: nftInputIndex,
+        inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
+      }
+      let ret = unlockingContract.verify(txContext)
+      if (ret.success == false) console.log(ret)
+      // }
+      txComposer.getInput(nftInputIndex).setScript(unlockingContract.toScript() as mvc.Script)
+    }
+
+    if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
+      p2pkhInputIndexs.forEach((inputIndex) => {
+        let privateKey = utxoPrivateKeys.splice(0, 1)[0]
+        txComposer.unlockP2PKHInput(privateKey, inputIndex)
+      })
+    }
+
+    this._checkTxFeeRate(txComposer)
+    return { txComposer }
+  }
+
+  private async _pretreatNftUtxoToTransferOn(nftUtxo: NftUtxo, codehash: string, genesis: string) {
+    let txHex = await this.api.getRawTxData(nftUtxo.txId)
+    const tx = new mvc.Transaction(txHex)
+    let tokenScript = tx.outputs[nftUtxo.outputIndex].script
+
+    let curDataPartObj = nftProto.parseDataPart(tokenScript.toBuffer())
+    let input = tx.inputs.find((input, i) => {
+      let script = new mvc.Script(input.script)
+      if (script.chunks.length > 0) {
+        const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
+        if (lockingScriptBuf) {
+          return true // TODO:
+          if (nftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
+            return true
+          }
+
+          let dataPartObj = nftProto.parseDataPart(lockingScriptBuf)
+          dataPartObj.sensibleID = curDataPartObj.sensibleID
+          dataPartObj.tokenIndex = BN.Zero
+          const newScriptBuf = nftProto.updateScript(lockingScriptBuf, dataPartObj)
+
+          let genesisHash = toHex(mvc.crypto.Hash.sha256ripemd160(newScriptBuf))
+
+          if (genesisHash == curDataPartObj.genesisHash) {
+            return true
+          }
+        }
+      }
+    })
+    if (!input) throw new CodeError(ErrCode.EC_INNER_ERROR, 'invalid nftUtxo')
+    let preTxId = input.prevTxId.toString('hex')
+    let preOutputIndex = input.outputIndex
+    let preTxHex = await this.api.getRawTxData(preTxId)
+    const preTx = new mvc.Transaction(preTxHex)
+
+    nftUtxo.satotxInfo = {
+      txId: nftUtxo.txId,
+      outputIndex: nftUtxo.outputIndex,
+      txHex,
+      preTxId,
+      preNftInputIndex: 0,
+      preOutputIndex,
+      preTxHex,
+      txInputsCount: tx.inputs.length,
+      preTx,
+    }
+
+    nftUtxo.preLockingScript = preTx.outputs[preOutputIndex].script
+    nftUtxo.lockingScript = tx.outputs[nftUtxo.outputIndex].script
+    nftUtxo.satoshis = tx.outputs[nftUtxo.outputIndex].satoshis
+    nftUtxo.preNftAddress = mvc.Address.fromPublicKeyHash(
+      Buffer.from(nftProto.getNftAddress(preTx.outputs[preOutputIndex].script.toBuffer()), 'hex'),
+      this.network
+    )
+
+    return nftUtxo
+  }
+
+  private async _calTransferEstimateFee({
+    nftUtxoSatoshis,
+    genesisScript,
+    opreturnData,
+    utxoMaxCount,
+  }: {
+    nftUtxoSatoshis: number
+    genesisScript: Bytes
+    opreturnData: any
+    utxoMaxCount: number
+  }) {
+    let p2pkhInputNum = utxoMaxCount
+    let stx = new SizeTransaction(this.feeb, this.dustCalculator)
+    stx.addInput(
+      NftFactory.calUnlockingScriptSize(
+        p2pkhInputNum,
+        genesisScript,
+        opreturnData,
+        nftProto.NFT_OP_TYPE.TRANSFER
+      ),
+      nftUtxoSatoshis
+    )
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx.addP2PKHInput()
+    }
+
+    stx.addOutput(NftFactory.getLockingScriptSize())
+    if (opreturnData) {
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+    }
+    stx.addP2PKHOutput()
+
+    return stx.getFee()
   }
 }

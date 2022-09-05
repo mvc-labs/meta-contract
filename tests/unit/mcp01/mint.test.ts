@@ -39,13 +39,13 @@ describe('NFT 铸造测试', () => {
   it('正常铸造', async () => {
     const metaTxId = ''
     const metaOutputIndex = 0
-    await nftManager.mint({
-      sensibleId,
-      metaTxId,
-      metaOutputIndex,
-      genesisWif: process.env.WIF,
-      receiverAddress: wallet.address,
-    })
+    // await nftManager.mint({
+    //   sensibleId,
+    //   metaTxId,
+    //   metaOutputIndex,
+    //   genesisWif: process.env.WIF,
+    //   receiverAddress: wallet.address,
+    // })
 
     const { txid, txHex } = await nftManager.mint({
       sensibleId,

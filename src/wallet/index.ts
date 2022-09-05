@@ -72,6 +72,7 @@ export class Wallet {
     utxos.forEach((v, index) => {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
+    console.log(txComposer.getTxId())
 
     return await this.broadcastTxComposer(txComposer, options)
   }
