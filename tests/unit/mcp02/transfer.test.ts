@@ -6,8 +6,10 @@ let wallet2: Wallet
 let ftManager: FtManager
 let sensibleId = 'b5f7ebcad420ff6c57d4a29d157cf8eec3ee9b2f5c001060949f66382d84691000000000'
 let mintTxId: string
-let genesis = 'bcbcdd9e34b74ebf60e48e28fcc3aa9dc9159781'
-let codehash = '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04'
+let genesis
+let codehash
+// let genesis = 'bcbcdd9e34b74ebf60e48e28fcc3aa9dc9159781'
+// let codehash = '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04'
 // let codehash = 'a771584dc693966b8d98ff3e02d906f840416f49'
 // let genesis = '39a4da6b72901545f4560822bd752a95e8727e5f'
 
@@ -30,26 +32,26 @@ beforeAll(async () => {
   ftManager.api.authorize({ authorization: process.env.METASV_BEARER })
 
   // 创世并铸造
-  // const currentDate = new Date().getHours() + ':' + new Date().getMinutes()
-  // const tokenName = 'Mint - ' + currentDate
-  // const tokenSymbol = 'HelloWorld'
-  // const decimalNum = 8
-  // const genesisResult = await ftManager.genesis({
-  //   tokenName,
-  //   tokenSymbol,
-  //   decimalNum,
-  // })
-  // codehash = genesisResult.codehash
-  // genesis = genesisResult.genesis
-  // sensibleId = genesisResult.sensibleId
-  // let { txid } = await ftManager.mint({
-  //   sensibleId,
-  //   genesisWif: process.env.WIF,
-  //   receiverAddress: wallet.address,
-  //   tokenAmount: '460',
-  // })
-  // mintTxId = txid
-  // console.log(mintTxId)
+  const currentDate = new Date().getHours() + ':' + new Date().getMinutes()
+  const tokenName = '测试MVC Token'
+  const tokenSymbol = 'HelloWorld'
+  const decimalNum = 8
+  const genesisResult = await ftManager.genesis({
+    tokenName,
+    tokenSymbol,
+    decimalNum,
+  })
+  codehash = genesisResult.codehash
+  genesis = genesisResult.genesis
+  sensibleId = genesisResult.sensibleId
+  let { txid } = await ftManager.mint({
+    sensibleId,
+    genesisWif: process.env.WIF,
+    receiverAddress: wallet.address.toString(),
+    tokenAmount: '10000',
+  })
+  mintTxId = txid
+  console.log(mintTxId)
 })
 
 describe('转账', () => {
@@ -59,8 +61,8 @@ describe('转账', () => {
 
   it('正常转账', async () => {
     let { txid: transferTxId } = await ftManager.transfer({
-      genesis,
-      codehash,
+      genesis: '0eacb9c6826b48e3573b09df5027b9f538eb26f0',
+      codehash: '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04',
       receivers: [
         {
           amount: '46',
@@ -69,6 +71,7 @@ describe('转账', () => {
       ],
       senderWif: process.env.WIF,
     })
+    console.log(transferTxId)
     expect(transferTxId).toHaveLength(64)
   })
 })

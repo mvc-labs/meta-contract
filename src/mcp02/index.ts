@@ -10,7 +10,9 @@ import {
   SigHashPreimage,
 } from '../scryptlib'
 import { CodeError, ErrCode } from '../common/error'
-import { API_TARGET, API_NET, mvc, Api } from '..'
+import * as mvc from '../mvc'
+import { API_TARGET, API_NET, Api } from '..'
+
 import { FEEB, TX_VERSION } from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
@@ -48,6 +50,7 @@ import {
   prepareUtxos,
   unlockP2PKHInputs,
 } from '../common/mcpUtils'
+import { dummyTxId } from '../common/dummy'
 const Signature = mvc.crypto.Signature
 const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
@@ -200,6 +203,10 @@ export class FtManager {
   private debug: boolean
 
   get api() {
+    return this._api
+  }
+
+  get sensibleApi() {
     return this._api
   }
 
@@ -1761,5 +1768,192 @@ export class FtManager {
 
   private getDustThreshold(size: number) {
     return this.dustCalculator.getDustThreshold(size)
+  }
+
+  public async getBalance({
+    codehash,
+    genesis,
+    address,
+  }: {
+    codehash: string
+    genesis: string
+    address: string
+  }): Promise<string> {
+    let { balance, pendingBalance } = await this.api.getFungibleTokenBalance(
+      codehash,
+      genesis,
+      address
+    )
+    return BN.fromString(balance, 10).add(BN.fromString(pendingBalance, 10)).toString()
+  }
+
+  /**
+   * Query token balance detail
+   * @param codehash
+   * @param genesis
+   * @param address
+   * @returns
+   */
+  public async getBalanceDetail({
+    codehash,
+    genesis,
+    address,
+  }: {
+    codehash: string
+    genesis: string
+    address: string
+  }): Promise<{
+    balance: string
+    pendingBalance: string
+    utxoCount: number
+    decimal: number
+  }> {
+    return await this.api.getFungibleTokenBalance(codehash, genesis, address)
+  }
+
+  /**
+   * Query the Token list under this address. Get the balance of each token
+   * @param address
+   * @returns
+   */
+  public async getSummary(address: string) {
+    return await this.api.getFungibleTokenSummary(address)
+  }
+
+  public async getFtUtxos(
+    codehash: string,
+    genesis: string,
+    address: string,
+    count: number = 20
+  ): Promise<FungibleTokenUnspent[]> {
+    return await this.api.getFungibleTokenUnspents(codehash, genesis, address, count)
+  }
+
+  public async getMergeEstimateFee({
+    codehash,
+    genesis,
+    ownerWif,
+    ownerPublicKey,
+    ftUtxos,
+    ftChangeAddress,
+    opreturnData,
+    utxoMaxCount = 3,
+    minUtxoSet = true,
+  }: {
+    codehash: string
+    genesis: string
+    ownerWif?: string
+    ownerPublicKey?: string | mvc.PublicKey
+    ftUtxos?: ParamFtUtxo[]
+    ftChangeAddress?: string | mvc.Address
+    opreturnData?: any
+    utxoMaxCount?: number
+    minUtxoSet?: boolean
+  }) {
+    return await this.getTransferEstimateFee({
+      codehash,
+      genesis,
+      senderWif: ownerWif,
+      senderPublicKey: ownerPublicKey,
+      ftUtxos,
+      ftChangeAddress,
+      opreturnData,
+      receivers: [],
+      isMerge: true,
+      utxoMaxCount,
+      minUtxoSet,
+    })
+  }
+
+  public async getTransferEstimateFee({
+    codehash,
+    genesis,
+    receivers,
+
+    senderWif,
+    senderPrivateKey,
+    senderPublicKey,
+    ftUtxos,
+    ftChangeAddress,
+    isMerge,
+    opreturnData,
+    utxoMaxCount = 3,
+    minUtxoSet = true,
+  }: {
+    codehash: string
+    genesis: string
+    receivers?: TokenReceiver[]
+
+    senderWif?: string
+    senderPrivateKey?: string | mvc.PrivateKey
+    senderPublicKey?: string | mvc.PublicKey
+    ftUtxos?: ParamFtUtxo[]
+    ftChangeAddress?: string | mvc.Address
+    isMerge?: boolean
+    opreturnData?: any
+    utxoMaxCount?: number
+    minUtxoSet?: boolean
+  }) {
+    let p2pkhInputNum = utxoMaxCount
+    if (p2pkhInputNum > 3) {
+      throw new CodeError(
+        ErrCode.EC_UTXOS_MORE_THAN_3,
+        'Bsv utxos should be no more than 3 in the transfer operation. '
+      )
+    }
+
+    if (senderWif) {
+      senderPrivateKey = mvc.PrivateKey.fromWIF(senderWif)
+      senderPublicKey = senderPrivateKey.toPublicKey()
+    } else if (senderPrivateKey) {
+      senderPrivateKey = new mvc.PrivateKey(senderPrivateKey)
+      senderPublicKey = senderPrivateKey.toPublicKey()
+    } else if (senderPublicKey) {
+      senderPublicKey = new mvc.PublicKey(senderPublicKey)
+    }
+
+    let utxos: Utxo[] = []
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      utxos.push({
+        txId: dummyTxId, //dummy
+        outputIndex: i,
+        satoshis: 1000,
+        address: this.zeroAddress,
+      })
+    }
+
+    let ftUtxoInfo = await this._pretreatFtUtxos(
+      ftUtxos,
+      codehash,
+      genesis,
+      senderPrivateKey as mvc.PrivateKey,
+      senderPublicKey as mvc.PublicKey
+    )
+    if (ftChangeAddress) {
+      ftChangeAddress = new mvc.Address(ftChangeAddress, this.network)
+    } else {
+      ftChangeAddress = ftUtxoInfo.ftUtxos[0].tokenAddress
+    }
+
+    let { tokenInputArray, tokenOutputArray, tokenTransferType } =
+      await this._prepareTransferTokens({
+        codehash,
+        genesis,
+        receivers,
+        ftUtxos: ftUtxoInfo.ftUtxos,
+        ftChangeAddress,
+        isMerge,
+        minUtxoSet,
+      })
+
+    let estimateSatoshis = this._calTransferEstimateFee({
+      p2pkhInputNum: utxos.length,
+      tokenInputArray,
+      tokenOutputArray,
+      tokenTransferType,
+      opreturnData,
+    })
+
+    return estimateSatoshis
   }
 }

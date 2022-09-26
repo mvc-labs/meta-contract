@@ -1,6 +1,7 @@
 import { DustCalculator } from '../common/DustCalculator'
 import { sighashType, TxComposer } from '../tx-composer'
-import { BN, mvc, API_NET, Api, API_TARGET } from '..'
+import * as mvc from '../mvc'
+import { BN, API_NET, Api, API_TARGET } from '..'
 import { NftGenesis, NftGenesisFactory } from './contract-factory/nftGenesis'
 import {
   addChangeOutput,
@@ -91,6 +92,10 @@ export class NftManager {
   private unlockContractCodeHashArray: Bytes[]
 
   get api() {
+    return this._api
+  }
+
+  get sensibleApi() {
     return this._api
   }
 
@@ -1514,5 +1519,63 @@ export class NftManager {
     stx.addP2PKHOutput()
 
     return stx.getFee()
+  }
+
+  /**
+   * Estimate the cost of transfer
+   * senderPrivateKey and senderPublicKey only need to provide one of them
+   */
+  public async getTransferEstimateFee({
+    genesis,
+    codehash,
+    tokenIndex,
+
+    senderWif,
+    senderPrivateKey,
+    senderPublicKey,
+    opreturnData,
+    utxoMaxCount = 10,
+  }: {
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    senderWif?: string
+    senderPrivateKey?: string | mvc.PrivateKey
+    senderPublicKey?: string | mvc.PublicKey
+    opreturnData?: any
+    utxoMaxCount?: number
+  }): Promise<number> {
+    // checkParamGenesis(genesis)
+    // checkParamCodehash(codehash)
+
+    if (senderWif) {
+      senderPrivateKey = new mvc.PrivateKey(senderWif)
+      senderPublicKey = senderPrivateKey.publicKey
+    } else if (senderPrivateKey) {
+      senderPrivateKey = new mvc.PrivateKey(senderPrivateKey)
+      senderPublicKey = senderPrivateKey.publicKey
+    } else if (senderPublicKey) {
+      senderPublicKey = new mvc.PublicKey(senderPublicKey)
+    }
+
+    let nftInfo = await this._pretreatNftUtxoToTransfer(
+      tokenIndex,
+      codehash,
+      genesis,
+      senderPrivateKey as mvc.PrivateKey,
+      senderPublicKey as mvc.PublicKey
+    )
+
+    let nftUtxo = await this._pretreatNftUtxoToTransferOn(nftInfo.nftUtxo, codehash, genesis)
+
+    let genesisScript = nftUtxo.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
+      ? new Bytes(nftUtxo.preLockingScript.toHex())
+      : new Bytes('')
+    return await this._calTransferEstimateFee({
+      nftUtxoSatoshis: nftUtxo.satoshis,
+      genesisScript,
+      opreturnData,
+      utxoMaxCount,
+    })
   }
 }

@@ -1,6 +1,6 @@
 {
     "version": 8,
-    "compilerVersion": "1.17.1+commit.3385a0d",
+    "compilerVersion": "1.17.3+commit.b1bcb14",
     "contract": "TokenSell",
     "md5": "b5b1dfc72a587613ef44907c877d18c3",
     "structs": [],

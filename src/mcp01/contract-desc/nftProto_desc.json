@@ -1,6 +1,6 @@
 {
     "version": 8,
-    "compilerVersion": "1.17.1+commit.3385a0d",
+    "compilerVersion": "1.17.3+commit.b1bcb14",
     "contract": "NftProto",
     "md5": "2605ce4194ebcdb51c8d3dc53df16caf",
     "structs": [],

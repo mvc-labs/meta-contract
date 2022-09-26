@@ -49,12 +49,14 @@ describe('FT 铸造测试', () => {
     expect(ftManager).toBeInstanceOf(FtManager)
   })
 
+  const receiverAddress = '1GvUYEQesC3BcQnvUnS1xXYhKnqf69KAga'
+
   it('正常铸造', async () => {
     let { txid } = await ftManager.mint({
       sensibleId,
       genesisWif: process.env.WIF,
-      receiverAddress: wallet.address,
-      tokenAmount: '100',
+      receiverAddress,
+      tokenAmount: '10000000000',
     })
 
     expect(txid).toHaveLength(64)
@@ -67,14 +69,14 @@ describe('FT 铸造测试', () => {
     let { txid: firstTxId } = await ftManager.mint({
       sensibleId,
       genesisWif: process.env.WIF,
-      receiverAddress: wallet.address,
-      tokenAmount: '200',
+      receiverAddress,
+      tokenAmount: '100000',
     })
     let { txid: secondTxId } = await ftManager.mint({
       sensibleId,
       genesisWif: process.env.WIF,
-      receiverAddress: wallet.address,
-      tokenAmount: '300',
+      receiverAddress,
+      tokenAmount: '100000',
     })
 
     // let res = await ftManager.api.getFungibleTokenBalance()

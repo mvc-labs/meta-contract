@@ -1,6 +1,6 @@
 {
     "version": 8,
-    "compilerVersion": "1.17.1+commit.3385a0d",
+    "compilerVersion": "1.17.3+commit.b1bcb14",
     "contract": "TokenBuyForNft",
     "md5": "da8b5b830262918fd9c5397cea876f2a",
     "structs": [

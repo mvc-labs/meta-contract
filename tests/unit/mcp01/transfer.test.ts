@@ -64,7 +64,8 @@ describe('转账', () => {
       codehash,
       tokenIndex: '0',
       senderWif: wallet.privateKey.toWIF(),
-      receiverAddress: wallet.address.toString(),
+      // receiverAddress: wallet.address.toString(),
+      receiverAddress: '1FFYZiQa8ET5ouPyuymYX7g52svEE3R9Zg',
       // noBroadcast: true,
     })
     console.log(res.txid)
