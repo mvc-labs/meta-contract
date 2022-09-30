@@ -45,7 +45,7 @@ export class MVC implements ApiBase {
     if (apiNet == API_NET.MAIN) {
       this.serverBase = 'https://api-mvc.metasv.com'
     } else {
-      throw new CodeError(ErrCode.EC_SENSIBLE_API_ERROR, 'MetaSV-MVC only support mainnet')
+      this.serverBase = 'https://api-mvc-testnet.metasv.com'
     }
     if (serverBase) {
       this.serverBase = serverBase
