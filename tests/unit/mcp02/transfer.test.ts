@@ -60,7 +60,7 @@ describe('转账', () => {
   })
 
   it('正常转账', async () => {
-    console.log({ genesis, codehash })
+    // console.log({ genesis, codehash })
     let { txid: transferTxId } = await ftManager.transfer({
       genesis,
       codehash,

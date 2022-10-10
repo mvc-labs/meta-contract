@@ -177,6 +177,7 @@ export function getTxidInfo(tx: mvc.Transaction) {
   writer.write(mvc.crypto.Hash.sha256(outputHashProof))
 
   const txHeader = writer.toBuffer().toString('hex')
+
   return {
     txHeader,
     inputHashProof: inputHashProof.toString('hex'),
@@ -211,4 +212,15 @@ export const getTxOutputProof = function (tx: mvc.Transaction, outputIndex: numb
     scriptHash: new Bytes(mvc.crypto.Hash.sha256(output.script.toBuffer()).toString('hex')),
   }
   return res
+}
+
+export const getTxInfoHex = function (tx: mvc.Transaction, outputIndex: number) {
+  const info = getTxidInfo(tx)
+  const output = tx.outputs[outputIndex]
+
+  return {
+    txHeader: info.txHeader,
+    txHashProof: info.outputHashProof,
+    txSatoshi: getUInt64Buf(output.satoshis).toString('hex'),
+  }
 }

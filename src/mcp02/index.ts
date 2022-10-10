@@ -8,6 +8,7 @@ import {
   buildTypeClasses,
   getPreimage,
   SigHashPreimage,
+  hash256,
 } from '../scryptlib'
 import { CodeError, ErrCode } from '../common/error'
 import * as mvc from '../mvc'
@@ -1565,19 +1566,23 @@ export class FtManager {
         )
 
         const tokenTxOutputProof = TokenUtil.getTxOutputProof(tokenTx, ftUtxo.outputIndex)
+        const tokenTxInfoHex = TokenUtil.getTxInfoHex(tokenTx, ftUtxo.outputIndex)
+
         tokenTxHeaderArray = Buffer.concat([
           tokenTxHeaderArray,
-          Buffer.from(tokenTxOutputProof.txHeader.toHex(), 'hex'),
+          Buffer.from(tokenTxInfoHex.txHeader, 'hex'),
         ])
-        const hashProofBuf = Buffer.from(tokenTxOutputProof.hashProof.toHex(), 'hex')
+
+        const hashProofBuf = Buffer.from(tokenTxInfoHex.txHashProof, 'hex')
         tokenTxHashProofArray = Buffer.concat([
           tokenTxHashProofArray,
           TokenUtil.getUInt32Buf(hashProofBuf.length),
           hashProofBuf,
         ])
+
         tokenSatoshiBytesArray = Buffer.concat([
           tokenSatoshiBytesArray,
-          Buffer.from(tokenTxOutputProof.satoshiBytes.toHex(), 'hex'),
+          Buffer.from(tokenTxInfoHex.txSatoshi, 'hex'),
         ])
 
         // unlockFromContract
