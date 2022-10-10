@@ -1,4 +1,4 @@
-const { compile } = require('mvc-scryptlib')
+const { compile } = require('mvc-scrypt')
 const { basename, join } = require('path')
 const { unlinkSync, existsSync } = require('fs')
 const { glob } = require('glob')

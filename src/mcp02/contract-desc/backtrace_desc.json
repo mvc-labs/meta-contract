@@ -1,5 +1,5 @@
 {
-    "version": 8,
+    "version": 9,
     "compilerVersion": "1.17.3+commit.b1bcb14",
     "contract": "Backtrace",
     "md5": "6e35f8a0a2d63bc61b763da3a9d2778b",
@@ -15,7 +15,8 @@
                     "name": "data",
                     "type": "bytes"
                 }
-            ]
+            ],
+            "genericTypes": []
         },
         {
             "name": "OpPushData",
@@ -28,7 +29,8 @@
                     "name": "value",
                     "type": "int"
                 }
-            ]
+            ],
+            "genericTypes": []
         },
         {
             "name": "VarIntData",
@@ -41,7 +43,8 @@
                     "name": "value",
                     "type": "int"
                 }
-            ]
+            ],
+            "genericTypes": []
         },
         {
             "name": "TxInputProof",
@@ -62,7 +65,8 @@
                     "name": "sequenceBytes",
                     "type": "bytes"
                 }
-            ]
+            ],
+            "genericTypes": []
         },
         {
             "name": "TxOutputProof",
@@ -83,7 +87,8 @@
                     "name": "scriptHash",
                     "type": "bytes"
                 }
-            ]
+            ],
+            "genericTypes": []
         }
     ],
     "library": [
@@ -109,9 +114,7 @@
     ],
     "stateProps": [],
     "buildType": "debug",
-    "file": "",
-    "asm": "",
+    "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/backtrace.scrypt",
     "hex": "",
-    "sources": [],
-    "sourceMap": []
+    "sourceMapFile": ""
 }

@@ -1,17 +1,13 @@
 import { Transaction, Address, PrivateKey, Script } from '../mvc'
-import { CodeError, ErrCode } from './error'
+import { CodeError, ErrCode } from '../common/error'
 import { API_NET, Api, TxComposer } from '..'
-import { sighashType, CONTRACT_TYPE } from './utils'
-import { ContractAdapter } from './ContractAdapter'
-import { DustCalculator } from './DustCalculator'
-import * as TokenUtil from '../common/tokenUtil'
-import { Bytes } from '../scryptlib'
-import { NftFactory } from '../mcp01/contract-factory/nft'
+import { sighashType, CONTRACT_TYPE } from '../common/utils'
+import { ContractAdapter } from '../common/ContractAdapter'
+import { DustCalculator } from '../common/DustCalculator'
 import { NftGenesisFactory } from '../mcp01/contract-factory/nftGenesis'
 import { TokenGenesisFactory } from '../mcp02/contract-factory/tokenGenesis'
 import * as nftProto from '../mcp01/contract-proto/nft.proto'
 import * as ftProto from '../mcp02/contract-proto/token.proto'
-import { TokenFactory } from '../mcp02/contract-factory/token'
 
 type Utxo = {
   txId: string
@@ -102,6 +98,10 @@ export function addContractOutput({
   })
 }
 
+export function addOpreturnOutput(txComposer: TxComposer, opreturnData: string) {
+  return txComposer.appendOpReturnOutput(opreturnData)
+}
+
 export function addChangeOutput(txComposer: TxComposer, changeAddress: Address, feeb) {
   return txComposer.appendChangeOutput(changeAddress, feeb)
 }
@@ -122,63 +122,9 @@ export function checkFeeRate(txComposer: TxComposer, feeb) {
   if (feeRate < feeb) {
     throw new CodeError(
       ErrCode.EC_INSUFFICIENT_BSV,
-      `Insufficient balance.The fee rate should not be less than ${feeb}, but in the end it is ${feeRate}.`
+      `Insufficient balance.The fee rate should not be less than ${feeb}, but in the end it is ${feeRate}. 余额不足，需要${feeb} sat/byte的费率，实际为${feeRate} sat/byte`
     )
   }
-}
-
-export function getGenesisIdentifiers({
-  genesisTx,
-  purse,
-  transferCheckCodeHashArray,
-  unlockContractCodeHashArray,
-  type,
-}: {
-  genesisTx: Transaction
-  purse: Purse
-  transferCheckCodeHashArray?: Bytes[]
-  unlockContractCodeHashArray: Bytes[]
-  type: string
-}) {
-  let genesis: string, codehash: string, sensibleId: string
-  const proto = type === 'nft' ? nftProto : ftProto
-
-  const genesisOutputIndex = 0
-  const genesisTxId = genesisTx.id
-  let genesisLockingScriptBuf = genesisTx.outputs[genesisOutputIndex].script.toBuffer()
-
-  const dataPartObj: any = proto.parseDataPart(genesisLockingScriptBuf)
-  dataPartObj.sensibleID = {
-    txid: genesisTxId,
-    index: genesisOutputIndex,
-  }
-  genesisLockingScriptBuf = proto.updateScript(genesisLockingScriptBuf, dataPartObj)
-
-  let artifactContract: any
-  if (type === 'nft') {
-    artifactContract = NftFactory.createContract(unlockContractCodeHashArray)
-  } else {
-    artifactContract = TokenFactory.createContract(
-      transferCheckCodeHashArray,
-      unlockContractCodeHashArray
-    )
-  }
-
-  artifactContract.setFormatedDataPart({
-    sensibleID: {
-      txid: genesisTxId,
-      index: genesisOutputIndex,
-    },
-    genesisHash: TokenUtil.getScriptHashBuf(genesisLockingScriptBuf).toString('hex'),
-    tokenAddress: purse.address.hashBuffer.toString('hex'),
-  })
-
-  let scriptBuf = artifactContract.lockingScript.toBuffer()
-  genesis = proto.getQueryGenesis(scriptBuf)
-  codehash = artifactContract.getCodeHash()
-  sensibleId = TokenUtil.getOutpointBuf(genesisTxId, genesisOutputIndex).toString('hex')
-
-  return { codehash, genesis, sensibleId }
 }
 
 export async function getNftInfo({

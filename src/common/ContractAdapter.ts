@@ -28,7 +28,7 @@ export class ContractAdapter {
   }
 
   setDataPart(dataPart: string) {
-    this._contract.setDataPart(dataPart)
+    this._contract.setDataPartInASM(dataPart)
   }
 
   //取OP_RETURN之前的hash

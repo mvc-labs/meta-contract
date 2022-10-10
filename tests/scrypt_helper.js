@@ -1,6 +1,6 @@
 const path = require('path')
 const { readFileSync, existsSync, mkdirSync } = require('fs')
-const { mvc, compile, compileContract: compileContractImpl } = require('mvc-scryptlib')
+const { mvc, compile, compileContract: compileContractImpl } = require('mvc-scrypt')
 
 const { exit } = require('process')
 const minimist = require('minimist')

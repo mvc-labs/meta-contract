@@ -8,26 +8,27 @@ let genesisTxId: string
 let genesisContract: any
 
 beforeAll(async () => {
+  const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
   const feeb = 0.5
 
-  wallet = new Wallet(wif, API_NET.MAIN, feeb, API_TARGET.MVC)
+  wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
   wallet.api.authorize({ authorization: process.env.METASV_BEARER })
 
   nftManager = new NftManager({
-    network: API_NET.MAIN,
+    network: network,
     apiTarget: API_TARGET.MVC,
     purse: wif,
     feeb: feeb,
   })
   nftManager.api.authorize({ authorization: process.env.METASV_BEARER })
 
-  const res = await nftManager.genesis({ totalSupply: '46' })
+  // const res = await nftManager.genesis({ totalSupply: '46' })
+  // sensibleId = res.sensibleId
+  // genesisContract = res.genesisContract
+  // genesisTxId = res.txid
 
-  sensibleId = res.sensibleId
-  genesisContract = res.genesisContract
-  genesisTxId = res.txid
-  // sensibleId = '2e4c6155ead72bb2e5d33c0e7b24c87c8be4864d7d235dad7b0445514a843e2a00000000'
+  sensibleId = 'f652bd86090b9bf93ba7127a85b007822a4dc6ea17e6e582ba10973e886b99b800000000'
 })
 
 jest.setTimeout(30000)
@@ -36,7 +37,7 @@ describe('NFT 铸造测试', () => {
     expect(nftManager).toBeInstanceOf(NftManager)
   })
 
-  const receiverAddress = '1Fub47P962JmvJiN6jXXJPzf3BBUMteyoL'
+  const receiverAddress = process.env.ADDRESS2 as string
 
   it('正常铸造', async () => {
     const metaTxId = ''
@@ -46,8 +47,8 @@ describe('NFT 铸造测试', () => {
       sensibleId,
       metaTxId,
       metaOutputIndex,
-      genesisWif: process.env.WIF,
-      receiverAddress,
+      // genesisWif: process.env.WIF,
+      // receiverAddress,
     })
 
     console.log({ txid })

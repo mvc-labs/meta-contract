@@ -1,5 +1,5 @@
 const { exit } = require('process')
-const { mvc } = require('mvc-scryptlib');
+const { mvc } = require('mvc-scrypt')
 
 // fill in private key on testnet in WIF here
 const key = 'cReKmkHQn8ejr8Kun9miTceTSUpqa77jpQysnbgyxgU3HSu7T9cG'
@@ -27,5 +27,5 @@ module.exports = {
   privateKey,
   privateKey2,
   privateKey3,
-  genPrivKey
+  genPrivKey,
 }

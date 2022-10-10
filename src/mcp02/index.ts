@@ -46,10 +46,10 @@ import {
   addContractOutput,
   addP2PKHInputs,
   checkFeeRate,
-  getGenesisIdentifiers,
   prepareUtxos,
   unlockP2PKHInputs,
-} from '../common/mcpUtils'
+} from '../helpers/transactionHelpers'
+import { getGenesisIdentifiers } from '../helpers/contractHelpers'
 import { dummyTxId } from '../common/dummy'
 const Signature = mvc.crypto.Signature
 const _ = mvc.deps._
@@ -562,7 +562,6 @@ export class FtManager {
       // TODO: 取消两轮？
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
-      console.log(genesisContract.getFormatedDataPart())
 
       let unlockResult = genesisContract.unlock({
         txPreimage: txComposer.getInputPreimage(genesisInputIndex),

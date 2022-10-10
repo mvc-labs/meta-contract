@@ -6,7 +6,8 @@ let MVCAPI: MVC
 let address: string
 
 beforeAll(async () => {
-  MVCAPI = new MVC(API_NET.MAIN)
+  const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
+  MVCAPI = new MVC(network)
   MVCAPI.authorize({ authorization: process.env.METASV_BEARER })
 
   address = process.env.ADDRESS

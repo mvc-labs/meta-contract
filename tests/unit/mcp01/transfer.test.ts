@@ -4,26 +4,24 @@ import { NftManager, Wallet, API_NET, API_TARGET } from '../../../src'
 let wallet: Wallet
 let wallet2: Wallet
 let nftManager: NftManager
-let sensibleId = '00ea9986c26490d153ad50776cd6c2b552719c981fd64a7c37709b3f98b6856c00000000'
+let sensibleId = 'f652bd86090b9bf93ba7127a85b007822a4dc6ea17e6e582ba10973e886b99b800000000'
 let mintTxId: string
-let genesis = '02dd3396f8ba7bce63564e673de7d61b9c65291a'
-// 87fae7840864948625f110daf3ba00ce8c95e458 a9d29bbdfb59ef2bcb3300e9b25f08dd30503a15
+let genesis = '1c69ab2f3047c45da7c606150bed18829bfcfdc9'
 let codehash = '48d6118692b459fabfc2910105f38dda0645fb57'
-// let codehash = 'a771584dc693966b8d98ff3e02d906f840416f49'
-// let genesis = '39a4da6b72901545f4560822bd752a95e8727e5f'
 
 jest.setTimeout(30000)
 beforeAll(async () => {
+  const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
   const feeb = 0.5
 
-  wallet = new Wallet(wif, API_NET.MAIN, feeb, API_TARGET.MVC)
-  wallet2 = new Wallet(wif2, API_NET.MAIN, feeb, API_TARGET.MVC)
+  wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
+  wallet2 = new Wallet(wif2, network, feeb, API_TARGET.MVC)
   wallet.api.authorize({ authorization: process.env.METASV_BEARER })
   wallet2.api.authorize({ authorization: process.env.METASV_BEARER })
 
   nftManager = new NftManager({
-    network: API_NET.MAIN,
+    network: network,
     apiTarget: API_TARGET.MVC,
     purse: wif,
     feeb: feeb,
@@ -62,10 +60,9 @@ describe('转账', () => {
     let res = await nftManager.transfer({
       genesis,
       codehash,
-      tokenIndex: '0',
+      tokenIndex: '2',
       senderWif: wallet.privateKey.toWIF(),
-      // receiverAddress: wallet.address.toString(),
-      receiverAddress: '1FFYZiQa8ET5ouPyuymYX7g52svEE3R9Zg',
+      receiverAddress: wallet.address.toString(),
       // noBroadcast: true,
     })
     console.log(res.txid)

@@ -137,6 +137,7 @@ export class MVC implements ApiBase {
     if (!_res.txid) {
       console.log(`广播出错：${_res.message.toString()}`)
     }
+
     return _res.txid
   }
 

@@ -1,2 +1,2 @@
-const scryptlib = require('mvc-scryptlib')
+const scryptlib = require('mvc-scrypt')
 module.exports = scryptlib

@@ -1,5 +1,5 @@
 {
-    "version": 8,
+    "version": 9,
     "compilerVersion": "1.17.3+commit.b1bcb14",
     "contract": "TxUtil",
     "md5": "c66a444a465b6393e97d6100739f5908",
@@ -15,7 +15,8 @@
                     "name": "data",
                     "type": "bytes"
                 }
-            ]
+            ],
+            "genericTypes": []
         },
         {
             "name": "OpPushData",
@@ -28,7 +29,8 @@
                     "name": "value",
                     "type": "int"
                 }
-            ]
+            ],
+            "genericTypes": []
         },
         {
             "name": "VarIntData",
@@ -41,7 +43,8 @@
                     "name": "value",
                     "type": "int"
                 }
-            ]
+            ],
+            "genericTypes": []
         },
         {
             "name": "TxInputProof",
@@ -62,7 +65,8 @@
                     "name": "sequenceBytes",
                     "type": "bytes"
                 }
-            ]
+            ],
+            "genericTypes": []
         },
         {
             "name": "TxOutputProof",
@@ -83,7 +87,8 @@
                     "name": "scriptHash",
                     "type": "bytes"
                 }
-            ]
+            ],
+            "genericTypes": []
         }
     ],
     "library": [
@@ -103,9 +108,7 @@
     ],
     "stateProps": [],
     "buildType": "debug",
-    "file": "",
-    "asm": "",
+    "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/txUtil.scrypt",
     "hex": "",
-    "sources": [],
-    "sourceMap": []
+    "sourceMapFile": ""
 }

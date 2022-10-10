@@ -291,6 +291,11 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
+"@discoveryjs/json-ext@^0.5.7":
+  version "0.5.7"
+  resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
+  integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
+
 "@gulp-sourcemaps/identity-map@^2.0.1":
   version "2.0.1"
   resolved "https://registry.npmjs.org/@gulp-sourcemaps/identity-map/-/identity-map-2.0.1.tgz"
@@ -4824,6 +4829,20 @@ mvc-lib@^1.0.5:
     inherits "2.0.3"
     unorm "1.4.1"
 
+mvc-scrypt@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/mvc-scrypt/-/mvc-scrypt-0.1.0.tgz#b517dd9e978cec8919faa23e14ab29faaf99ab6f"
+  integrity sha512-LAnLkOtz3bmmswD2Kt4ZDzEM18TuM8E+/TmfnES/L/+wM9l8iJ8q2F4EUPcLBFnvw0sX3yZ1cJueFXyIg1vNTw==
+  dependencies:
+    "@discoveryjs/json-ext" "^0.5.7"
+    compare-versions "^3.6.0"
+    json-bigint "^1.0.0"
+    md5 "^2.2.1"
+    mvc-lib "^1.0.5"
+    node-fetch "^3.0.0"
+    patch-package "^6.4.7"
+    sourcemap-codec "^1.4.8"
+
 mvc-scryptlib@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmmirror.com/mvc-scryptlib/-/mvc-scryptlib-1.0.0.tgz#ccd478f5b8e294fd2b45ccb850b7b6fb1f73784a"
@@ -6003,6 +6022,11 @@ source-map@^0.7.3:
   version "0.7.4"
   resolved "https://registry.npmjs.org/source-map/-/source-map-0.7.4.tgz"
   integrity sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA==
+
+sourcemap-codec@^1.4.8:
+  version "1.4.8"
+  resolved "https://registry.yarnpkg.com/sourcemap-codec/-/sourcemap-codec-1.4.8.tgz#ea804bd94857402e6992d05a38ef1ae35a9ab4c4"
+  integrity sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==
 
 sparkles@^1.0.0:
   version "1.0.1"
