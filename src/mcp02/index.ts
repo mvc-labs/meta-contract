@@ -1,46 +1,23 @@
-import {
-  Bytes,
-  Int,
-  PubKey,
-  Ripemd160,
-  Sig,
-  toHex,
-  buildTypeClasses,
-  getPreimage,
-  SigHashPreimage,
-  hash256,
-} from '../scryptlib'
-import { CodeError, ErrCode } from '../common/error'
+import {buildTypeClasses, Bytes, getPreimage, Int, PubKey, Ripemd160, Sig, SigHashPreimage, toHex,} from '../scryptlib'
+import {CodeError, ErrCode} from '../common/error'
 import * as mvc from '../mvc'
-import { API_TARGET, API_NET, Api } from '..'
+import {Api, API_NET, API_TARGET} from '..'
 
-import { FEEB, TX_VERSION } from './constants'
+import {FEEB} from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
 import * as $ from '../common/argumentCheck'
-import { Prevouts } from '../common/Prevouts'
-import { TxComposer } from '../tx-composer'
-import { TokenFactory } from './contract-factory/token'
-import { ContractUtil } from './contractUtil'
-const jsonDescr = require('./contract-desc/txUtil_desc.json')
-const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
-
-import {
-  CONTRACT_TYPE,
-  P2PKH_UNLOCK_SIZE,
-  PLACE_HOLDER_PUBKEY,
-  PLACE_HOLDER_SIG,
-  isNull,
-} from '../common/utils'
-import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
-import {
-  TokenTransferCheckFactory,
-  TOKEN_TRANSFER_TYPE,
-} from './contract-factory/tokenTransferCheck'
+import {Prevouts} from '../common/Prevouts'
+import {TxComposer} from '../tx-composer'
+import {TokenFactory} from './contract-factory/token'
+import {ContractUtil} from './contractUtil'
+import {CONTRACT_TYPE, isNull, P2PKH_UNLOCK_SIZE, PLACE_HOLDER_PUBKEY, PLACE_HOLDER_SIG,} from '../common/utils'
+import {TokenGenesisFactory} from './contract-factory/tokenGenesis'
+import {TOKEN_TRANSFER_TYPE, TokenTransferCheckFactory,} from './contract-factory/tokenTransferCheck'
 import * as ftProto from './contract-proto/token.proto'
-import { DustCalculator } from '../common/DustCalculator'
-import { SizeTransaction } from '../common/SizeTransaction'
-import { FungibleTokenUnspent } from '../api'
+import {DustCalculator} from '../common/DustCalculator'
+import {SizeTransaction} from '../common/SizeTransaction'
+import {FungibleTokenUnspent} from '../api'
 import {
   addChangeOutput,
   addContractInput,
@@ -50,8 +27,12 @@ import {
   prepareUtxos,
   unlockP2PKHInputs,
 } from '../helpers/transactionHelpers'
-import { getGenesisIdentifiers } from '../helpers/contractHelpers'
-import { dummyTxId } from '../common/dummy'
+import {getGenesisIdentifiers} from '../helpers/contractHelpers'
+import {dummyTxId} from '../common/dummy'
+
+const jsonDescr = require('./contract-desc/txUtil_desc.json')
+const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
+
 const Signature = mvc.crypto.Signature
 const _ = mvc.deps._
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID

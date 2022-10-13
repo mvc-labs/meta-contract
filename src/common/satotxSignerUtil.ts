@@ -1,5 +1,5 @@
 import * as BN from '../bn.js'
-import { Bytes, Int, toHex } from '../scryptlib'
+import { Bytes, Int, toHex } from 'mvc-scrypt'
 import { CodeError, ErrCode } from './error'
 import { SatotxSigner, SignerConfig } from './SatotxSigner'
 import * as TokenUtil from './tokenUtil'

@@ -1,4 +1,4 @@
-import { Bytes } from '../scryptlib'
+import { Bytes } from 'mvc-scrypt'
 import { NftFactory } from './contract-factory/nft'
 import { NftGenesisFactory } from './contract-factory/nftGenesis'
 import { NftSellFactory } from './contract-factory/nftSell'

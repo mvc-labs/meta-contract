@@ -1,8 +1,9 @@
 import * as mvc from '../mvc'
-import { CodeError, ErrCode } from '../common/error'
-import { Net } from '../net'
+import {CodeError, ErrCode} from '../common/error'
+import {Net} from '../net'
 import {
   API_NET,
+  ApiBase,
   AuthorizationOption,
   FungibleTokenBalance,
   FungibleTokenSummary,
@@ -10,8 +11,8 @@ import {
   NonFungibleTokenSummary,
   NonFungibleTokenUnspent,
   SA_utxo,
-  ApiBase,
 } from './index'
+
 type ResData = {
   code: number
   data: any
@@ -36,6 +37,7 @@ type SensibleQueryUtxo = {
   metaTxId?: string
   metaOutputIndex?: number
 }
+
 export class MVC implements ApiBase {
   serverBase: string
   authorization: string
@@ -166,7 +168,7 @@ export class MVC implements ApiBase {
     address: string,
     size: number = 10
   ): Promise<FungibleTokenUnspent[]> {
-    let path = `/sensible/ft/address/${address}/utxo`
+    let path = `/contract/ft/address/${address}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(
       url,
@@ -196,7 +198,7 @@ export class MVC implements ApiBase {
     genesis: string,
     address: string
   ): Promise<FungibleTokenBalance> {
-    let path = `/sensible/ft/address/${address}/balance`
+    let path = `/contract/ft/address/${address}/balance`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(
       url,
@@ -225,7 +227,7 @@ export class MVC implements ApiBase {
    * 查询某人持有的FT Token列表。获得每个token的余额
    */
   public async getFungibleTokenSummary(address: string): Promise<FungibleTokenSummary[]> {
-    let path = `/sensible/ft/address/${address}/balance`
+    let path = `/contract/ft/address/${address}/balance`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, {}, { headers: this._getHeaders(path) })
 
@@ -255,7 +257,7 @@ export class MVC implements ApiBase {
     cursor: number = 0,
     size: number = 20
   ): Promise<NonFungibleTokenUnspent[]> {
-    let path = `/sensible/nft/address/${address}/utxo`
+    let path = `/contract/nft/address/${address}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(
       url,
@@ -282,7 +284,7 @@ export class MVC implements ApiBase {
     genesis: string,
     tokenIndex: string
   ) {
-    let path = `/sensible/nft/genesis/${codehash}/${genesis}/utxo`
+    let path = `/contract/nft/genesis/${codehash}/${genesis}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, { tokenIndex }, { headers: this._getHeaders(path) })
 
@@ -346,7 +348,7 @@ export class MVC implements ApiBase {
   }
 
   public async getNftSellUtxo(codehash: string, genesis: string, tokenIndex: string) {
-    let path = `/sensible/nft/sell/genesis/${codehash}/${genesis}/utxo`
+    let path = `/contract/nft/sell/genesis/${codehash}/${genesis}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, { tokenIndex }, { headers: this._getHeaders(path) })
 
@@ -370,7 +372,7 @@ export class MVC implements ApiBase {
     cursor: number = 0,
     size: number = 20
   ) {
-    let path = `/sensible/nft/sell/genesis/${codehash}/${genesis}/utxo`
+    let path = `/contract/nft/sell/genesis/${codehash}/${genesis}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, {}, { headers: this._getHeaders(path) })
 
@@ -389,7 +391,7 @@ export class MVC implements ApiBase {
   }
 
   public async getNftSellListByAddress(address: string, cursor: number = 0, size: number = 20) {
-    let path = `/sensible/nft/sell/address/${address}/utxo`
+    let path = `/contract/nft/sell/address/${address}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, {}, { headers: this._getHeaders(path) })
     let ret = _res
@@ -419,4 +421,5 @@ export class MVC implements ApiBase {
       spentInputIndex: data.idx,
     }
   }
+
 }

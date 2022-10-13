@@ -1,6 +1,6 @@
 import * as mvc from '../mvc'
-import { CONTRACT_TYPE, dumpTx, SigHashInfo } from '../common/utils'
-import { getPreimage, signTx, toHex, Sig } from '../scryptlib'
+import {CONTRACT_TYPE, dumpTx, SigHashInfo} from '../common/utils'
+import {getPreimage, Sig, signTx, toHex} from 'mvc-scrypt'
 
 const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
