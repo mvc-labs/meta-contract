@@ -1,6 +1,6 @@
 {
   "name": "meta-contract",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Meta Contract SDK",
   "main": "dist/index.js",
   "browser": "dist/sensible.browser.min.js",
