@@ -1,4 +1,4 @@
-import { toHex } from '../scryptlib'
+import { toHex } from 'mvc-scrypt'
 import * as mvc from '../mvc'
 import * as TokenUtil from './tokenUtil'
 const Signature = mvc.crypto.Signature

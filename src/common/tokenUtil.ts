@@ -1,5 +1,5 @@
 import * as mvc from '../mvc'
-import { Bytes } from '../scryptlib'
+import { Bytes } from 'mvc-scrypt'
 import BN = require('../bn.js')
 
 export const RABIN_SIG_LEN = 384

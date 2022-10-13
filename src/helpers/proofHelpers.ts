@@ -1,6 +1,7 @@
-import { buildTypeClasses, Bytes } from '../scryptlib'
-import { Transaction, crypto, encoding } from '../mvc'
-import { BN } from '..'
+import {buildTypeClasses, Bytes} from '../scryptlib'
+import {crypto, encoding, Transaction} from '../mvc'
+import {BN} from '..'
+
 const jsonDescr = require('../mcp01/contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
 
