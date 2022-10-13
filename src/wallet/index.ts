@@ -130,7 +130,6 @@ export class Wallet {
       return txComposer
     }
 
-    console.log({ txid2: txComposer.getTxId() })
     return await this.blockChainApi.broadcast(txComposer.getRawHex())
     // return txComposer
   }

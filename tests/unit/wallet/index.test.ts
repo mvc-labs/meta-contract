@@ -6,6 +6,7 @@ import { Transaction } from '../../../src/mvc'
 let wallet: Wallet
 let wallet2: Wallet
 
+jest.setTimeout(30000)
 beforeAll(async () => {
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
   const feeb = 0.5
@@ -25,7 +26,6 @@ describe('钱包测试', () => {
   it('获取Utxos', async () => {
     const utxos = await wallet.getUtxos()
     expect(utxos).toBeInstanceOf(Array)
-    // console.log(utxos)
 
     const totalBalance = utxos.reduce((acc, cur) => acc + cur.satoshis, 0)
     expect(totalBalance).toBeGreaterThan(0)
