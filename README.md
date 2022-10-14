@@ -93,16 +93,23 @@ let { balance, pendingBalance, utxoCount, decimal } = await ft.getBalanceDetail(
 
 ### Init
 
-```js
-const { NFT } = require('meta-contract')
-const { signers, signerSelecteds } = await NFT.selectSigners()
-const nft = new NFT({
-  network: 'testnet', //mainnet or testnet
-  purse: '', //the wif of a mvc address to offer transaction fees
-  feeb: 0.5,
-  signers,
-  signerSelecteds,
-})
+```ts
+import {API_NET, API_TARGET, mvc, NftManager} from "meta-contract"
+
+
+// Generate new seed , need to memorize this mnemonic or use your own
+// let mnemonic = mvc.Mnemonic.fromString(cute siren parrot merit swamp plate federal buddy sing tourist family tragic)
+let mnemonic = mvc.Mnemonic.fromRandom()
+console.log(mnemonic.toString())
+let hdPrivateKey = mnemonic.toHDPrivateKey("", "testnet").deriveChild("m/44'/0'/0'");
+console.log(hdPrivateKey.publicKey.toAddress("testnet").toString())
+console.log(mnemonic.toHDPrivateKey("", "testnet").deriveChild("m/44'/0'/0'").privateKey.toString());
+// use this private key to sign txs later
+const privKey = mnemonic.toHDPrivateKey("", "testnet").deriveChild("m/44'/0'/0'").privateKey.toString()
+const nftManager = new NftManager({apiTarget: API_TARGET.MVC, network: API_NET.TEST, purse: privKey});
+// todo remove authorize in the future
+nftManager.api.authorize({authorization: "METASV_KEY"})
+
 ```
 
 ### Genesis
@@ -110,42 +117,39 @@ const nft = new NFT({
 Define the NFT with totalSupply
 You should save the returned values.(genesis、codehash、sensibleId)
 
-```js
-let { txid, genesis, codehash, sensibleId } = await nft.genesis({
-  genesisWif: CoffeeShop.wif,
-  totalSupply: '3',
-})
+```ts
+const result = await nftManager.genesis({totalSupply: "10"})
+console.log(result)
 ```
 
-### Issue
+### Mint
 
 Mint a NFT to CoffeeShop's address
 metaTxId is created by metaid which stands for NFT State
 
 ```js
-let { txid, tokenIndex } = await nft.issue({
-  genesis,
-  codehash,
-  sensibleId,
-  genesisWif: CoffeeShop.wif,
-  receiverAddress: CoffeeShop.address,
-  metaTxId: '8424d5efb0c11f574d7f045959bdc233c17804312c9ca1e196cebdae2b2646ea',
-  metaOutputIndex: 0,
-})
+// todo generate metaId tx before mint
+const mintResult = await nftManager.mint({
+    metaOutputIndex: 0,
+    metaTxId: "0000000000000000000000000000000000000000000000000000000000000000",
+    sensibleId: result.sensibleID
+});
+console.log(mintResult)
 ```
 
 ### Transfer
 
 Transfer #1 NFT from CoffeShop to Alice
 
-```js
-let { txid } = await nft.transfer({
-  senderWif: CoffeeShop.wif,
-  receiverAddress: Alice.address,
-  codehash: codehash,
-  genesis: genesis,
-  tokenIndex: '1',
-})
+```ts
+const result = await nftManager.transfer({
+    codehash: "48d6118692b459fabfc2910105f38dda0645fb57",
+    genesis: "4920af2eb18493255e662b07d1d80610de7cb2e3",
+    receiverAddress: "mymqKrpZjY31ABhPXfXjfVcUd78L1LCHEv",
+    senderWif: privKey,
+    tokenIndex: "1"
+});
+console.log(result)
 ```
 
 ### Sell
