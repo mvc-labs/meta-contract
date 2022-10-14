@@ -89,10 +89,11 @@ export class MVC implements ApiBase {
         'MetaSV-Signature': sigEncoded,
       }
     } else {
-      throw new CodeError(
-        ErrCode.EC_SENSIBLE_API_ERROR,
-        'MetaSV should be authorized to access api.'
-      )
+      headers = {}
+      // throw new CodeError(
+      //   ErrCode.EC_SENSIBLE_API_ERROR,
+      //   'MetaSV should be authorized to access api.'
+      // )
     }
     return headers
   }
