@@ -1,6 +1,6 @@
 import * as mvc from '../mvc'
-import { CodeError, ErrCode } from '../common/error'
-import { Net } from '../net'
+import {CodeError, ErrCode} from '../common/error'
+import {Net} from '../net'
 import {
   API_NET,
   ApiBase,
@@ -140,6 +140,7 @@ export class MVC implements ApiBase {
 
     if (!_res.txid) {
       console.log(`广播出错：${_res.message.toString()}`)
+      throw new Error("broadcast error " + _res.message.toString() )
     }
 
     return _res.txid
