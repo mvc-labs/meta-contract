@@ -218,6 +218,25 @@ export function parseDataPart(scriptBuf: Buffer): FormatedDataPart {
   let protoVersion = proto.getProtoVersioin(scriptBuf)
   let protoType = proto.getProtoType(scriptBuf)
 
+  // const scriptHexLen = scriptBuf.toString('hex').length
+  // const scriptLen = scriptBuf.length
+  // const protoVersion1 = proto.getProtoVersioin(scriptBuf)
+  // const protoVersion2 = scriptBuf.toString('hex').slice(scriptHexLen - 40, scriptHexLen - 32)
+  // const metacontract = Buffer.from('metacontract')
+  // const metacontract2 = proto.getFlag(scriptBuf)
+  // console.log(
+  //   'parsing',
+  //   scriptBuf.toString('hex'),
+  //   scriptHexLen,
+  //   scriptLen,
+  //   protoVersion1,
+  //   protoVersion2,
+  //   metacontract.toString('hex'),
+  //   metacontract2.toString('hex'),
+  //   proto.PROTO_FLAG_LEN,
+  //   proto.PROTO_FLAG.toString('hex')
+  // )
+
   return {
     metaidOutpoint,
     nftAddress,
@@ -244,6 +263,7 @@ export function getQueryGenesis(script: Buffer): string {
   return toHex(
     mvc.crypto.Hash.sha256ripemd160(
       script.slice(script.length - GENESIS_HASH_OFFSET, script.length - proto.getHeaderLen())
+      // [len - (20+36+25), len - 25]
     )
   )
 }

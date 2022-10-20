@@ -151,10 +151,6 @@ export class NftManager {
       unlockContractCodeHashArray: this.unlockContractCodeHashArray,
       type: 'nft',
     })
-    console.log({
-      txid1: txid,
-      txid2: txComposer.tx.id,
-    })
 
     return {
       codehash,
@@ -534,6 +530,7 @@ export class NftManager {
 
     // 第四步：创建铸造合约，添加铸造输出
     const genesisHash = this.getGenesisHash(genesisContract, sensibleID)
+    console.log({ genesisHash })
     const mintContract = createNftMintContract({
       genesisHash,
       genesisContract,

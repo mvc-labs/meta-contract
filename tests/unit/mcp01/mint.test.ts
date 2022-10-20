@@ -28,7 +28,7 @@ beforeAll(async () => {
   // genesisContract = res.genesisContract
   // genesisTxId = res.txid
 
-  sensibleId = 'f652bd86090b9bf93ba7127a85b007822a4dc6ea17e6e582ba10973e886b99b800000000'
+  sensibleId = 'b081766cdff8fd72a567628c4643e60b372398947aaa7aa84d8c8b1facdc6cde00000000'
 })
 
 jest.setTimeout(30000)
