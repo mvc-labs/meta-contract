@@ -117,6 +117,7 @@ export class MVC implements ApiBase {
       outputIndex: v.outIndex,
       satoshis: v.value,
       address: address,
+      height: v.height
     }))
     return ret
   }
