@@ -1,7 +1,8 @@
 import * as mvc from '../mvc'
-import { dumpTx } from '../common/utils'
-import { API_NET, API_TARGET, Api, ApiBase } from '../api'
-import { TxComposer } from '../tx-composer'
+import {dumpTx} from '../common/utils'
+import {Api, API_NET, API_TARGET, ApiBase} from '../api'
+import {TxComposer} from '../tx-composer'
+
 type Receiver = {
   amount: number
   address: any
@@ -118,6 +119,35 @@ export class Wallet {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
 
+    return await this.broadcastTxComposer(txComposer, options)
+  }
+
+  // evenly split all amount into utxo shares, this will increase parallel for wallet
+  // minShareValue is used to guarantee single share value won't be too small
+  // the last share will cover the tx fee
+  public async evenSplit(shares: number, minShareValue = 0, options?: BroadcastOptions) {
+    const txComposer = new TxComposer()
+    const utxos = await this.blockChainApi.getUnspents(this.address.toString())
+    const sumAmount = utxos.map(utxo => utxo.satoshis).reduce((a, b) => a + b, 0);
+    utxos.forEach((v) => {
+      txComposer.appendP2PKHInput({
+        address: new mvc.Address(v.address, this.network),
+        txId: v.txId,
+        outputIndex: v.outputIndex,
+        satoshis: v.satoshis,
+      })
+    })
+    const shareValue = Math.floor(sumAmount / shares);
+    if (shareValue < minShareValue) {
+      throw new Error(`"Share value ${shareValue} is less than minShareValue ${minShareValue}"`)
+    }
+    for (let i = 0; i < shares - 1; i++) {
+      txComposer.appendP2PKHOutput({address: this.address, satoshis:shareValue});
+    }
+    txComposer.appendChangeOutput(this.address, this.feeb)
+    utxos.forEach((v, index) => {
+      txComposer.unlockP2PKHInput(this.privateKey, index)
+    })
     return await this.broadcastTxComposer(txComposer, options)
   }
 
