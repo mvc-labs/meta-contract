@@ -30,6 +30,7 @@ export type SA_utxo = {
   outputIndex: number
   satoshis: number
   address: string
+  height: number
 }
 export type FungibleTokenSummary = {
   codehash: string

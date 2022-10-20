@@ -1,6 +1,6 @@
 import * as mvc from '../mvc'
-import {dumpTx} from '../common/utils'
-import {Api, API_NET, API_TARGET, ApiBase} from '../api'
+import {dumpTx, P2PKH_UNLOCK_SIZE} from '../common/utils'
+import {Api, API_NET, API_TARGET, ApiBase, SA_utxo} from '../api'
 import {TxComposer} from '../tx-composer'
 
 type Receiver = {
@@ -57,7 +57,8 @@ export class Wallet {
   public async send(address: string, amount: number, options?: BroadcastOptions) {
     const txComposer = new TxComposer()
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
-    utxos.forEach((v) => {
+    const pickedUtxos = this.pickUtxo(utxos, amount);
+    pickedUtxos.forEach((v) => {
       txComposer.appendP2PKHInput({
         address: new mvc.Address(v.address, this.network),
         txId: v.txId,
@@ -70,7 +71,7 @@ export class Wallet {
       satoshis: amount,
     })
     txComposer.appendChangeOutput(this.address, this.feeb)
-    utxos.forEach((v, index) => {
+    pickedUtxos.forEach((v, index) => {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
 
@@ -182,5 +183,27 @@ export class Wallet {
     })
 
     return await this.broadcastTxComposer(txComposer, options)
+  }
+
+  // pick utxo enough to pay amount and fee, use confirmed utxo in priority
+  private pickUtxo(utxos: SA_utxo[], amount: number) {
+    // amount + 2 outputs + buffer
+    let requiredAmount = amount + 34 * 2 * this.feeb + 100
+    const candidateUtxos: SA_utxo[] = [];
+    // sort by height desc
+    utxos.sort((a, b) => {
+      return a.height > b.height ? -1 : 1;
+    })
+    let current = 0
+    for (let utxo of utxos) {
+      current += utxo.satoshis
+      // add input fee
+      requiredAmount += this.feeb * P2PKH_UNLOCK_SIZE
+      candidateUtxos.push(utxo)
+      if (current > requiredAmount) {
+        break
+      }
+    }
+    return candidateUtxos
   }
 }
