@@ -1,7 +1,6 @@
-import { API_NET, API_TARGET } from '../../../src/api'
-import { Wallet } from '../../../src/wallet'
+import {API_NET, API_TARGET} from '../../../src/api'
+import {Wallet} from '../../../src/wallet'
 import 'dotenv/config'
-import { Transaction } from '../../../src/mvc'
 
 let wallet: Wallet
 let wallet2: Wallet
@@ -60,6 +59,10 @@ describe('钱包测试', () => {
   it('合并UTXO', async () => {
     const txId = await wallet2.merge()
     expect(txId).toHaveLength(64)
+  })
+
+  it('splitUTXO', async () => {
+    const txId = await wallet2.evenSplit(10, 10000)
   })
 
   it.todo('广播')

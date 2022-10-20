@@ -114,6 +114,15 @@ describe('Wallet Test', () => {
       })
     })
 
+    it('even split Alice satoshis should be ok', async () => {
+      wallet = new Wallet(Alice.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.MVC)
+      wallet.blockChainApi = api
+      let txComposer = await wallet.evenSplit(5, 0, {
+        noBroadcast: false,
+        dump: true,
+      })
+    });
+
     it('send opreturnData should be ok', async () => {
       wallet = new Wallet(Alice.privateKey.toWIF(), API_NET.MAIN, 0.5, API_TARGET.MVC)
       wallet.blockChainApi = api
