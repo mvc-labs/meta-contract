@@ -36,9 +36,9 @@ describe('钱包测试', () => {
   })
 
   it('转账', async () => {
-    // const receiverAddress = wallet2.address.toString()
-    const receiverAddress = 'moKL4yva1SAb3j736k5m14GX9j7Fv4n3MS'
-    const txId = await wallet.send(receiverAddress, 1000000000)
+    const receiverAddress = wallet2.address.toString()
+    // const receiverAddress = 'moKL4yva1SAb3j736k5m14GX9j7Fv4n3MS'
+    const txId = await wallet.send(receiverAddress, 6875285816)
     expect(txId).toHaveLength(64)
     console.log(txId)
   })
