@@ -50,7 +50,7 @@ describe('FT 铸造测试', () => {
     expect(ftManager).toBeInstanceOf(FtManager)
   })
 
-  const receiverAddress = process.env.ADDRESS2
+  const receiverAddress = process.env.ADDRESS
 
   it('正常铸造', async () => {
     let { txid } = await ftManager.mint({

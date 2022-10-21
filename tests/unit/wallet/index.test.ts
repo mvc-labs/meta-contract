@@ -1,5 +1,5 @@
-import {API_NET, API_TARGET} from '../../../src/api'
-import {Wallet} from '../../../src/wallet'
+import { API_NET, API_TARGET } from '../../../src/api'
+import { Wallet } from '../../../src/wallet'
 import 'dotenv/config'
 
 let wallet: Wallet
@@ -36,9 +36,9 @@ describe('钱包测试', () => {
   })
 
   it('转账', async () => {
-    const receiverAddress = wallet2.address.toString()
-    // const receiverAddress = 'moKL4yva1SAb3j736k5m14GX9j7Fv4n3MS'
-    const txId = await wallet.send(receiverAddress, 6875285816)
+    // const receiverAddress = wallet2.address.toString()
+    const receiverAddress = 'mpCe4PHqWhXuzkeKwHsB6RT8eHyhe9Sq4j'
+    const txId = await wallet.send(receiverAddress, 100000000)
     expect(txId).toHaveLength(64)
     console.log(txId)
   })

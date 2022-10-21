@@ -1,23 +1,42 @@
-import {buildTypeClasses, Bytes, getPreimage, Int, PubKey, Ripemd160, Sig, SigHashPreimage, toHex,} from '../scryptlib'
-import {CodeError, ErrCode} from '../common/error'
+import {
+  buildTypeClasses,
+  Bytes,
+  getPreimage,
+  Int,
+  PubKey,
+  Ripemd160,
+  Sig,
+  SigHashPreimage,
+  toHex,
+} from '../scryptlib'
+import { CodeError, ErrCode } from '../common/error'
 import * as mvc from '../mvc'
-import {Api, API_NET, API_TARGET} from '..'
+import { Api, API_NET, API_TARGET } from '..'
 
-import {FEEB} from './constants'
+import { FEEB } from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
 import * as $ from '../common/argumentCheck'
-import {Prevouts} from '../common/Prevouts'
-import {TxComposer} from '../tx-composer'
-import {TokenFactory} from './contract-factory/token'
-import {ContractUtil} from './contractUtil'
-import {CONTRACT_TYPE, isNull, P2PKH_UNLOCK_SIZE, PLACE_HOLDER_PUBKEY, PLACE_HOLDER_SIG,} from '../common/utils'
-import {TokenGenesisFactory} from './contract-factory/tokenGenesis'
-import {TOKEN_TRANSFER_TYPE, TokenTransferCheckFactory,} from './contract-factory/tokenTransferCheck'
+import { Prevouts } from '../common/Prevouts'
+import { TxComposer } from '../tx-composer'
+import { TokenFactory } from './contract-factory/token'
+import { ContractUtil } from './contractUtil'
+import {
+  CONTRACT_TYPE,
+  isNull,
+  P2PKH_UNLOCK_SIZE,
+  PLACE_HOLDER_PUBKEY,
+  PLACE_HOLDER_SIG,
+} from '../common/utils'
+import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
+import {
+  TOKEN_TRANSFER_TYPE,
+  TokenTransferCheckFactory,
+} from './contract-factory/tokenTransferCheck'
 import * as ftProto from './contract-proto/token.proto'
-import {DustCalculator} from '../common/DustCalculator'
-import {SizeTransaction} from '../common/SizeTransaction'
-import {FungibleTokenUnspent} from '../api'
+import { DustCalculator } from '../common/DustCalculator'
+import { SizeTransaction } from '../common/SizeTransaction'
+import { FungibleTokenUnspent } from '../api'
 import {
   addChangeOutput,
   addContractInput,
@@ -27,8 +46,8 @@ import {
   prepareUtxos,
   unlockP2PKHInputs,
 } from '../helpers/transactionHelpers'
-import {getGenesisIdentifiers} from '../helpers/contractHelpers'
-import {dummyTxId} from '../common/dummy'
+import { getGenesisIdentifiers } from '../helpers/contractHelpers'
+import { dummyTxId } from '../common/dummy'
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
@@ -1180,7 +1199,7 @@ export class FtManager {
         if (script.chunks.length > 0) {
           const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
           if (lockingScriptBuf) {
-            return true //TODO: 怎么回事？？？！
+            // return true //TODO: 怎么回事？？？！
             console.log(ftProto.getQueryGenesis(lockingScriptBuf), genesis)
             if (ftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
               return true
@@ -1570,6 +1589,11 @@ export class FtManager {
         const contractTxOutputProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
 
         tokenContract.setDataPart(toHex(dataPart))
+        console.log({
+          satoshis: txComposer.getInput(inputIndex).output.satoshis,
+
+          inputIndex,
+        })
 
         const unlockingContract = tokenContract.unlock({
           txPreimage: txComposer.getInputPreimage(inputIndex),
@@ -1611,15 +1635,16 @@ export class FtManager {
           operation: ftProto.OP_TRANSFER,
         })
 
-        if (this.debug && senderPrivateKey) {
-          let txContext = {
-            tx: txComposer.getTx(),
-            inputIndex: inputIndex,
-            inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
-          }
-          let ret = unlockingContract.verify(txContext)
-          if (ret.success == false) console.log(ret)
+        // if (this.debug && senderPrivateKey) {
+        let txContext = {
+          tx: txComposer.getTx(),
+          inputIndex: inputIndex,
+          inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
         }
+        let ret = unlockingContract.verify(txContext)
+        // console.log({ tokenVerify: ret })
+        if (ret.success == false) console.log(ret)
+        // }
 
         txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
       })
@@ -1670,6 +1695,7 @@ export class FtManager {
         inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
       }
       let ret = unlockingContract.verify(txContext)
+      // console.log({ tokenTransferCheckVerify: ret })
       if (ret.success == false) console.log(ret)
       // }
 
