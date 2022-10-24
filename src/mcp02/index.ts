@@ -1194,13 +1194,15 @@ export class FtManager {
         curDataPartObj = ftProto.parseDataPart(tokenScript.toBuffer())
       }
       //Find a valid preTx
-      let input = tx.inputs.find((input) => {
+      let prevTokenInputIndex = 0
+      let input = tx.inputs.find((input, inputIndex) => {
         let script = new mvc.Script(input.script)
         if (script.chunks.length > 0) {
           const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
           if (lockingScriptBuf) {
             // console.log(ftProto.getQueryGenesis(lockingScriptBuf), genesis)
             if (ftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
+              prevTokenInputIndex = inputIndex
               return true
             }
 
@@ -1210,6 +1212,7 @@ export class FtManager {
             let genesisHash = toHex(mvc.crypto.Hash.sha256ripemd160(newScriptBuf))
             // console.log(genesisHash, curDataPartObj.genesisHash, curDataPartObj, dataPartObj)
             if (genesisHash == curDataPartObj.genesisHash) {
+              prevTokenInputIndex = inputIndex
               return true
             }
           }
@@ -1229,7 +1232,7 @@ export class FtManager {
 
       // 新增字段 prevTokenInputIndex, prevTokenOutputIndex
       ftUtxo.prevTokenOutputIndex = input.outputIndex
-      ftUtxo.prevTokenInputIndex = 0 // TODO: ???
+      ftUtxo.prevTokenInputIndex = prevTokenInputIndex
 
       if (!cachedHexs[preTxId]) {
         cachedHexs[preTxId] = {
