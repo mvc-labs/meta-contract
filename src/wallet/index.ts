@@ -186,22 +186,33 @@ export class Wallet {
   }
 
   // pick utxo enough to pay amount and fee, use confirmed utxo in priority
+  // shuffle confirmed utxo for higher concurrency
   private pickUtxo(utxos: SA_utxo[], amount: number) {
     // amount + 2 outputs + buffer
     let requiredAmount = amount + 34 * 2 * this.feeb + 100
     const candidateUtxos: SA_utxo[] = [];
-    // sort by height desc
-    utxos.sort((a, b) => {
-      return a.height > b.height ? -1 : 1;
-    })
+    // split utxo to confirmed and unconfirmed and shuffle them
+    const confirmedUtxos = utxos.filter(utxo => {return utxo.height > 0}).sort(() => Math.random() - 0.5)
+    const unconfirmedUtxos = utxos.filter(utxo => {return utxo.height < 0}).sort(() => Math.random() - 0.5)
+
     let current = 0
-    for (let utxo of utxos) {
+    // use confirmed first
+    for (let utxo of confirmedUtxos) {
       current += utxo.satoshis
       // add input fee
       requiredAmount += this.feeb * P2PKH_UNLOCK_SIZE
       candidateUtxos.push(utxo)
       if (current > requiredAmount) {
-        break
+        return candidateUtxos
+      }
+    }
+    for (let utxo of unconfirmedUtxos) {
+      current += utxo.satoshis
+      // add input fee
+      requiredAmount += this.feeb * P2PKH_UNLOCK_SIZE
+      candidateUtxos.push(utxo)
+      if (current > requiredAmount) {
+        return candidateUtxos
       }
     }
     return candidateUtxos

@@ -1,5 +1,4 @@
-import { API_NET, API_TARGET } from '../../../src/api'
-import { Wallet } from '../../../src/wallet'
+import {API_NET, API_TARGET, Wallet} from '../../../src'
 import 'dotenv/config'
 
 let wallet: Wallet
