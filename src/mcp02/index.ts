@@ -1199,17 +1199,16 @@ export class FtManager {
         if (script.chunks.length > 0) {
           const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
           if (lockingScriptBuf) {
-            // return true //TODO: 怎么回事？？？！
-            console.log(ftProto.getQueryGenesis(lockingScriptBuf), genesis)
+            // console.log(ftProto.getQueryGenesis(lockingScriptBuf), genesis)
             if (ftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
               return true
             }
+
             let dataPartObj = ftProto.parseDataPart(lockingScriptBuf)
             dataPartObj.sensibleID = curDataPartObj.sensibleID
             const newScriptBuf = ftProto.updateScript(lockingScriptBuf, dataPartObj)
-
             let genesisHash = toHex(mvc.crypto.Hash.sha256ripemd160(newScriptBuf))
-            console.log(genesisHash, curDataPartObj.genesisHash, curDataPartObj, dataPartObj)
+            // console.log(genesisHash, curDataPartObj.genesisHash, curDataPartObj, dataPartObj)
             if (genesisHash == curDataPartObj.genesisHash) {
               return true
             }
