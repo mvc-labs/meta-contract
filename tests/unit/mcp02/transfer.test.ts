@@ -62,7 +62,7 @@ describe('转账', () => {
     expect(ftManager).toHaveProperty('transfer')
   })
 
-  it.skip('正常转账', async () => {
+  it('正常转账', async () => {
     // console.log({ genesis, codehash })
     // let { txid } = await ftManager.transfer({
     //   genesis,

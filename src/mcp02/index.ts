@@ -1591,11 +1591,6 @@ export class FtManager {
         const contractTxOutputProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
 
         tokenContract.setDataPart(toHex(dataPart))
-        console.log({
-          satoshis: txComposer.getInput(inputIndex).output.satoshis,
-
-          inputIndex,
-        })
 
         const unlockingContract = tokenContract.unlock({
           txPreimage: txComposer.getInputPreimage(inputIndex),
@@ -1643,9 +1638,9 @@ export class FtManager {
           inputIndex: inputIndex,
           inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
         }
-        let ret = unlockingContract.verify(txContext)
+        // let ret = unlockingContract.verify(txContext)
         // console.log({ tokenVerify: ret })
-        if (ret.success == false) console.log(ret)
+        // if (ret.success == false) console.log(ret)
         // }
 
         txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
@@ -1696,9 +1691,9 @@ export class FtManager {
         inputIndex: transferCheckInputIndex,
         inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
       }
-      let ret = unlockingContract.verify(txContext)
+      // let ret = unlockingContract.verify(txContext)
       // console.log({ tokenTransferCheckVerify: ret })
-      if (ret.success == false) console.log(ret)
+      // if (ret.success == false) console.log(ret)
       // }
 
       txComposer
