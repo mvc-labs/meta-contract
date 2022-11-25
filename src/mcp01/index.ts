@@ -133,13 +133,20 @@ export class NftManager {
     }
   }
 
-  public async genesis({ totalSupply }: { totalSupply: string }) {
+  public async genesis({
+    totalSupply,
+    opreturnData,
+  }: {
+    totalSupply: string
+    opreturnData?: string
+  }) {
     const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
 
     const { txComposer, genesisContract } = await this.createGenesisTx({
       totalSupply,
       utxos,
       utxoPrivateKeys,
+      opreturnData,
     })
 
     let txHex = txComposer.getRawHex()
@@ -168,10 +175,12 @@ export class NftManager {
     totalSupply,
     utxos,
     utxoPrivateKeys,
+    opreturnData,
   }: {
     totalSupply: string
     utxos: Utxo[]
     utxoPrivateKeys: mvc.PrivateKey[]
+    opreturnData?: string
   }) {
     const txComposer = new TxComposer()
     const changeAddress = this.purse.address
@@ -186,6 +195,12 @@ export class NftManager {
       contract: genesisContract,
       dustCalculator: this.dustCalculator,
     })
+
+    //  添加opreturn输出
+    if (opreturnData) {
+      addOpreturnOutput(txComposer, opreturnData)
+    }
+
     addChangeOutput(txComposer, changeAddress, this.feeb)
     unlockP2PKHInputs(txComposer, p2pkhInputIndexs, utxoPrivateKeys)
 
@@ -203,17 +218,18 @@ export class NftManager {
     sensibleId,
     metaTxId,
     metaOutputIndex,
+    opreturnData,
   }: {
     sensibleId: string
     metaTxId: string
     metaOutputIndex: number
+    opreturnData?: string
   }) {
     const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
 
     const genesisPrivateKey = this.purse.privateKey
     const genesisPublicKey = genesisPrivateKey.toPublicKey()
     const receiverAddress = this.purse.address
-    const opreturnData = 'mint'
     const changeAddress = this.purse.address
 
     const { txComposer } = await this.createMintTx({

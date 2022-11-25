@@ -1,25 +1,34 @@
-import {Bytes, Int, PubKey, Ripemd160, Sig, toHex} from '../scryptlib'
+import { Bytes, Int, PubKey, Ripemd160, Sig, toHex } from '../scryptlib'
 import * as BN from '../bn.js'
 import * as mvc from '../mvc'
-import {DustCalculator} from '../common/DustCalculator'
-import {CodeError, ErrCode} from '../common/error'
-import {hasProtoFlag} from '../common/protoheader'
-import {SatotxSigner, SignerConfig} from '../common/SatotxSigner'
-import {getRabinData, getRabinDatas, selectSigners} from '../common/satotxSignerUtil'
-import {SizeTransaction} from '../common/SizeTransaction'
+import { DustCalculator } from '../common/DustCalculator'
+import { CodeError, ErrCode } from '../common/error'
+import { hasProtoFlag } from '../common/protoheader'
+import { SatotxSigner, SignerConfig } from '../common/SatotxSigner'
+import { getRabinData, getRabinDatas, selectSigners } from '../common/satotxSignerUtil'
+import { SizeTransaction } from '../common/SizeTransaction'
 import * as TokenUtil from '../common/tokenUtil'
 import * as Utils from '../common/utils'
-import {CONTRACT_TYPE, PLACE_HOLDER_PUBKEY, PLACE_HOLDER_SIG, SigHashInfo, SigInfo} from '../common/utils'
-import {Api, API_NET, API_TARGET, ApiBase, NonFungibleTokenUnspent} from '../api'
-import {TxComposer} from '../tx-composer'
-import {NftFactory} from './contract-factory/nft'
-import {NftGenesisFactory} from './contract-factory/nftGenesis'
-import {NFT_SELL_OP, NftSellFactory} from './contract-factory/nftSell'
-import {NFT_UNLOCK_CONTRACT_TYPE, NftUnlockContractCheckFactory,} from './contract-factory/nftUnlockContractCheck'
+import {
+  CONTRACT_TYPE,
+  PLACE_HOLDER_PUBKEY,
+  PLACE_HOLDER_SIG,
+  SigHashInfo,
+  SigInfo,
+} from '../common/utils'
+import { Api, API_NET, API_TARGET, ApiBase, NonFungibleTokenUnspent } from '../api'
+import { TxComposer } from '../tx-composer'
+import { NftFactory } from './contract-factory/nft'
+import { NftGenesisFactory } from './contract-factory/nftGenesis'
+import { NFT_SELL_OP, NftSellFactory } from './contract-factory/nftSell'
+import {
+  NFT_UNLOCK_CONTRACT_TYPE,
+  NftUnlockContractCheckFactory,
+} from './contract-factory/nftUnlockContractCheck'
 import * as nftProto from './contract-proto/nft.proto'
-import {SIGNER_VERIFY_NUM} from './contract-proto/nft.proto'
+import { SIGNER_VERIFY_NUM } from './contract-proto/nft.proto'
 import * as nftSellProto from './contract-proto/nftSell.proto'
-import {ContractUtil} from './contractUtil'
+import { ContractUtil } from './contractUtil'
 
 const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID

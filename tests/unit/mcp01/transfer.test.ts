@@ -60,9 +60,10 @@ describe('转账', () => {
     let res = await nftManager.transfer({
       genesis,
       codehash,
-      tokenIndex: '2',
+      tokenIndex: '3',
       senderWif: wallet.privateKey.toWIF(),
-      receiverAddress: wallet.address.toString(),
+      // receiverAddress: wallet.address.toString(),
+      receiverAddress: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
       // noBroadcast: true,
     })
     console.log(res.txid)

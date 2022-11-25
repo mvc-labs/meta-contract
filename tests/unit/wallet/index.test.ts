@@ -1,4 +1,4 @@
-import {API_NET, API_TARGET, Wallet} from '../../../src'
+import { API_NET, API_TARGET, Wallet } from '../../../src'
 import 'dotenv/config'
 
 let wallet: Wallet
@@ -36,7 +36,7 @@ describe('钱包测试', () => {
 
   it('转账', async () => {
     // const receiverAddress = wallet2.address.toString()
-    const receiverAddress = 'mpCe4PHqWhXuzkeKwHsB6RT8eHyhe9Sq4j'
+    const receiverAddress = 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx'
     const txId = await wallet.send(receiverAddress, 100000000)
     expect(txId).toHaveLength(64)
     console.log(txId)

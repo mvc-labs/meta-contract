@@ -82,7 +82,7 @@ describe('转账', () => {
       receivers: [
         {
           amount: '100000',
-          address: 'mzJR1zKcZCZvMJj87rVqmFFxmaVEe62BBW',
+          address: 'mjdRRKd3qCwiLwyHhuCQA5nniUEPofwpro',
         },
       ],
       senderWif: process.env.WIF,
@@ -91,7 +91,7 @@ describe('转账', () => {
     expect(transferTxId).toHaveLength(64)
   })
 
-  it('mtt转账', async () => {
+  it.skip('mtt转账', async () => {
     const mttGenesis = '1828fa4fa01c6e6b76509355ea0c16abd3535660'
     const mttCodehash = '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04'
     const mttManager = new FtManager({
