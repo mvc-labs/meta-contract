@@ -41,6 +41,7 @@ import {
   addChangeOutput,
   addContractInput,
   addContractOutput,
+  addOpreturnOutput,
   addP2PKHInputs,
   checkFeeRate,
   prepareUtxos,
@@ -480,14 +481,6 @@ export class FtManager {
 
     const txComposer = new TxComposer()
 
-    //The first input is the genesis contract
-    // const genesisInputIndex = txComposer.appendInput(genesisUtxo)
-    // txComposer.addSigHashInfo({
-    //   inputIndex: genesisInputIndex,
-    //   address: genesisPublicKey.toAddress(this.network).toString(),
-    //   sighashType,
-    //   contractType: CONTRACT_TYPE.BCP02_TOKEN_GENESIS,
-    // })
     const genesisInputIndex = addContractInput(
       txComposer,
       genesisUtxo as any,
@@ -495,25 +488,11 @@ export class FtManager {
       CONTRACT_TYPE.BCP02_TOKEN_GENESIS
     )
 
-    // const p2pkhInputIndexs = utxos.map((utxo) => {
-    //   const inputIndex = txComposer.appendP2PKHInput(utxo)
-    //   txComposer.addSigHashInfo({
-    //     inputIndex,
-    //     address: utxo.address.toString(),
-    //     sighashType,
-    //     contractType: CONTRACT_TYPE.P2PKH,
-    //   })
-    //   return inputIndex
-    // })
     const p2pkhInputIndexs = addP2PKHInputs(txComposer, utxos)
 
     //If increase issues is allowed, add a new issue contract as the first output
     let newGenesisOutputIndex = -1
     if (allowIncreaseMints) {
-      // newGenesisOutputIndex = txComposer.appendOutput({
-      //   lockingScript: newGenesisContract.lockingScript,
-      //   satoshis: this.getDustThreshold(newGenesisContract.lockingScript.toBuffer().length),
-      // })
       newGenesisOutputIndex = addContractOutput({
         txComposer,
         contract: newGenesisContract,
@@ -521,11 +500,6 @@ export class FtManager {
       })
     }
 
-    //The following output is the Token
-    // const tokenOutputIndex = txComposer.appendOutput({
-    //   lockingScript: tokenContract.lockingScript,
-    //   satoshis: this.getDustThreshold(tokenContract.lockingScript.toBuffer().length),
-    // })
     const tokenOutputIndex = addContractOutput({
       txComposer,
       contract: tokenContract,
@@ -535,9 +509,10 @@ export class FtManager {
     //If there is opReturn, add it to the output
     let opreturnScriptHex = ''
     if (opreturnData) {
-      const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
+      const opreturnOutputIndex = addOpreturnOutput(txComposer, opreturnData)
       opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
     }
+
     const prevInputIndex = 0 // TODO: 0?
     const genesisTx = genesisUtxo.satotxInfo.tx as mvc.Transaction
     const inputRes = TokenUtil.getTxInputProof(genesisTx, prevInputIndex)

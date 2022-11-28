@@ -136,9 +136,11 @@ export class NftManager {
   public async genesis({
     totalSupply,
     opreturnData,
+    noBroadcast = false,
   }: {
     totalSupply: string
     opreturnData?: string
+    noBroadcast?: boolean
   }) {
     const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
 
@@ -150,7 +152,10 @@ export class NftManager {
     })
 
     let txHex = txComposer.getRawHex()
-    const txid = await this.api.broadcast(txHex)
+    let txid
+    if (!noBroadcast) {
+      txid = await this.api.broadcast(txHex)
+    }
 
     let { codehash, genesis, sensibleId } = getGenesisIdentifiers({
       genesisTx: txComposer.getTx(),
@@ -167,7 +172,7 @@ export class NftManager {
       txid: txComposer.tx.id,
       txHex,
       genesisContract,
-      broadcastStatus: txid ? 'success' : 'fail',
+      broadcastStatus: noBroadcast ? 'pending' : txid ? 'success' : 'fail',
     }
   }
 
@@ -219,11 +224,13 @@ export class NftManager {
     metaTxId,
     metaOutputIndex,
     opreturnData,
+    noBroadcast = false,
   }: {
     sensibleId: string
     metaTxId: string
     metaOutputIndex: number
     opreturnData?: string
+    noBroadcast?: boolean
   }) {
     const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
 
@@ -243,7 +250,10 @@ export class NftManager {
     })
 
     let txHex = txComposer.getRawHex()
-    await this.api.broadcast(txHex)
+    if (!noBroadcast) {
+      await this.api.broadcast(txHex)
+    }
+
     return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
   }
 
@@ -254,6 +264,7 @@ export class NftManager {
     senderWif,
     receiverAddress,
     opreturnData,
+    noBroadcast = false,
   }: {
     genesis: string
     codehash: string
@@ -261,6 +272,7 @@ export class NftManager {
     senderWif: string
     receiverAddress: string | mvc.Address
     opreturnData?: any
+    noBroadcast?: boolean
   }) {
     const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
     const changeAddress = this.purse.address
@@ -297,7 +309,9 @@ export class NftManager {
     // })
 
     let txHex = txComposer.getRawHex()
-    await this.api.broadcast(txHex)
+    if (!noBroadcast) {
+      await this.api.broadcast(txHex)
+    }
 
     return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
   }
