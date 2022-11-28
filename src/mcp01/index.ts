@@ -33,7 +33,12 @@ import * as TokenUtil from '../common/tokenUtil'
 import * as nftProto from './contract-proto/nft.proto'
 
 import { ContractUtil } from './contractUtil'
-import { CONTRACT_TYPE, PLACE_HOLDER_PUBKEY, PLACE_HOLDER_SIG } from '../common/utils'
+import {
+  CONTRACT_TYPE,
+  P2PKH_UNLOCK_SIZE,
+  PLACE_HOLDER_PUBKEY,
+  PLACE_HOLDER_SIG,
+} from '../common/utils'
 import { Prevouts } from '../common/Prevouts'
 import { CodeError, ErrCode } from '../common/error'
 import { NonFungibleTokenUnspent } from '../api'
@@ -137,10 +142,12 @@ export class NftManager {
     totalSupply,
     opreturnData,
     noBroadcast = false,
+    calcFee = false,
   }: {
     totalSupply: string
     opreturnData?: string
     noBroadcast?: boolean
+    calcFee?: boolean
   }) {
     const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
 
@@ -150,6 +157,18 @@ export class NftManager {
       utxoPrivateKeys,
       opreturnData,
     })
+
+    if (calcFee) {
+      const unlockSize =
+        txComposer.tx.inputs.filter((v) => v.output.script.isPublicKeyHashOut()).length *
+        P2PKH_UNLOCK_SIZE
+      let fee = Math.ceil(
+        (txComposer.tx.toBuffer().length + unlockSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) *
+          this.feeb
+      )
+
+      return { fee }
+    }
 
     let txHex = txComposer.getRawHex()
     let txid
@@ -225,12 +244,14 @@ export class NftManager {
     metaOutputIndex,
     opreturnData,
     noBroadcast = false,
+    calcFee = false,
   }: {
     sensibleId: string
     metaTxId: string
     metaOutputIndex: number
     opreturnData?: string
     noBroadcast?: boolean
+    calcFee?: boolean
   }) {
     const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
 
@@ -238,6 +259,19 @@ export class NftManager {
     const genesisPublicKey = genesisPrivateKey.toPublicKey()
     const receiverAddress = this.purse.address
     const changeAddress = this.purse.address
+
+    if (calcFee) {
+      return await this.createMintTx({
+        utxos,
+        utxoPrivateKeys,
+        sensibleId,
+        metaTxId,
+        metaOutputIndex,
+        opreturnData,
+        receiverAddress,
+        calcFee,
+      })
+    }
 
     const { txComposer } = await this.createMintTx({
       utxos,
@@ -489,6 +523,7 @@ export class NftManager {
     metaOutputIndex,
     opreturnData,
     receiverAddress,
+    calcFee = false,
   }: {
     utxos: Utxo[]
     utxoPrivateKeys: mvc.PrivateKey[]
@@ -497,6 +532,7 @@ export class NftManager {
     metaOutputIndex: number
     opreturnData: string
     receiverAddress: mvc.Address
+    calcFee?: boolean
   }) {
     const txComposer = new TxComposer()
     const changeAddress = this.purse.address
@@ -526,6 +562,16 @@ export class NftManager {
       opreturnData,
       utxoMaxCount: utxos.length,
     })
+
+    if (calcFee) {
+      return {
+        fee: estimateSatoshis,
+        txid: txComposer.getTxId,
+        txHex: txComposer.getRawHex(),
+        tx: txComposer.getTx(),
+      }
+    }
+
     if (balance < estimateSatoshis) {
       throw new CodeError(
         ErrCode.EC_INSUFFICIENT_BSV,
@@ -814,7 +860,28 @@ export class NftManager {
     }
   }
 
-  private async _calIssueEstimateFee({
+  public async _calGenesisEstimateFee(totalSupply, opreturnData, feeb) {
+    const txComposer = new TxComposer()
+    const changeAddress = this.purse.address
+
+    // 构建合约
+    const genesisContract = createNftGenesisContract({ totalSupply, address: this.purse.address })
+
+    if (opreturnData) {
+      addOpreturnOutput(txComposer, opreturnData)
+    }
+
+    const unlockSize =
+      txComposer.tx.inputs.filter((v) => v.output.script.isPublicKeyHashOut()).length *
+      P2PKH_UNLOCK_SIZE
+    let fee = Math.ceil(
+      (txComposer.tx.toBuffer().length + unlockSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) * feeb
+    )
+
+    return fee
+  }
+
+  public async _calIssueEstimateFee({
     genesisUtxoSatoshis,
     opreturnData,
     utxoMaxCount = 10,

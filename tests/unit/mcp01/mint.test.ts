@@ -43,7 +43,7 @@ describe('NFT 铸造测试', () => {
     const metaTxId = ''
     const metaOutputIndex = 0
 
-    const { txid, txHex } = await nftManager.mint({
+    const { txid } = await nftManager.mint({
       sensibleId,
       metaTxId,
       metaOutputIndex,
