@@ -449,7 +449,7 @@ export class Transaction {
 
   _getUnspentValue(): number
   _estimateFee(): number
-  _estimateSize: number
+  _estimateSize(): number
 }
 
 export class ECIES {

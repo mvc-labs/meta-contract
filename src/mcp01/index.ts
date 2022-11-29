@@ -174,7 +174,7 @@ export class NftManager {
       //   (txComposer.tx.toBuffer().length + unlockSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) *
       //     this.feeb
       // )
-      let fee = Math.ceil(txComposer.tx._estimateSize * this.feeb)
+      let fee = Math.ceil(txComposer.tx._estimateSize() * this.feeb)
 
       return { fee, feeb: this.feeb }
     }
