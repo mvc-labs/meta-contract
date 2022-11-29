@@ -1,6 +1,6 @@
 import { mvc } from 'mvc-scryptlib'
 
-export const FEEB = 0.5
+export const FEEB = 1
 
 // export const PROTO_FLAG = Buffer.from('metacontract')
 // export const PROTO_FLAG_LEN = PROTO_FLAG.length

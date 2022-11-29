@@ -51,6 +51,7 @@ import {
   getGenesisIdentifiers,
 } from '../helpers/contractHelpers'
 import { createGenesisTxInputProof, createPrevGenesisTxOutputProof } from '../helpers/proofHelpers'
+import { FEEB } from '../mcp02/constants'
 ContractUtil.init()
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
@@ -114,7 +115,7 @@ export class NftManager {
     purse,
     network = API_NET.MAIN,
     apiTarget = API_TARGET.MVC,
-    feeb = 0.5,
+    feeb = FEEB,
   }: {
     purse: string
     network: API_NET
@@ -166,15 +167,16 @@ export class NftManager {
     })
 
     if (calcFee) {
-      const unlockSize =
-        txComposer.tx.inputs.filter((v) => v.output.script.isPublicKeyHashOut()).length *
-        P2PKH_UNLOCK_SIZE
-      let fee = Math.ceil(
-        (txComposer.tx.toBuffer().length + unlockSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) *
-          this.feeb
-      )
+      // const unlockSize =
+      //   txComposer.tx.inputs.filter((v) => v.output.script.isPublicKeyHashOut()).length *
+      //   P2PKH_UNLOCK_SIZE
+      // let fee = Math.ceil(
+      //   (txComposer.tx.toBuffer().length + unlockSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) *
+      //     this.feeb
+      // )
+      let fee = Math.ceil(txComposer.tx._estimateSize * this.feeb)
 
-      return { fee }
+      return { fee, feeb: this.feeb }
     }
 
     let txHex = txComposer.getRawHex()
