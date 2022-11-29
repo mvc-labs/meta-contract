@@ -1,13 +1,14 @@
-import {Address, PrivateKey, Script, Transaction} from '../mvc'
-import {CodeError, ErrCode} from '../common/error'
-import {Api, API_NET, TxComposer} from '..'
-import {CONTRACT_TYPE, sighashType} from '../common/utils'
-import {ContractAdapter} from '../common/ContractAdapter'
-import {DustCalculator} from '../common/DustCalculator'
-import {NftGenesisFactory} from '../mcp01/contract-factory/nftGenesis'
-import {TokenGenesisFactory} from '../mcp02/contract-factory/tokenGenesis'
+import { Address, PrivateKey, Script, Transaction } from '../mvc'
+import { CodeError, ErrCode } from '../common/error'
+import { Api, API_NET, TxComposer } from '..'
+import { CONTRACT_TYPE, sighashType } from '../common/utils'
+import { ContractAdapter } from '../common/ContractAdapter'
+import { DustCalculator } from '../common/DustCalculator'
+import { NftGenesisFactory } from '../mcp01/contract-factory/nftGenesis'
+import { TokenGenesisFactory } from '../mcp02/contract-factory/tokenGenesis'
 import * as nftProto from '../mcp01/contract-proto/nft.proto'
 import * as ftProto from '../mcp02/contract-proto/token.proto'
+import * as mvc from '../mvc'
 
 type Utxo = {
   txId: string
@@ -24,12 +25,28 @@ type Purse = {
 export async function prepareUtxos(
   purse: Purse,
   api: Api,
-  network: API_NET
+  network: API_NET,
+  utxosInput?: any[]
 ): Promise<{
   utxos: Utxo[]
   utxoPrivateKeys: PrivateKey[]
 }> {
   let utxoPrivateKeys = []
+
+  if (utxosInput) {
+    utxosInput.forEach((utxo) => {
+      if (utxo.wif) {
+        let privateKey = new mvc.PrivateKey(utxo.wif)
+        utxoPrivateKeys.push(privateKey)
+        utxo.address = privateKey.toAddress(this.network).toString() //Compatible with the old version, only wif is provided but no address is provided
+      }
+    })
+
+    return {
+      utxos: utxosInput,
+      utxoPrivateKeys,
+    }
+  }
 
   const utxos: any[] = await api.getUnspents(purse.address.toString())
   utxos.forEach((utxo) => {

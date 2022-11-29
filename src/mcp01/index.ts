@@ -141,15 +141,22 @@ export class NftManager {
   public async genesis({
     totalSupply,
     opreturnData,
+    utxos: utxosInput,
     noBroadcast = false,
     calcFee = false,
   }: {
     totalSupply: string
     opreturnData?: string
+    utxos?: any[]
     noBroadcast?: boolean
     calcFee?: boolean
   }) {
-    const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
+    const { utxos, utxoPrivateKeys } = await prepareUtxos(
+      this.purse,
+      this.api,
+      this.network,
+      utxosInput
+    )
 
     const { txComposer, genesisContract } = await this.createGenesisTx({
       totalSupply,
@@ -243,6 +250,7 @@ export class NftManager {
     metaTxId,
     metaOutputIndex,
     opreturnData,
+    utxos: utxosInput,
     noBroadcast = false,
     calcFee = false,
   }: {
@@ -250,10 +258,16 @@ export class NftManager {
     metaTxId: string
     metaOutputIndex: number
     opreturnData?: string
+    utxos?: any[]
     noBroadcast?: boolean
     calcFee?: boolean
   }) {
-    const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
+    const { utxos, utxoPrivateKeys } = await prepareUtxos(
+      this.purse,
+      this.api,
+      this.network,
+      utxosInput
+    )
 
     const genesisPrivateKey = this.purse.privateKey
     const genesisPublicKey = genesisPrivateKey.toPublicKey()
