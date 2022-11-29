@@ -38,7 +38,7 @@ gulp.task('browserify', function () {
     // fullPaths: true,
   })
     .plugin(tsify, tsProject.config)
-    .plugin(standalonify, { name: 'sensible' })
+    .plugin(standalonify, { name: 'metaContract' })
     .bundle()
     .pipe(source('metaContract.browser.min.js'))
     .pipe(buffer())
