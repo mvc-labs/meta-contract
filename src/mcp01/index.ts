@@ -139,6 +139,62 @@ export class NftManager {
     }
   }
 
+  /**
+   * Estimate the cost of genesis
+   * The minimum cost required in the case of 10 utxo inputs
+   * @param opreturnData
+   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @returns
+   */
+  async getGenesisEstimateFee({
+    opreturnData,
+    utxoMaxCount = 10,
+  }: {
+    opreturnData?: any
+    utxoMaxCount?: number
+  }) {
+    let p2pkhInputNum = utxoMaxCount
+    let stx = new SizeTransaction(this.feeb, this.dustCalculator)
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx.addP2PKHInput()
+    }
+
+    stx.addOutput(NftGenesisFactory.getLockingScriptSize())
+
+    if (opreturnData) {
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+    }
+    stx.addP2PKHOutput()
+    return stx.getFee()
+  }
+
+  async getIssueEstimateFee({
+    sensibleId,
+    opreturnData,
+    utxoMaxCount = 10,
+  }: {
+    sensibleId: string
+    opreturnData?: any
+    utxoMaxCount?: number
+  }) {
+    const { genesisUtxo } = (await getLatestGenesisInfo({
+      sensibleId,
+      api: this.api,
+      address: this.purse.address,
+      type: 'nft',
+    })) as {
+      genesisContract: NftGenesis
+      genesisUtxo: Utxo
+      genesisTxId: string
+      genesisOutputIndex: number
+    }
+    return await this._calIssueEstimateFee({
+      genesisUtxoSatoshis: genesisUtxo.satoshis,
+      opreturnData,
+      utxoMaxCount,
+    })
+  }
+
   public async genesis({
     totalSupply,
     opreturnData,
@@ -147,11 +203,15 @@ export class NftManager {
     calcFee = false,
   }: {
     totalSupply: string
-    opreturnData?: string
+    opreturnData?: any
     utxos?: any[]
     noBroadcast?: boolean
     calcFee?: boolean
   }) {
+    if (calcFee) {
+      return await this.getGenesisEstimateFee({ opreturnData })
+    }
+
     const { utxos, utxoPrivateKeys } = await prepareUtxos(
       this.purse,
       this.api,
@@ -259,11 +319,15 @@ export class NftManager {
     sensibleId: string
     metaTxId: string
     metaOutputIndex: number
-    opreturnData?: string
+    opreturnData?: any
     utxos?: any[]
     noBroadcast?: boolean
     calcFee?: boolean
   }) {
+    if (calcFee) {
+      return await this.getIssueEstimateFee({ sensibleId, opreturnData })
+    }
+
     const { utxos, utxoPrivateKeys } = await prepareUtxos(
       this.purse,
       this.api,

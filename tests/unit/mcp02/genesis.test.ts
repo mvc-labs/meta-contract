@@ -8,7 +8,7 @@ let ftManager: FtManager
 beforeAll(async () => {
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
-  const feeb = 0.5
+  const feeb = 1
 
   wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
   wallet2 = new Wallet(wif2, network, feeb, API_TARGET.MVC)
@@ -30,10 +30,20 @@ describe('FT 创世测试', () => {
   })
 
   it('正常创世', async () => {
-    const tokenName = '测试FT'
-    const tokenSymbol = 'HelloWorld'
+    const tokenName = 'SPACE-MIT'
+    const tokenSymbol = 'SMIT'
     const decimalNum = 8
-    // const genesisWif = process.env.WIF
+    const dataCarrier = {
+      type: '',
+      tokenName,
+      tokenSymbol,
+      decimalNum,
+      desc: 'SPACE-MIT(SMIT) is a reward token launched for the MVC Incentivized Testnet (MIT). You can swap the reward to the Mainnet coin in a specific ratio after the launch of MVC Mainnet.',
+      icon: '',
+      website: 'https://mvc.space/',
+      issuerName: 'MVC Foundation',
+      signers: [],
+    }
     const genesis = await ftManager.genesis({
       tokenName,
       tokenSymbol,
