@@ -209,7 +209,10 @@ export class NftManager {
     calcFee?: boolean
   }) {
     if (calcFee) {
-      return await this.getGenesisEstimateFee({ opreturnData })
+      return {
+        fee: await this.getGenesisEstimateFee({ opreturnData }),
+        feeb: this.feeb,
+      }
     }
 
     const { utxos, utxoPrivateKeys } = await prepareUtxos(
@@ -325,7 +328,10 @@ export class NftManager {
     calcFee?: boolean
   }) {
     if (calcFee) {
-      return await this.getIssueEstimateFee({ sensibleId, opreturnData })
+      return {
+        fee: await this.getIssueEstimateFee({ sensibleId, opreturnData }),
+        feeb: this.feeb,
+      }
     }
 
     const { utxos, utxoPrivateKeys } = await prepareUtxos(
