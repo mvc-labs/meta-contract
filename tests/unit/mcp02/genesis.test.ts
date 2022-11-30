@@ -34,7 +34,7 @@ describe('FT 创世测试', () => {
     const tokenSymbol = 'SMIT'
     const decimalNum = 8
     const dataCarrier = {
-      type: '',
+      type: 'metacontract',
       tokenName,
       tokenSymbol,
       decimalNum,
@@ -44,10 +44,24 @@ describe('FT 创世测试', () => {
       issuerName: 'MVC Foundation',
       signers: [],
     }
+    const scriptPayload = [
+      'meta',
+      pNode,
+      ParentInfo.data.txId,
+      'testmetaid',
+      'ftGenesis-' + pNode.substr(0, 12),
+      JSON.stringify(dataCarrier),
+      '0',
+      '1.0.0',
+      'text/plain',
+      'UTF-8',
+    ]
+
     const genesis = await ftManager.genesis({
       tokenName,
       tokenSymbol,
       decimalNum,
+      opreturnData: scriptPayload,
     })
 
     console.log(genesis)

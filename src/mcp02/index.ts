@@ -262,7 +262,7 @@ export class FtManager {
     tokenName,
     tokenSymbol,
     decimalNum,
-    utxos,
+    utxos: utxosInput,
     changeAddress,
     opreturnData,
     noBroadcast = false,
@@ -270,7 +270,7 @@ export class FtManager {
     tokenName: string
     tokenSymbol: string
     decimalNum: number
-    utxos?: ParamUtxo[]
+    utxos?: any[]
     changeAddress?: string | mvc.Address
     opreturnData?: any
     noBroadcast?: boolean
@@ -292,7 +292,7 @@ export class FtManager {
       'decimalNum should be a number and must be between 0 and 255'
     )
 
-    const utxoInfo = await prepareUtxos(this.purse, this.api, this.network)
+    const utxoInfo = await prepareUtxos(this.purse, this.api, this.network, utxosInput)
     if (changeAddress) {
       changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
@@ -356,7 +356,7 @@ export class FtManager {
     receiverAddress,
     tokenAmount,
     allowIncreaseMints = true,
-    utxos,
+    utxos: utxosInput,
     changeAddress,
     opreturnData,
     noBroadcast = false,
@@ -368,7 +368,7 @@ export class FtManager {
     receiverAddress: string | mvc.Address
     tokenAmount: string | BN
     allowIncreaseMints?: boolean
-    utxos?: ParamUtxo[]
+    utxos?: any[]
     changeAddress?: string | mvc.Address
     opreturnData?: any
     noBroadcast?: boolean
@@ -380,7 +380,7 @@ export class FtManager {
     $.checkArgument(receiverAddress, 'receiverAddress is required')
     $.checkArgument(tokenAmount, 'tokenAmount is required')
 
-    const utxoInfo = await prepareUtxos(this.purse, this.api, this.network)
+    const utxoInfo = await prepareUtxos(this.purse, this.api, this.network, utxosInput)
     if (changeAddress) {
       changeAddress = new mvc.Address(changeAddress, this.network)
     } else {
