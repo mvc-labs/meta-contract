@@ -62,7 +62,7 @@ describe('FT 创世测试', () => {
       tokenName,
       tokenSymbol,
       decimalNum,
-      genesisWif: process.env.WIF,
+      genesisWif: process.env.WIF2,
       opreturnData: [],
     })
 

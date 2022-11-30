@@ -36,6 +36,7 @@ beforeAll(async () => {
     tokenName,
     tokenSymbol,
     decimalNum,
+    genesisWif: wif2,
   })
   codehash = genesisResult.codehash
   genesis = genesisResult.genesis
@@ -55,7 +56,7 @@ describe('FT 铸造测试', () => {
   it('正常铸造', async () => {
     let { txid } = await ftManager.mint({
       sensibleId,
-      genesisWif: process.env.WIF,
+      genesisWif: process.env.WIF2,
       receiverAddress,
       tokenAmount: '10000000000',
     })
@@ -68,7 +69,7 @@ describe('FT 铸造测试', () => {
   it.skip('连续铸造，拥有同样的sensibleId、Genesis、CodeHash', async () => {
     let { txid: firstTxId } = await ftManager.mint({
       sensibleId,
-      genesisWif: process.env.WIF,
+      genesisWif: process.env.WIF2,
       receiverAddress,
       tokenAmount: '100000',
     })
