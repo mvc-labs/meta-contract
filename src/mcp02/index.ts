@@ -302,8 +302,8 @@ export class FtManager {
     }
 
     const tokenAddress = genesisWif
-      ? mvc.PrivateKey.fromWIF(genesisWif).toAddress(this.network).hashBuffer.toString('hex')
-      : this.purse.address.hashBuffer.toString('hex')
+      ? mvc.PrivateKey.fromWIF(genesisWif).toAddress(this.network)
+      : this.purse.address
 
     let { txComposer } = await this._genesis({
       tokenName,
@@ -312,7 +312,7 @@ export class FtManager {
       utxos: utxoInfo.utxos,
       utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
       changeAddress: changeAddress as mvc.Address,
-      tokenAddress,
+      tokenAddress: tokenAddress.hashBuffer.toString('hex'),
       opreturnData,
     })
 
@@ -323,7 +323,7 @@ export class FtManager {
 
     let { codehash, genesis, sensibleId } = getGenesisIdentifiers({
       genesisTx: txComposer.getTx(),
-      purse: this.purse,
+      purse: { address: tokenAddress, privateKey: this.purse.privateKey },
       transferCheckCodeHashArray: this.transferCheckCodeHashArray,
       unlockContractCodeHashArray: this.unlockContractCodeHashArray,
       type: 'ft',
