@@ -1,5 +1,6 @@
 import { API_NET, API_TARGET, Wallet } from '../../../src'
 import 'dotenv/config'
+import * as mvc from '../../../src/mvc'
 
 let wallet: Wallet
 let wallet2: Wallet
@@ -34,7 +35,14 @@ describe('钱包测试', () => {
     expect(balance).toBeGreaterThan(0)
   })
 
-  it('转账', async () => {
+  it('test', async () => {
+    const wif = 'cQhewXMoXq9h3nXXbQkc99wRsMrmMzkt6HRnU9g4hAKKsQTv54ZB'
+    const pk = mvc.PrivateKey.fromWIF(wif)
+
+    console.log({ pk })
+  })
+
+  it.skip('转账', async () => {
     // const receiverAddress = wallet2.address.toString()
     const receiverAddress = 'mgtKwsre9GEzNpqYACNPnWSoeCyKi7tkgR'
     const txId = await wallet.send(receiverAddress, 100000000)
