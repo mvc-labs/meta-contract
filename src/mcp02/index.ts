@@ -598,6 +598,7 @@ export class FtManager {
       txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as mvc.Script)
     }
 
+    console.log({ inputs: txComposer.tx.inputs, indexes: p2pkhInputIndexs, pks: utxoPrivateKeys })
     unlockP2PKHInputs(txComposer, p2pkhInputIndexs, utxoPrivateKeys)
     // if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
     //   p2pkhInputIndexs.forEach((inputIndex) => {
