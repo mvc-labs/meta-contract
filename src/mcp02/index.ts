@@ -265,6 +265,7 @@ export class FtManager {
     utxos: utxosInput,
     changeAddress,
     opreturnData,
+    genesisWif,
     noBroadcast = false,
   }: {
     tokenName: string
@@ -273,6 +274,7 @@ export class FtManager {
     utxos?: any[]
     changeAddress?: string | mvc.Address
     opreturnData?: any
+    genesisWif?: string
     noBroadcast?: boolean
   }) {
     // TODO 检查必要参数
@@ -299,6 +301,10 @@ export class FtManager {
       changeAddress = utxoInfo.utxos[0].address
     }
 
+    const tokenAddress = genesisWif
+      ? mvc.PrivateKey.fromWIF(genesisWif).toAddress(this.network).hashBuffer.toString('hex')
+      : this.purse.address.hashBuffer.toString('hex')
+
     let { txComposer } = await this._genesis({
       tokenName,
       tokenSymbol,
@@ -306,6 +312,7 @@ export class FtManager {
       utxos: utxoInfo.utxos,
       utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
       changeAddress: changeAddress as mvc.Address,
+      tokenAddress,
       opreturnData,
     })
 
@@ -794,6 +801,7 @@ export class FtManager {
     utxos,
     utxoPrivateKeys,
     changeAddress,
+    tokenAddress,
     opreturnData,
   }: {
     tokenName: string
@@ -802,6 +810,7 @@ export class FtManager {
     utxos?: Utxo[]
     utxoPrivateKeys?: mvc.PrivateKey[]
     changeAddress?: mvc.Address
+    tokenAddress: string
     opreturnData?: any
   }) {
     //create genesis contract
@@ -811,7 +820,7 @@ export class FtManager {
       tokenName,
       tokenSymbol,
       decimalNum,
-      tokenAddress: this.purse.address.hashBuffer.toString('hex'),
+      tokenAddress,
     })
     let estimateSatoshis = await this.getGenesisEstimateFee({
       opreturnData,
