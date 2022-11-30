@@ -449,8 +449,9 @@ export class FtManager {
     genesisPrivateKey?: mvc.PrivateKey
     genesisPublicKey: mvc.PublicKey
   }) {
+    const genesisAddress = genesisPrivateKey.toAddress(this.network).toString()
     let { genesisContract, genesisTxId, genesisOutputIndex, genesisUtxo } =
-      await this._prepareMintUtxo({ sensibleId })
+      await this._prepareMintUtxo({ sensibleId, genesisAddress })
 
     let balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
     let estimateSatoshis = await this._calMintEstimateFee({
@@ -609,7 +610,13 @@ export class FtManager {
     return { txComposer }
   }
 
-  private async _prepareMintUtxo({ sensibleId }: { sensibleId: string }) {
+  private async _prepareMintUtxo({
+    sensibleId,
+    genesisAddress,
+  }: {
+    sensibleId: string
+    genesisAddress: string
+  }) {
     let genesisContract = TokenGenesisFactory.createContract()
 
     //Looking for UTXO for issue
@@ -617,7 +624,8 @@ export class FtManager {
     let genesisUtxo = await this._getMintUtxo(
       genesisContract.getCodeHash(),
       genesisTxId,
-      genesisOutputIndex
+      genesisOutputIndex,
+      genesisAddress
     )
     if (!genesisUtxo) {
       throw new CodeError(ErrCode.EC_FIXED_TOKEN_SUPPLY, 'token supply is fixed')
@@ -654,7 +662,8 @@ export class FtManager {
   private async _getMintUtxo(
     codehash: string,
     genesisTxId: string,
-    genesisOutputIndex: number
+    genesisOutputIndex: number,
+    genesisAddress: string
   ): Promise<FtUtxo> {
     let unspent: FungibleTokenUnspent
     let firstGenesisTxHex = await this.api.getRawTxData(genesisTxId)
@@ -665,7 +674,7 @@ export class FtManager {
     let genesisUtxos = await this.api.getFungibleTokenUnspents(
       codehash,
       originGenesis,
-      this.purse.address.toString()
+      genesisAddress
     )
 
     unspent = genesisUtxos.find((v) => v.txId == genesisTxId && v.outputIndex == genesisOutputIndex)
@@ -682,7 +691,7 @@ export class FtManager {
       let issueUtxos = await this.api.getFungibleTokenUnspents(
         codehash,
         issueGenesis,
-        this.purse.address.toString()
+        genesisAddress
       )
       if (issueUtxos.length > 0) {
         unspent = issueUtxos[0]
