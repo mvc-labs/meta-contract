@@ -115,7 +115,7 @@ export function addContractOutput({
   })
 }
 
-export function addOpreturnOutput(txComposer: TxComposer, opreturnData: string) {
+export function addOpreturnOutput(txComposer: TxComposer, opreturnData: any) {
   return txComposer.appendOpReturnOutput(opreturnData)
 }
 
