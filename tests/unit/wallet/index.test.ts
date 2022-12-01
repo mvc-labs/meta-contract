@@ -38,8 +38,9 @@ describe('钱包测试', () => {
   it('test', async () => {
     const wif = 'cQhewXMoXq9h3nXXbQkc99wRsMrmMzkt6HRnU9g4hAKKsQTv54ZB'
     const pk = mvc.PrivateKey.fromWIF(wif)
+    const address = pk.toAddress('testnet').toString()
 
-    console.log({ pk })
+    console.log({ pk, address })
   })
 
   it.skip('转账', async () => {
