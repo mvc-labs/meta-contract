@@ -551,9 +551,7 @@ export class FtManager {
         changeOutputIndex,
         changeSatoshis: txComposer.getOutput(changeOutputIndex).satoshis,
         genesisOutputIndex: newGenesisOutputIndex,
-        genesisSatoshis: txComposer.getOutput(newGenesisOutputIndex).satoshis,
         tokenOutputIndex,
-        tokenSatoshis: txComposer.getOutput(tokenOutputIndex).satoshis,
         txComposer,
       })
       let unlockResult = genesisContract.unlock({
