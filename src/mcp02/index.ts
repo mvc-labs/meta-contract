@@ -547,7 +547,15 @@ export class FtManager {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
 
-      console.log({ changeOutputIndex, txComposer })
+      console.log({
+        changeOutputIndex,
+        changeSatoshis: txComposer.getOutput(changeOutputIndex).satoshis,
+        genesisOutputIndex: newGenesisOutputIndex,
+        genesisSatoshis: txComposer.getOutput(newGenesisOutputIndex).satoshis,
+        tokenOutputIndex,
+        tokenSatoshis: txComposer.getOutput(tokenOutputIndex).satoshis,
+        txComposer,
+      })
       let unlockResult = genesisContract.unlock({
         txPreimage: txComposer.getInputPreimage(genesisInputIndex),
         pubKey,
