@@ -53,8 +53,8 @@ beforeAll(async () => {
   // mintTxId = txid
   // console.log({ mintTxId })
 
-  codehash = 'cc0fff7a33d936dc8313b09c5e22c52b9c5664b0'
-  genesis = '1fee1f470142604f865bb72f6080bbad50e57ee3'
+  codehash = '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04'
+  genesis = '4aaf336ad752d24bbd6aa78e69c55a872a8d06c0'
 })
 
 describe('转账', () => {
@@ -91,7 +91,17 @@ describe('转账', () => {
     expect(transferTxId).toHaveLength(64)
   })
 
-  it('多人转账', async () => {
+  it('归并', async () => {
+    let { txid: mergeTxId } = await ftManager.merge({
+      genesis,
+      codehash,
+      ownerWif: process.env.WIF,
+    })
+    console.log(mergeTxId)
+    expect(mergeTxId).toHaveLength(64)
+  })
+
+  it.skip('多人转账', async () => {
     const receivers = []
     for (let i = 0; i < 99; i++) {
       receivers.push({

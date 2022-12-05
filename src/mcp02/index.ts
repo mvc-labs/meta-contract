@@ -738,7 +738,36 @@ export class FtManager {
     return stx.getFee()
   }
 
-  public async merge() {}
+  public async merge({
+    codehash,
+    genesis,
+    ownerWif,
+    utxos,
+    changeAddress,
+    noBroadcast = false,
+    opreturnData,
+  }: {
+    codehash: string
+    genesis: string
+    ownerWif: string
+    utxos?: ParamUtxo[]
+    changeAddress?: string | mvc.Address
+    noBroadcast?: boolean
+    opreturnData?: any
+  }) {
+    $.checkArgument(ownerWif, 'ownerWif is required')
+    return await this.transfer({
+      codehash,
+      genesis,
+      senderWif: ownerWif,
+      utxos,
+      changeAddress,
+      isMerge: true,
+      noBroadcast,
+      receivers: [],
+      opreturnData,
+    })
+  }
 
   private async _pretreatUtxos(
     paramUtxos?: ParamUtxo[]
