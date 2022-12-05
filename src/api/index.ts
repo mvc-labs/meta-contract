@@ -133,6 +133,10 @@ export interface ApiBase {
   getNftSellListByAddress(address: string, cursor?: number, size?: number): Promise<NftSellUtxo[]>
 
   getOutpointSpent(txId: string, index: number): Promise<OutpointSpent>
+
+  getXpubLiteUtxo(xpub: string): Promise<any>
+
+  getXpubLiteBalance(xpub: string): Promise<any>
 }
 
 export class Api implements ApiBase {
@@ -224,5 +228,13 @@ export class Api implements ApiBase {
 
   async getOutpointSpent(txId: string, index: number) {
     return this.apiHandler.getOutpointSpent(txId, index)
+  }
+
+  async getXpubLiteUtxo(xpub: string) {
+    return this.apiHandler.getXpubLiteUtxo(xpub)
+  }
+
+  async getXpubLiteBalance(xpub: string) {
+    return this.apiHandler.getXpubLiteBalance(xpub)
   }
 }

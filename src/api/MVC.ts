@@ -424,4 +424,29 @@ export class MVC implements ApiBase {
       spentInputIndex: data.idx,
     }
   }
+
+  public async getXpubLiteUtxo(xpub: string) {
+    const path = `/xpubLite/${xpub}/utxo`
+    const url = this.serverBase + path
+    return await Net.httpGet(
+      url,
+      {},
+      {
+        headers: this._getHeaders(path),
+      }
+    )
+  }
+
+  public async getXpubLiteBalance(xpub: string) {
+    const path = `/xpubLite/${xpub}/balance`
+    const url = this.serverBase + path
+
+    return await Net.httpGet(
+      url,
+      {},
+      {
+        headers: this._getHeaders(path),
+      }
+    )
+  }
 }
