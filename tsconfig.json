@@ -16,6 +16,7 @@
     "skipLibCheck": true,
     "pretty": true,
     "declaration": true,
+    "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "typeRoots": ["./src/typings", "./node_modules/@types"],

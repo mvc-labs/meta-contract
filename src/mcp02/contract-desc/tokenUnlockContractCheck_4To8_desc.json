@@ -1,6 +1,6 @@
 {
     "version": 9,
-    "compilerVersion": "1.17.3+commit.b1bcb14",
+    "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "TokenUnlockContractCheck",
     "md5": "7d598946ea321178d731170b8d2e2481",
     "structs": [

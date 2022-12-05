@@ -547,13 +547,6 @@ export class FtManager {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
 
-      console.log({
-        changeOutputIndex,
-        changeSatoshis: txComposer.getOutput(changeOutputIndex).satoshis,
-        genesisOutputIndex: newGenesisOutputIndex,
-        tokenOutputIndex,
-        txComposer,
-      })
       let unlockResult = genesisContract.unlock({
         txPreimage: txComposer.getInputPreimage(genesisInputIndex),
         pubKey,
@@ -591,7 +584,7 @@ export class FtManager {
         inputSatoshis: txComposer.getOutput(newGenesisOutputIndex).satoshis,
       }
       const verify = unlockResult.verify(txContext)
-      console.log({ verify })
+      // console.log({ verify })
 
       // if (this.debug && genesisPrivateKey && c == 1) {
       //   let ret = unlockResult.verify({
@@ -605,7 +598,6 @@ export class FtManager {
       txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as mvc.Script)
     }
 
-    console.log({ inputs: txComposer.tx.inputs, indexes: p2pkhInputIndexs, pks: utxoPrivateKeys })
     unlockP2PKHInputs(txComposer, p2pkhInputIndexs, utxoPrivateKeys)
     // if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
     //   p2pkhInputIndexs.forEach((inputIndex) => {
@@ -1137,14 +1129,15 @@ export class FtManager {
     //Choose a transfer plan
     let inputLength = tokenInputArray.length
     let outputLength = tokenOutputArray.length
-    // let tokenTransferType = TokenTransferCheckFactory.getOptimumType(inputLength, outputLength)
-    // if (tokenTransferType == TOKEN_TRANSFER_TYPE.UNSUPPORT) {
-    //   throw new CodeError(
-    //     ErrCode.EC_TOO_MANY_FT_UTXOS,
-    //     'Too many token-utxos, should merge them to continue.'
-    //   )
-    // }
-    let tokenTransferType = TOKEN_TRANSFER_TYPE.IN_3_OUT_3
+    let tokenTransferType = TokenTransferCheckFactory.getOptimumType(inputLength, outputLength)
+    if (tokenTransferType == TOKEN_TRANSFER_TYPE.UNSUPPORT) {
+      throw new CodeError(
+        ErrCode.EC_TOO_MANY_FT_UTXOS,
+        'Too many token-utxos, should merge them to continue.'
+      )
+    }
+    // console.log({ tokenTransferType })
+    // let tokenTransferType = TOKEN_TRANSFER_TYPE.IN_3_OUT_3
 
     return {
       tokenInputArray,
@@ -1201,6 +1194,7 @@ export class FtManager {
         if (script.chunks.length > 0) {
           const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
           if (lockingScriptBuf) {
+            return true
             // console.log(ftProto.getQueryGenesis(lockingScriptBuf), genesis)
             if (ftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
               prevTokenInputIndex = inputIndex
@@ -1598,7 +1592,7 @@ export class FtManager {
           prevouts: new Bytes(prevouts.toHex()),
 
           tokenInputIndex: inputIndex,
-          amountCheckHashIndex: 0,
+          amountCheckHashIndex: tokenTransferType - 1,
           amountCheckInputIndex: txComposer.getTx().inputs.length - 1,
           // amountCheckInputIndex: ftUtxo.satotxInfo.txInputsCount - 1,
           amountCheckTxOutputProofInfo,

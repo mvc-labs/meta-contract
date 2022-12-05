@@ -10,11 +10,11 @@ let mintTxId: string
 let genesis
 let codehash
 
-jest.setTimeout(30000)
+jest.setTimeout(300000)
 beforeAll(async () => {
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2, wif3] = [process.env.WIF, process.env.WIF2, process.env.WIF3] as string[]
-  const feeb = 0.5
+  const feeb = 1
 
   wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
   wallet2 = new Wallet(wif2, network, feeb, API_TARGET.MVC)
@@ -53,8 +53,8 @@ beforeAll(async () => {
   // mintTxId = txid
   // console.log({ mintTxId })
 
-  codehash = '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04'
-  genesis = '45e78fd83fb2ded9e7eb645ac43a5c31c529501f'
+  codehash = 'cc0fff7a33d936dc8313b09c5e22c52b9c5664b0'
+  genesis = '1fee1f470142604f865bb72f6080bbad50e57ee3'
 })
 
 describe('转账', () => {
@@ -62,7 +62,7 @@ describe('转账', () => {
     expect(ftManager).toHaveProperty('transfer')
   })
 
-  it('正常转账', async () => {
+  it.skip('正常转账', async () => {
     // console.log({ genesis, codehash })
     // let { txid } = await ftManager.transfer({
     //   genesis,
@@ -85,6 +85,24 @@ describe('转账', () => {
           address: 'mjdRRKd3qCwiLwyHhuCQA5nniUEPofwpro',
         },
       ],
+      senderWif: process.env.WIF,
+    })
+    console.log(transferTxId)
+    expect(transferTxId).toHaveLength(64)
+  })
+
+  it('多人转账', async () => {
+    const receivers = []
+    for (let i = 0; i < 99; i++) {
+      receivers.push({
+        amount: '10',
+        address: process.env.ADDRESS2,
+      })
+    }
+    let { txid: transferTxId } = await ftManager.transfer({
+      genesis,
+      codehash,
+      receivers,
       senderWif: process.env.WIF,
     })
     console.log(transferTxId)

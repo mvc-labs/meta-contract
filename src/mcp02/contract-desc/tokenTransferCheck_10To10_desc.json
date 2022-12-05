@@ -1,6 +1,6 @@
 {
     "version": 9,
-    "compilerVersion": "1.17.3+commit.b1bcb14",
+    "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "TokenTransferCheck",
     "md5": "37a8a55f77468d2a8296183e3aa5a28d",
     "structs": [

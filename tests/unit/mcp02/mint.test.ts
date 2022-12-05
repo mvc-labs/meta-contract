@@ -36,7 +36,7 @@ beforeAll(async () => {
     tokenName,
     tokenSymbol,
     decimalNum,
-    genesisWif: wif2,
+    genesisWif: wif,
   })
   codehash = genesisResult.codehash
   genesis = genesisResult.genesis
@@ -56,7 +56,7 @@ describe('FT 铸造测试', () => {
   it('正常铸造', async () => {
     let { txid } = await ftManager.mint({
       sensibleId,
-      genesisWif: process.env.WIF2,
+      genesisWif: process.env.WIF,
       receiverAddress,
       tokenAmount: '10000000000',
     })
