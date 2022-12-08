@@ -196,13 +196,17 @@ export class NftManager {
   }
 
   public async genesis({
+    genesisWif,
     totalSupply,
     opreturnData,
     utxos: utxosInput,
+    changeAddress,
     noBroadcast = false,
     calcFee = false,
   }: {
+    genesisWif?: string
     totalSupply: string
+    changeAddress?: string | mvc.Address
     opreturnData?: any
     utxos?: any[]
     noBroadcast?: boolean
@@ -221,12 +225,18 @@ export class NftManager {
       this.network,
       utxosInput
     )
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxos[0].address
+    }
 
     const { txComposer, genesisContract } = await this.createGenesisTx({
       totalSupply,
       utxos,
       utxoPrivateKeys,
       opreturnData,
+      changeAddress,
     })
 
     if (calcFee) {
@@ -272,14 +282,15 @@ export class NftManager {
     utxos,
     utxoPrivateKeys,
     opreturnData,
+    changeAddress,
   }: {
     totalSupply: string
     utxos: Utxo[]
     utxoPrivateKeys: mvc.PrivateKey[]
     opreturnData?: string
+    changeAddress: mvc.Address
   }) {
     const txComposer = new TxComposer()
-    const changeAddress = this.purse.address
 
     // 构建合约
     const genesisContract = createNftGenesisContract({ totalSupply, address: this.purse.address })
@@ -316,6 +327,8 @@ export class NftManager {
     metaOutputIndex,
     opreturnData,
     utxos: utxosInput,
+    receiverAddress,
+    changeAddress,
     noBroadcast = false,
     calcFee = false,
   }: {
@@ -324,6 +337,8 @@ export class NftManager {
     metaOutputIndex: number
     opreturnData?: any
     utxos?: any[]
+    receiverAddress?: string | mvc.Address
+    changeAddress?: string | mvc.Address
     noBroadcast?: boolean
     calcFee?: boolean
   }) {
@@ -343,8 +358,16 @@ export class NftManager {
 
     const genesisPrivateKey = this.purse.privateKey
     const genesisPublicKey = genesisPrivateKey.toPublicKey()
-    const receiverAddress = this.purse.address
-    const changeAddress = this.purse.address
+    if (receiverAddress) {
+      receiverAddress = new mvc.Address(receiverAddress, this.network)
+    } else {
+      receiverAddress = this.purse.address
+    }
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxos[0].address
+    }
 
     if (calcFee) {
       return await this.createMintTx({
@@ -355,6 +378,7 @@ export class NftManager {
         metaOutputIndex,
         opreturnData,
         receiverAddress,
+        changeAddress,
         calcFee,
       })
     }
@@ -367,6 +391,7 @@ export class NftManager {
       metaOutputIndex,
       opreturnData,
       receiverAddress,
+      changeAddress,
     })
 
     let txHex = txComposer.getRawHex()
@@ -609,6 +634,7 @@ export class NftManager {
     metaOutputIndex,
     opreturnData,
     receiverAddress,
+    changeAddress,
     calcFee = false,
   }: {
     utxos: Utxo[]
@@ -618,10 +644,10 @@ export class NftManager {
     metaOutputIndex: number
     opreturnData: string
     receiverAddress: mvc.Address
+    changeAddress: mvc.Address
     calcFee?: boolean
   }) {
     const txComposer = new TxComposer()
-    const changeAddress = this.purse.address
 
     // 输入：第一个为上一个创世，后面是付钱的utxo
     // 输出：第一个为更新的创世，第二个是nft，后面是找零

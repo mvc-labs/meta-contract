@@ -11,7 +11,7 @@ let wallet: Wallet
 let wallet2: Wallet
 let nftManager: NftManager
 
-jest.setTimeout(10000)
+jest.setTimeout(30000)
 beforeAll(async () => {
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
