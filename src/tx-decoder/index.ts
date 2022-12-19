@@ -23,24 +23,24 @@ export class TxDecoder {
     let scriptBuf = output.script.toBuffer()
     if (proto.hasProtoFlag(scriptBuf)) {
       let protoType = proto.getProtoType(scriptBuf)
-      // if (protoType == proto.PROTO_TYPE.NFT) {
-      //   return {
-      //     type: OutputType.SENSIBLE_NFT,
-      //     satoshis: output.satoshis,
-      //     data: SensibleNFT.parseTokenScript(scriptBuf, network),
-      //   }
-      // } else if (protoType == proto.PROTO_TYPE.FT) {
-      //   return {
-      //     type: OutputType.SENSIBLE_FT,
-      //     satoshis: output.satoshis,
-      //     data: SensibleFT.parseTokenScript(scriptBuf, network),
-      //   }
-      // } else {
+      if (protoType == proto.PROTO_TYPE.NFT) {
+        return {
+          type: OutputType.SENSIBLE_NFT,
+          satoshis: output.satoshis,
+          // data: SensibleNFT.parseTokenScript(scriptBuf, network),
+        }
+      } else if (protoType == proto.PROTO_TYPE.FT) {
+        return {
+          type: OutputType.SENSIBLE_FT,
+          satoshis: output.satoshis,
+          // data: SensibleFT.parseTokenScript(scriptBuf, network),
+        }
+      } else {
         return {
           type: OutputType.UNKNOWN,
           satoshis: output.satoshis,
         }
-      // }
+      }
     } else if (output.script.isPublicKeyHashOut()) {
       return {
         type: OutputType.P2PKH,
