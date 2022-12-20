@@ -2,6 +2,7 @@ import { DustCalculator } from '../common/DustCalculator'
 import { sighashType, TxComposer } from '../tx-composer'
 import * as mvc from '../mvc'
 import { BN, API_NET, Api, API_TARGET } from '..'
+
 import { NftGenesis, NftGenesisFactory } from './contract-factory/nftGenesis'
 import {
   addChangeOutput,
@@ -43,7 +44,7 @@ import { Prevouts } from '../common/Prevouts'
 import { CodeError, ErrCode } from '../common/error'
 import { NonFungibleTokenUnspent } from '../api'
 import { SizeTransaction } from '../common/SizeTransaction'
-import { getFlag, PROTO_TYPE } from '../common/protoheader'
+import { hasProtoFlag } from '../common/protoheader'
 import {
   createNftGenesisContract,
   createNftMintContract,
@@ -1054,5 +1055,48 @@ export class NftManager {
     stx.addP2PKHOutput()
 
     return stx.getFee()
+  }
+
+  public static parseTokenScript(
+    scriptBuf: Buffer,
+    network: API_NET = API_NET.MAIN
+  ): {
+    codehash: string
+    genesis: string
+    sensibleId: string
+    metaidOutpoint: nftProto.MetaidOutpoint
+
+    nftAddress: string
+    totalSupply: any
+    tokenIndex: any
+    genesisHash: string
+    sensibleID: nftProto.SensibleID
+    protoVersion: number
+    protoType: number
+  } {
+    if (!hasProtoFlag(scriptBuf)) {
+      return null
+    }
+    const dataPart = nftProto.parseDataPart(scriptBuf)
+    const nftAddress = mvc.Address.fromPublicKeyHash(
+      Buffer.from(dataPart.nftAddress, 'hex'),
+      network
+    ).toString()
+    const genesis = nftProto.getQueryGenesis(scriptBuf)
+    const codehash = nftProto.getQueryCodehash(scriptBuf)
+    const sensibleId = nftProto.getQuerySensibleID(scriptBuf)
+    return {
+      codehash,
+      genesis,
+      sensibleId,
+      metaidOutpoint: dataPart.metaidOutpoint,
+      nftAddress,
+      totalSupply: dataPart.totalSupply,
+      tokenIndex: dataPart.tokenIndex,
+      genesisHash: dataPart.genesisHash,
+      sensibleID: dataPart.sensibleID,
+      protoVersion: dataPart.protoVersion,
+      protoType: dataPart.protoType,
+    }
   }
 }

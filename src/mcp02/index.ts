@@ -49,6 +49,7 @@ import {
 } from '../helpers/transactionHelpers'
 import { getGenesisIdentifiers } from '../helpers/contractHelpers'
 import { dummyTxId } from '../common/dummy'
+import { hasProtoFlag } from '../common/protoheader'
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
@@ -1987,5 +1988,49 @@ export class FtManager {
     })
 
     return estimateSatoshis
+  }
+
+  public static parseTokenScript(
+    scriptBuf: Buffer,
+    network: API_NET = API_NET.MAIN
+  ): {
+    codehash: string
+    genesis: string
+    sensibleId: string
+    tokenName: string
+    tokenSymbol: string
+    decimalNum: number
+    tokenAddress: string
+    tokenAmount: any
+    genesisHash: string
+    sensibleID: ftProto.SensibleID
+    protoVersion: number
+    protoType: number
+  } {
+    if (!hasProtoFlag(scriptBuf)) {
+      return null
+    }
+    const dataPart = ftProto.parseDataPart(scriptBuf)
+    const tokenAddress = mvc.Address.fromPublicKeyHash(
+      Buffer.from(dataPart.tokenAddress, 'hex'),
+      network
+    ).toString()
+    const genesis = ftProto.getQueryGenesis(scriptBuf)
+    const codehash = ftProto.getQueryCodehash(scriptBuf)
+    const sensibleId = ftProto.getQuerySensibleID(scriptBuf)
+    return {
+      codehash,
+      genesis,
+      sensibleId,
+      tokenName: dataPart.tokenName,
+      tokenSymbol: dataPart.tokenSymbol,
+      decimalNum: dataPart.decimalNum,
+      tokenAddress,
+      tokenAmount: dataPart.tokenAmount,
+      genesisHash: dataPart.genesisHash,
+      sensibleID: dataPart.sensibleID,
+      protoVersion: dataPart.protoVersion,
+      protoType: dataPart.protoType,
+    }
   }
 }

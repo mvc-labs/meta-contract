@@ -3,6 +3,7 @@
 import * as mvc from '../mvc'
 import * as proto from '../common/protoheader'
 import { API_NET } from '../api'
+import { NftManager, FtManager } from '..'
 export enum OutputType {
   SENSIBLE_NFT,
   SENSIBLE_FT,
@@ -27,13 +28,13 @@ export class TxDecoder {
         return {
           type: OutputType.SENSIBLE_NFT,
           satoshis: output.satoshis,
-          // data: SensibleNFT.parseTokenScript(scriptBuf, network),
+          data: NftManager.parseTokenScript(scriptBuf, network),
         }
       } else if (protoType == proto.PROTO_TYPE.FT) {
         return {
           type: OutputType.SENSIBLE_FT,
           satoshis: output.satoshis,
-          // data: SensibleFT.parseTokenScript(scriptBuf, network),
+          data: FtManager.parseTokenScript(scriptBuf, network),
         }
       } else {
         return {
