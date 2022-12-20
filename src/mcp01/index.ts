@@ -43,7 +43,7 @@ import { Prevouts } from '../common/Prevouts'
 import { CodeError, ErrCode } from '../common/error'
 import { NonFungibleTokenUnspent } from '../api'
 import { SizeTransaction } from '../common/SizeTransaction'
-import { PROTO_TYPE } from '../common/protoheader'
+import { getFlag, PROTO_TYPE } from '../common/protoheader'
 import {
   createNftGenesisContract,
   createNftMintContract,

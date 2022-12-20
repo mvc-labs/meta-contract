@@ -148,7 +148,7 @@ export function parseDataPart(scriptBuf: Buffer): FormatedDataPart {
   let sellerAddress = getSellerAddress(scriptBuf)
   let satoshisPrice = getSatoshisPrice(scriptBuf)
   let nftID = getNftID(scriptBuf)
-  let protoVersion = proto.getProtoVersioin(scriptBuf)
+  let protoVersion = proto.getProtoVersion(scriptBuf)
   let protoType = proto.getProtoType(scriptBuf)
   return {
     codehash,

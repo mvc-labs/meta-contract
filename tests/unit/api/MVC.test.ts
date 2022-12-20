@@ -18,7 +18,7 @@ describe('MetaSV MVC API测试', () => {
     expect(MVCAPI).toBeInstanceOf(MVC)
   })
 
-  it('获取地址余额', async () => {
+  it.skip('获取地址余额', async () => {
     const address = process.env.ADDRESS
     const res1 = await MVCAPI.getBalance(address)
     console.log(`账号1余额 - balance: ${res1.balance} - pendingBalance: ${res1.pendingBalance}`)
@@ -30,13 +30,21 @@ describe('MetaSV MVC API测试', () => {
     expect(res1.balance + res1.pendingBalance).toBeGreaterThan(0)
   })
 
-  it('获取地址UTXOs', async () => {
+  it.skip('获取地址UTXOs', async () => {
     const utxos = await MVCAPI.getUnspents(address)
 
     expect(utxos.length).toBeGreaterThan(0)
-
-    console.log({ utxos })
   })
+
+  it('获取tx vins', async () => {
+    const randomTxId = '009e91e36eceaed18fcd9ef34a0c9f96d3c06a549a098809e2d737c2a3200256'
+    const vins = await MVCAPI.getVins(randomTxId)
+
+    expect(vins.length).toBeGreaterThan(0)
+
+    console.log({ vins })
+  })
+
   it.todo('广播')
   it.todo('通过txid获取tx信息')
   it.todo('获取FT信息')

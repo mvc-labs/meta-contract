@@ -71,7 +71,7 @@ export class MVC implements ApiBase {
   }
 
   private _getHeaders(path: string) {
-    let headers = {}
+    let headers: any = {}
     if (this.authorization) {
       headers = { authorization: this.authorization }
     } else if (this.privateKey) {
@@ -95,6 +95,8 @@ export class MVC implements ApiBase {
       //   'MetaSV should be authorized to access api.'
       // )
     }
+
+    headers.accept = 'application/json'
     return headers
   }
 
@@ -120,6 +122,19 @@ export class MVC implements ApiBase {
       height: v.height,
     }))
     return ret
+  }
+
+  public async getVins(txid: string): Promise<any> {
+    let path = `/vin/${txid}/detail`
+    let url = this.serverBase + path
+    let _res: any = await Net.httpGet(
+      url,
+      {},
+      {
+        headers: this._getHeaders(path),
+      }
+    )
+    return _res
   }
 
   /**

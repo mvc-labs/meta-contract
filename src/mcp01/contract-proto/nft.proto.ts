@@ -215,12 +215,12 @@ export function parseDataPart(scriptBuf: Buffer): FormatedDataPart {
   let tokenIndex = getTokenIndex(scriptBuf)
   let genesisHash = getGenesisHash(scriptBuf)
   let sensibleID = getSensibleID(scriptBuf)
-  let protoVersion = proto.getProtoVersioin(scriptBuf)
+  let protoVersion = proto.getProtoVersion(scriptBuf)
   let protoType = proto.getProtoType(scriptBuf)
 
   // const scriptHexLen = scriptBuf.toString('hex').length
   // const scriptLen = scriptBuf.length
-  // const protoVersion1 = proto.getProtoVersioin(scriptBuf)
+  // const protoVersion1 = proto.getProtoVersion(scriptBuf)
   // const protoVersion2 = scriptBuf.toString('hex').slice(scriptHexLen - 40, scriptHexLen - 32)
   // const metacontract = Buffer.from('metacontract')
   // const metacontract2 = proto.getFlag(scriptBuf)

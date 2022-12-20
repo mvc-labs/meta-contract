@@ -284,7 +284,7 @@ export function parseDataPart(scriptBuf: Buffer): FormatedDataPart {
   let genesisHash = getGenesisHash(scriptBuf)
   let rabinPubKeyHashArrayHash = getRabinPubKeyHashArrayHash(scriptBuf)
   let sensibleID = getSensibleID(scriptBuf)
-  let protoVersion = proto.getProtoVersioin(scriptBuf)
+  let protoVersion = proto.getProtoVersion(scriptBuf)
   let protoType = proto.getProtoType(scriptBuf)
   return {
     tokenName,

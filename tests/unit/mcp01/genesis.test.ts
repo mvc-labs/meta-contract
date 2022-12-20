@@ -42,12 +42,12 @@ describe('NFT 创世测试', () => {
       totalSupply,
     })
 
-    console.log(res)
+    // console.log(res)
 
     expect(res.txid).toHaveLength(64)
   })
 
-  it('测试genesis正确生成', async () => {
+  it.skip('测试genesis正确生成', async () => {
     const privateKey = mvc.PrivateKey.fromWIF(process.env.WIF)
     const address = privateKey.toAddress(API_NET.TEST)
 

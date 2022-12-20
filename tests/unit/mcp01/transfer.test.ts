@@ -6,7 +6,7 @@ let wallet2: Wallet
 let nftManager: NftManager
 let sensibleId = 'f652bd86090b9bf93ba7127a85b007822a4dc6ea17e6e582ba10973e886b99b800000000'
 let mintTxId: string
-let genesis = '1c69ab2f3047c45da7c606150bed18829bfcfdc9'
+let genesis = 'd19256c13428d653a7d13937a4c7a7d74b13c25d'
 let codehash = '48d6118692b459fabfc2910105f38dda0645fb57'
 
 jest.setTimeout(30000)
@@ -34,8 +34,6 @@ beforeAll(async () => {
   // const tokenSymbol = 'HelloWorld'
   // const decimalNum = 8
   // const genesisResult = await nftManager.genesis({
-  //   tokenName,
-  //   tokenSymbol,
   //   decimalNum,
   // })
   // codehash = genesisResult.codehash
@@ -60,7 +58,7 @@ describe('转账', () => {
     let res = await nftManager.transfer({
       genesis,
       codehash,
-      tokenIndex: '3',
+      tokenIndex: '0',
       senderWif: wallet.privateKey.toWIF(),
       // receiverAddress: wallet.address.toString(),
       receiverAddress: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
