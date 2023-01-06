@@ -468,13 +468,15 @@ export class NftManager {
     let tokenScript = tx.outputs[nftUtxo.outputIndex].script
 
     let curDataPartObj = nftProto.parseDataPart(tokenScript.toBuffer())
-    let input = tx.inputs.find((input) => {
+    let preNftInputIndex = 0
+    let input = tx.inputs.find((input, inputIndex) => {
       let script = new mvc.Script(input.script)
       if (script.chunks.length > 0) {
         const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
         if (lockingScriptBuf) {
-          return true // TODO:
+          // return true // TODO:
           if (nftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
+            preNftInputIndex = inputIndex
             return true
           }
 
@@ -486,11 +488,13 @@ export class NftManager {
           let genesisHash = toHex(mvc.crypto.Hash.sha256ripemd160(newScriptBuf))
 
           if (genesisHash == curDataPartObj.genesisHash) {
+            preNftInputIndex = inputIndex
             return true
           }
         }
       }
     })
+
     if (!input) throw new CodeError(ErrCode.EC_INNER_ERROR, 'invalid nftUtxo')
     let preTxId = input.prevTxId.toString('hex')
     let preOutputIndex = input.outputIndex
@@ -502,7 +506,7 @@ export class NftManager {
       outputIndex: nftUtxo.outputIndex,
       txHex,
       preTxId,
-      preNftInputIndex: 0,
+      preNftInputIndex,
       preOutputIndex,
       preTxHex,
       txInputsCount: tx.inputs.length,
@@ -913,6 +917,7 @@ export class NftManager {
       )
 
       const contractInputIndex = 0
+      console.log({ prevNftInputIndex, contractInputIndex, nftInputIndex })
       const contractTxProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
 
       const amountCheckOutputIndex = 0

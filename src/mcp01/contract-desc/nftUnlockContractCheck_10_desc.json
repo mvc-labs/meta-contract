@@ -1,6 +1,6 @@
 {
     "version": 9,
-    "compilerVersion": "1.17.3+commit.b1bcb14",
+    "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "NftUnlockContractCheck",
     "md5": "55a3ce7af7b39150a8d6b3891b89f077",
     "structs": [

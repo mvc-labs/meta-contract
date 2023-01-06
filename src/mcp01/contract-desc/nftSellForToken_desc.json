@@ -1,6 +1,6 @@
 {
     "version": 9,
-    "compilerVersion": "1.17.3+commit.b1bcb14",
+    "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "NftSellForToken",
     "md5": "36ba3e7bc2210501bd68d8145b43ec50",
     "structs": [

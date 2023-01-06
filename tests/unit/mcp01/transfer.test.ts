@@ -13,7 +13,7 @@ jest.setTimeout(30000)
 beforeAll(async () => {
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
-  const feeb = 0.5
+  const feeb = 1
 
   wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
   wallet2 = new Wallet(wif2, network, feeb, API_TARGET.MVC)
@@ -23,7 +23,7 @@ beforeAll(async () => {
   nftManager = new NftManager({
     network: network,
     apiTarget: API_TARGET.MVC,
-    purse: wif,
+    purse: process.env.WIF4,
     feeb: feeb,
   })
   nftManager.api.authorize({ authorization: process.env.METASV_BEARER })
@@ -54,15 +54,31 @@ describe('转账', () => {
     expect(nftManager).toHaveProperty('transfer')
   })
 
-  it('正常转账', async () => {
+  it.skip('正常转账', async () => {
     let res = await nftManager.transfer({
       genesis,
       codehash,
-      tokenIndex: '0',
-      senderWif: wallet.privateKey.toWIF(),
-      // receiverAddress: wallet.address.toString(),
-      receiverAddress: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+      tokenIndex: '7',
+      senderWif: wallet2.privateKey.toWIF(),
+      receiverAddress: wallet2.address.toString(),
+      // receiverAddress: 'mvJquTmxsGjvJfWPg7VhrfvpVPXFVHpCY7',
       // noBroadcast: true,
+    })
+    console.log(res.txid)
+
+    expect(res.txid).toHaveLength(64)
+  })
+
+  it('转MetaName', async () => {
+    const genesis = '1a2f7b2160d7cf398da9c13fd4bcbc8ee7919dd6'
+    const codehash = '48d6118692b459fabfc2910105f38dda0645fb57'
+    const tokenIndex = '4'
+    let res = await nftManager.transfer({
+      genesis,
+      codehash,
+      tokenIndex,
+      senderWif: process.env.WIF4,
+      receiverAddress: process.env.ADDRESS4,
     })
     console.log(res.txid)
 

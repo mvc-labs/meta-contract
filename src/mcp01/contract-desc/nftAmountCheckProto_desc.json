@@ -1,6 +1,6 @@
 {
     "version": 9,
-    "compilerVersion": "1.17.3+commit.b1bcb14",
+    "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "AmountCheckProto",
     "md5": "37c6c2db20bc3765f065e63a47040558",
     "structs": [],
