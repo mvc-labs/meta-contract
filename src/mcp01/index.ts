@@ -410,6 +410,7 @@ export class NftManager {
     senderWif,
     receiverAddress,
     opreturnData,
+    utxos: utxosInput,
     noBroadcast = false,
   }: {
     genesis: string
@@ -418,9 +419,15 @@ export class NftManager {
     senderWif: string
     receiverAddress: string | mvc.Address
     opreturnData?: any
+    utxos?: any[]
     noBroadcast?: boolean
   }) {
-    const { utxos, utxoPrivateKeys } = await prepareUtxos(this.purse, this.api, this.network)
+    const { utxos, utxoPrivateKeys } = await prepareUtxos(
+      this.purse,
+      this.api,
+      this.network,
+      utxosInput
+    )
     const changeAddress = this.purse.address
     const nftPrivateKey = this.purse.privateKey
     let { nftUtxo } = await getNftInfo({

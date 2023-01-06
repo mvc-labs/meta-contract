@@ -34,7 +34,6 @@ export async function prepareUtxos(
   let utxoPrivateKeys = []
 
   if (utxosInput) {
-    console.log({ utxosInput })
     utxosInput.forEach((utxo) => {
       if (utxo.wif) {
         let privateKey = mvc.PrivateKey.fromWIF(utxo.wif)
