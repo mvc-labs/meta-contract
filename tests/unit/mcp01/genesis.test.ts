@@ -37,12 +37,12 @@ describe('NFT 创世测试', () => {
   })
 
   it('正常创世', async () => {
-    const totalSupply = '1000'
+    const totalSupply = '2'
     const res = await nftManager.genesis({
       totalSupply,
     })
 
-    // console.log(res)
+    console.log(res)
 
     expect(res.txid).toHaveLength(64)
   })

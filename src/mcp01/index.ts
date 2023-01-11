@@ -716,21 +716,26 @@ export class NftManager {
     const p2pkhInputIndexs = addP2PKHInputs(txComposer, utxos)
 
     // 第三步：复制创世合约，添加创世输出
-    // TODO: 到头
     const sensibleID = {
       txid: genesisTxId,
       index: genesisOutputIndex,
     }
-    const nextGenesisContract = this.updateGenesisContract(genesisContract, sensibleID)
-    const nextGenesisOutputIndex = addContractOutput({
-      txComposer,
-      contract: nextGenesisContract,
-      dustCalculator: this.dustCalculator,
-    })
+    // 到头（tokenIndex == totalSupply - 1）时，则不再添加创世输出
+    const dataPart = genesisContract.getFormatedDataPart()
+    const currentTokenIndex = dataPart.tokenIndex
+    const totalSupply = dataPart.totalSupply
+    let nextGenesisOutputIndex = -1
+    if (currentTokenIndex.lt(totalSupply.sub(BN.One))) {
+      const nextGenesisContract = this.updateGenesisContract(genesisContract, sensibleID)
+      nextGenesisOutputIndex = addContractOutput({
+        txComposer,
+        contract: nextGenesisContract,
+        dustCalculator: this.dustCalculator,
+      })
+    }
 
     // 第四步：创建铸造合约，添加铸造输出
     const genesisHash = this.getGenesisHash(genesisContract, sensibleID)
-    console.log({ genesisHash })
     const mintContract = createNftMintContract({
       genesisHash,
       genesisContract,
@@ -832,6 +837,9 @@ export class NftManager {
     const { prevGenesisTxHeader, prevTxOutputHashProof, prevTxOutputSatoshiBytes } =
       createPrevGenesisTxOutputProof(genesisUtxo)
 
+    const genesisSatoshis =
+      nextGenesisOutputIndex > -1 ? txComposer.getOutput(nextGenesisOutputIndex).satoshis : 0
+
     for (let c = 0; c < 2; c++) {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
@@ -857,7 +865,7 @@ export class NftManager {
         prevTxOutputSatoshiBytes,
 
         nftScript: new Bytes(txComposer.getOutput(nftOutputIndex).script.toHex()),
-        genesisSatoshis: txComposer.getOutput(nextGenesisOutputIndex).satoshis,
+        genesisSatoshis,
         nftSatoshis: txComposer.getOutput(nftOutputIndex).satoshis,
         changeAddress: new Ripemd160(changeAddress.hashBuffer.toString('hex')),
         changeSatoshis:
@@ -868,8 +876,8 @@ export class NftManager {
       let ret = unlockResult.verify({
         tx: txComposer.getTx(),
         inputIndex: 0,
-        // inputSatoshis: txComposer.getInput(genesisInputIndex).output.satoshis,
-        inputSatoshis: txComposer.getOutput(nextGenesisOutputIndex).satoshis,
+        inputSatoshis: txComposer.getInput(genesisInputIndex).output.satoshis,
+        // inputSatoshis: genesisSatoshis,
       })
       if (ret.success == false) console.log(ret)
 
@@ -924,7 +932,6 @@ export class NftManager {
       )
 
       const contractInputIndex = 0
-      console.log({ prevNftInputIndex, contractInputIndex, nftInputIndex })
       const contractTxProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
 
       const amountCheckOutputIndex = 0

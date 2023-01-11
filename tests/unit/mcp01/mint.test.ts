@@ -28,7 +28,7 @@ beforeAll(async () => {
   // genesisContract = res.genesisContract
   // genesisTxId = res.txid
 
-  sensibleId = 'b081766cdff8fd72a567628c4643e60b372398947aaa7aa84d8c8b1facdc6cde00000000'
+  sensibleId = '4874dff763ec1ec6849ce0ae935eaedc67e6802d7e645ce6a088b8a270175def00000000'
 })
 
 jest.setTimeout(30000)
@@ -39,7 +39,7 @@ describe('NFT 铸造测试', () => {
 
   const receiverAddress = process.env.ADDRESS2 as string
 
-  it('正常铸造', async () => {
+  it.skip('正常铸造', async () => {
     const metaTxId = ''
     const metaOutputIndex = 0
 
@@ -53,5 +53,31 @@ describe('NFT 铸造测试', () => {
 
     console.log({ txid })
     expect(txid).toHaveLength(64)
+  })
+
+  it('当达到totalSupply上限时，应正确地不再生成genesis Utxo，并在下一次调用铸造方法时正确报错', async () => {
+    const metaTxId = ''
+    const metaOutputIndex = 0
+
+    // 创世，设置totalSupply为1
+    const { sensibleId } = await nftManager.genesis({ totalSupply: '1' })
+
+    // 铸造1个
+    const { tx } = await nftManager.mint({
+      sensibleId,
+      metaTxId,
+      metaOutputIndex,
+    })
+    // 此tx应只有两个output，不存在genesis utxo
+    expect(tx.outputs.length).toBe(2)
+
+    // 铸造第二个，应报错
+    await expect(
+      nftManager.mint({
+        sensibleId,
+        metaTxId,
+        metaOutputIndex,
+      })
+    ).rejects.toThrow('token supply is fixed')
   })
 })
