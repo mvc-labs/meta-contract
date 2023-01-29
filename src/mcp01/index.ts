@@ -384,7 +384,7 @@ export class NftManager {
       })
     }
 
-    const { txComposer } = await this.createMintTx({
+    const { txComposer, tokenIndex } = await this.createMintTx({
       utxos,
       utxoPrivateKeys,
       sensibleId,
@@ -400,7 +400,7 @@ export class NftManager {
       await this.api.broadcast(txHex)
     }
 
-    return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
+    return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx(), tokenIndex }
   }
 
   public async transfer({
