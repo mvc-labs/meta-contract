@@ -43,7 +43,7 @@ describe('钱包测试', () => {
     console.log({ pk, address })
   })
 
-  it.skip('转账', async () => {
+  it('转账', async () => {
     // const receiverAddress = wallet2.address.toString()
     const receiverAddress = 'mgtKwsre9GEzNpqYACNPnWSoeCyKi7tkgR'
     const txId = await wallet.send(receiverAddress, 100000000)
