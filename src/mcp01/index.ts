@@ -196,6 +196,37 @@ export class NftManager {
     })
   }
 
+  async getTransferEstimateFee({
+    tokenIndex,
+    codehash,
+    genesis,
+    opreturnData,
+    utxoMaxCount = 10,
+  }: {
+    tokenIndex: string
+    codehash: string
+    genesis: string
+    opreturnData?: any
+    utxoMaxCount?: number
+  }) {
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+    nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
+    const genesisScript = new Bytes(nftUtxo.preLockingScript.toHex())
+
+    return await this._calTransferEstimateFee({
+      nftUtxoSatoshis: nftUtxo.satoshis,
+      genesisScript,
+      opreturnData,
+      utxoMaxCount,
+    })
+  }
+
   public async genesis({
     genesisWif,
     totalSupply,
