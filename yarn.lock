@@ -4829,10 +4829,10 @@ mvc-lib@^1.0.5:
     inherits "2.0.3"
     unorm "1.4.1"
 
-mvc-scrypt@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/mvc-scrypt/-/mvc-scrypt-0.1.0.tgz#b517dd9e978cec8919faa23e14ab29faaf99ab6f"
-  integrity sha512-LAnLkOtz3bmmswD2Kt4ZDzEM18TuM8E+/TmfnES/L/+wM9l8iJ8q2F4EUPcLBFnvw0sX3yZ1cJueFXyIg1vNTw==
+mvc-scrypt@0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/mvc-scrypt/-/mvc-scrypt-0.1.1.tgz#841a8179be9cc6bdb0b60200ba5dbb716e5eb53f"
+  integrity sha512-csJ5QVontTNHTRKR/Mmh9r0JMg6vBFoEFa99Ey5D/9BwhoxFQ73/jtvzEC6WcG9xsWoLwisVh65WXN418sKsYw==
   dependencies:
     "@discoveryjs/json-ext" "^0.5.7"
     compare-versions "^3.6.0"

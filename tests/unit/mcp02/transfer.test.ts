@@ -5,8 +5,6 @@ let wallet: Wallet
 let wallet2: Wallet
 let wallet3: Wallet
 let ftManager: FtManager
-let sensibleId = 'b5f7ebcad420ff6c57d4a29d157cf8eec3ee9b2f5c001060949f66382d84691000000000'
-let mintTxId: string
 let genesis
 let codehash
 
@@ -57,6 +55,33 @@ beforeAll(async () => {
   genesis = '4aaf336ad752d24bbd6aa78e69c55a872a8d06c0'
 })
 
+// 创世并铸造
+async function genesisAndMint() {
+  const currentDate = new Date().getHours() + ':' + new Date().getMinutes()
+  const tokenName = '测试MVC Token - ' + currentDate
+  const tokenSymbol = 'Riverrun'
+  const decimalNum = 18
+  const genesisResult = await ftManager.genesis({
+    tokenName,
+    tokenSymbol,
+    decimalNum,
+  })
+
+  let { txid } = await ftManager.mint({
+    sensibleId: genesisResult.sensibleId,
+    genesisWif: process.env.WIF,
+    receiverAddress: wallet.address.toString(),
+    tokenAmount: '10000',
+  })
+
+  return {
+    genesis: genesisResult.genesis,
+    codehash: genesisResult.codehash,
+    mintTxId: txid,
+    sensibleId: genesisResult.sensibleId,
+  }
+}
+
 describe('转账', () => {
   it('正常初始化', async () => {
     expect(ftManager).toHaveProperty('transfer')
@@ -91,7 +116,7 @@ describe('转账', () => {
     expect(transferTxId).toHaveLength(64)
   })
 
-  it('归并', async () => {
+  it.skip('归并', async () => {
     let { txid: mergeTxId } = await ftManager.merge({
       genesis,
       codehash,

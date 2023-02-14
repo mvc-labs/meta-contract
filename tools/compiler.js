@@ -28,8 +28,8 @@ function compileContract(filePath, isDebug) {
     { path: filePath },
     {
       desc: true,
-      debug: isDebug ? true : false,
-      sourceMap: isDebug ? true : false,
+      debug: isDebug,
+      sourceMap: isDebug,
       outputDir: out,
     }
   )

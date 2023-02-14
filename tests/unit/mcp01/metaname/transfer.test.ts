@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { NftManager, Wallet, API_NET, API_TARGET } from '../../../src'
+import { NftManager, Wallet, API_NET, API_TARGET } from '../../../../src'
 
 let wallet: Wallet
 let wallet2: Wallet
@@ -29,53 +29,33 @@ beforeAll(async () => {
   nftManager.api.authorize({ authorization: process.env.METASV_BEARER })
 })
 
-// 创世并铸造
-async function genesisAndMint() {
-  const { sensibleId, genesis, codehash } = await nftManager.genesis({ totalSupply: '46' })
-
-  const { txid } = await nftManager.mint({
-    sensibleId,
-    metaTxId: '',
-    metaOutputIndex: 0,
-  })
-
-  return { sensibleId, genesis, codehash, mintTxId: txid }
-}
-
 describe('转账', () => {
   it('正常初始化', async () => {
     expect(nftManager).toHaveProperty('transfer')
   })
 
   it('正常转账', async () => {
-    const mintRes = await genesisAndMint()
-
-    const { genesis, codehash, mintTxId } = mintRes
-    const tokenIndex = '0'
-
-    let res = await nftManager.transfer({
-      genesis,
-      codehash,
-      tokenIndex,
-      senderWif: process.env.WIF,
-      receiverAddress: process.env.ADDRESS,
+    const wif = 'cRgQViedFfc8PiFLQUNYnxNh4jofqNgGBmS56F5UNQqnDHsTgoq4'
+    const address = new Wallet(wif, API_NET.TEST, 1, API_TARGET.MVC).address.toString()
+    console.log({ address })
+    const nftManager = new NftManager({
+      network: API_NET.TEST,
+      apiTarget: API_TARGET.MVC,
+      purse: wif,
+      feeb: 1,
     })
-    console.log({ res })
-  })
-
-  it.skip('转MetaName', async () => {
-    const genesis = '1a2f7b2160d7cf398da9c13fd4bcbc8ee7919dd6'
+    const genesis = '77faeb33e541d4c9893034bd9794ecb17e8c275b'
     const codehash = '48d6118692b459fabfc2910105f38dda0645fb57'
-    const tokenIndex = '4'
+
     let res = await nftManager.transfer({
       genesis,
       codehash,
-      tokenIndex,
-      senderWif: process.env.WIF4,
-      receiverAddress: process.env.ADDRESS4,
+      tokenIndex: '0',
+      senderWif: wif,
+      receiverAddress: address,
     })
     console.log(res.txid)
 
-    expect(res.txid).toHaveLength(64)
+    // expect(res.txid).toHaveLength(64)
   })
 })

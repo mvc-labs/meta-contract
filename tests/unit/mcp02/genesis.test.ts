@@ -31,38 +31,15 @@ describe('FT 创世测试', () => {
   })
 
   it('正常创世', async () => {
-    const tokenName = 'SPACE-MIT'
-    const tokenSymbol = 'SMIT'
-    const decimalNum = 8
-    // const dataCarrier = {
-    //   type: 'metacontract',
-    //   tokenName,
-    //   tokenSymbol,
-    //   decimalNum,
-    //   desc: 'SPACE-MIT(SMIT) is a reward token launched for the MVC Incentivized Testnet (MIT). You can swap the reward to the Mainnet coin in a specific ratio after the launch of MVC Mainnet.',
-    //   icon: '',
-    //   website: 'https://mvc.space/',
-    //   issuerName: 'MVC Foundation',
-    //   signers: [],
-    // }
-    // const scriptPayload = [
-    //   'meta',
-    //   pNode,
-    //   ParentInfo.data.txId,
-    //   'testmetaid',
-    //   'ftGenesis-' + pNode.substr(0, 12),
-    //   JSON.stringify(dataCarrier),
-    //   '0',
-    //   '1.0.0',
-    //   'text/plain',
-    //   'UTF-8',
-    // ]
+    const tokenName = 'TEST_FT'
+    const tokenSymbol = 'TEST'
+    const decimalNum = 18
 
     const genesis = await ftManager.genesis({
       tokenName,
       tokenSymbol,
       decimalNum,
-      genesisWif: process.env.WIF2,
+      genesisWif: process.env.WIF,
       opreturnData: [],
     })
 

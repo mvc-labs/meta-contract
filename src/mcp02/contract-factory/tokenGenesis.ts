@@ -65,7 +65,6 @@ export class TokenGenesis extends ContractAdapter {
 
   public setFormatedDataPartFromLockingScript(script: mvc.Script) {
     let dataPart = ftProto.parseDataPart(script.toBuffer())
-    console.log(dataPart)
     this.setFormatedDataPart(dataPart)
   }
 

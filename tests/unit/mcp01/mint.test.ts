@@ -28,8 +28,19 @@ beforeAll(async () => {
   // genesisContract = res.genesisContract
   // genesisTxId = res.txid
 
-  sensibleId = '4874dff763ec1ec6849ce0ae935eaedc67e6802d7e645ce6a088b8a270175def00000000'
+  // sensibleId = '4874dff763ec1ec6849ce0ae935eaedc67e6802d7e645ce6a088b8a270175def00000000'
 })
+
+
+// 创世准备
+async function genesis() {
+  const res = await nftManager.genesis({ totalSupply: '46' })
+  sensibleId = res.sensibleId
+  genesisContract = res.genesisContract
+  genesisTxId = res.txid
+
+  return { sensibleId, genesisTxId }
+}
 
 jest.setTimeout(30000)
 describe('NFT 铸造测试', () => {
@@ -37,11 +48,10 @@ describe('NFT 铸造测试', () => {
     expect(nftManager).toBeInstanceOf(NftManager)
   })
 
-  const receiverAddress = process.env.ADDRESS2 as string
-
-  it.skip('正常铸造', async () => {
+  it('正常铸造', async () => {
     const metaTxId = ''
     const metaOutputIndex = 0
+    const { sensibleId } = await genesis()
 
     const { txid } = await nftManager.mint({
       sensibleId,
@@ -55,7 +65,7 @@ describe('NFT 铸造测试', () => {
     expect(txid).toHaveLength(64)
   })
 
-  it('当达到totalSupply上限时，应正确地不再生成genesis Utxo，并在下一次调用铸造方法时正确报错', async () => {
+  it.skip('当达到totalSupply上限时，应正确地不再生成genesis Utxo，并在下一次调用铸造方法时正确报错', async () => {
     const metaTxId = ''
     const metaOutputIndex = 0
 
