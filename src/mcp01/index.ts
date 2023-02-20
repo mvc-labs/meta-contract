@@ -1315,7 +1315,7 @@ export class NftManager {
       })
 
       // 2.3 添加找零输出
-      const changeOutputIndex = addChangeOutput(txComposer, changeAddress, this.feeb)
+      const changeOutputIndex = addChangeOutput(txComposer, middleChangeAddress, this.feeb)
       unlockP2PKHInputs(txComposer, p2pkhInputIndexes, utxoPrivateKeys)
 
       // 2.4检查最终费率

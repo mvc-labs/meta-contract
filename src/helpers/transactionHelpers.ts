@@ -37,7 +37,6 @@ export async function prepareUtxos(
     utxosInput.forEach((utxo) => {
       if (utxo.wif) {
         let privateKey = mvc.PrivateKey.fromWIF(utxo.wif)
-        console.log({ privateKey })
         utxoPrivateKeys.push(privateKey)
         utxo.address = privateKey.toAddress(network) //Compatible with the old version, only wif is provided but no address is provided
       }
