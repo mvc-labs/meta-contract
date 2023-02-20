@@ -1249,7 +1249,6 @@ export class NftManager {
       if (script.chunks.length > 0) {
         const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
         if (lockingScriptBuf) {
-          // return true // TODO:
           if (nftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
             preNftInputIndex = inputIndex
             return true
@@ -1996,11 +1995,53 @@ export class NftManager {
     }
   }
 
-  public async getSellEstimateFee({ utxoMaxCount, opreturnData }) {
-    return this._calSellEstimateFee({
+  public async getSellEstimateFee({
+    genesis,
+    codehash,
+    tokenIndex,
+
+    senderWif,
+    opreturnData,
+    utxoMaxCount = 10,
+  }: {
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    senderWif?: string
+    senderPrivateKey?: string | mvc.PrivateKey
+    senderPublicKey?: string | mvc.PublicKey
+    opreturnData?: any
+
+    utxoMaxCount?: number
+  }) {
+    const senderPrivateKey = new mvc.PrivateKey(senderWif)
+    const senderPublicKey = senderPrivateKey.publicKey
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+
+    // 1.2 验证nft Utxo
+    nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
+
+    let genesisScript = nftUtxo.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
+      ? new Bytes(nftUtxo.preLockingScript.toHex())
+      : new Bytes('')
+
+    let estimateSatoshis1 = await this._calSellEstimateFee({
       utxoMaxCount,
       opreturnData,
     })
+    let estimateSatoshis2 = await this._calTransferEstimateFee({
+      nftUtxoSatoshis: nftUtxo.satoshis,
+      genesisScript,
+      opreturnData,
+      utxoMaxCount: 1,
+    })
+    return estimateSatoshis1 + estimateSatoshis2
   }
 
   private async _calSellEstimateFee({
