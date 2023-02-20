@@ -1996,6 +1996,13 @@ export class NftManager {
     }
   }
 
+  public async getSellEstimateFee({ utxoMaxCount, opreturnData }) {
+    return this._calSellEstimateFee({
+      utxoMaxCount,
+      opreturnData,
+    })
+  }
+
   private async _calSellEstimateFee({
     utxoMaxCount,
     opreturnData,
