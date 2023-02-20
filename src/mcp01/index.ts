@@ -612,6 +612,145 @@ export class NftManager {
     }
   }
 
+  public async cancelSell({
+    genesis,
+    codehash,
+    tokenIndex,
+
+    sellerWif,
+
+    sellUtxo,
+
+    opreturnData,
+    utxos: utxosInput,
+    changeAddress,
+    noBroadcast = false,
+
+    middleChangeAddress,
+    middlePrivateKey,
+  }: {
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    sellerWif?: string | mvc.PrivateKey
+    opreturnData?: any
+    utxos?: any[]
+    changeAddress?: string | mvc.Address
+    noBroadcast?: boolean
+
+    sellUtxo?: SellUtxo
+    middleChangeAddress?: string | mvc.Address
+    middlePrivateKey?: string | mvc.PrivateKey
+  }) {
+    // checkParamGenesis(genesis)
+    // checkParamCodehash(codehash)
+
+    const sellerPrivateKey = new mvc.PrivateKey(sellerWif)
+    const sellerPublicKey = sellerPrivateKey.publicKey
+
+    // let { nftUtxo } = await getNftInfo({
+    //   tokenIndex,
+    //   codehash,
+    //   genesis,
+    //   api: this.api,
+    //   network: this.network,
+    // })
+
+    // let nftInfo = await this._pretreatNftUtxoToTransfer(
+    //   tokenIndex,
+    //   codehash,
+    //   genesis,
+    //   sellerPrivateKey as mvc.PrivateKey,
+    //   sellerPublicKey as mvc.PublicKey
+    // )
+
+    // 准备钱💰；utxo不能超过3个
+    const { utxos, utxoPrivateKeys } = await prepareUtxos(
+      this.purse,
+      this.api,
+      this.network,
+      utxosInput
+    )
+    if (utxos.length > 3) {
+      throw new CodeError(
+        ErrCode.EC_UTXOS_MORE_THAN_3,
+        '下架合约使用的utxo数量应当少于等于3个，请先归集utxo。MVC utxos should be no more than 3 in this operation, please merge it first.'
+      )
+    }
+
+    // 准备找零地址
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxos[0].address
+    }
+
+    // 准备中间找零地址
+    if (middleChangeAddress) {
+      middleChangeAddress = new mvc.Address(middleChangeAddress, this.network)
+      middlePrivateKey = new mvc.PrivateKey(middlePrivateKey)
+    } else {
+      middleChangeAddress = utxos[0].address
+      middlePrivateKey = utxoPrivateKeys[0]
+    }
+
+    // const res = await this.createCancelSellTx({
+    //   utxos,
+    //   utxoPrivateKeys,
+
+    //   genesis,
+    //   codehash,
+    //   tokenIndex,
+    //   sellUtxo,
+
+    //   buyerPrivateKey,
+    //   opreturnData,
+
+    //   changeAddress,
+    //   middlePrivateKey,
+    //   middleChangeAddress,
+    // })
+
+    // if (!sellUtxo) {
+    //   sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
+    // }
+    // if (!sellUtxo) {
+    //   throw new CodeError(
+    //     ErrCode.EC_NFT_NOT_ON_SELL,
+    //     'The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+    //   )
+    // }
+
+    // let { unlockCheckTxComposer, txComposer } = await this._cancelSell({
+    //   genesis,
+    //   codehash,
+    //   nftUtxo: nftInfo.nftUtxo,
+    //   nftPrivateKey: nftInfo.nftUtxoPrivateKey,
+    //   sellUtxo,
+    //   opreturnData,
+    //   utxos: utxoInfo.utxos,
+    //   utxoPrivateKeys: utxoInfo.utxoPrivateKeys,
+    //   changeAddress,
+    //   middlePrivateKey,
+    //   middleChangeAddress,
+    // })
+
+    // let unlockCheckTxHex = unlockCheckTxComposer.getRawHex()
+    // let txHex = txComposer.getRawHex()
+    // if (!noBroadcast) {
+    //   await this.api.broadcast(unlockCheckTxHex)
+    //   await this.api.broadcast(txHex)
+    // }
+    // return {
+    //   tx: txComposer.tx,
+    //   txHex,
+    //   txid: txComposer.tx.id,
+    //   unlockCheckTxId: unlockCheckTxComposer.getTxId(),
+    //   unlockCheckTx: unlockCheckTxComposer.getTx(),
+    //   unlockCheckTxHex: unlockCheckTxHex,
+    // }
+  }
+
   public async buy({
     genesis,
     codehash,
@@ -661,15 +800,6 @@ export class NftManager {
     }
 
     const buyerPrivateKey = new mvc.PrivateKey(buyerWif)
-    const buyerPublicKey = buyerPrivateKey.publicKey
-
-    let { nftUtxo } = await getNftInfo({
-      tokenIndex,
-      codehash,
-      genesis,
-      api: this.api,
-      network: this.network,
-    })
 
     // 准备找零地址
     if (changeAddress) {
@@ -2041,7 +2171,7 @@ export class NftManager {
       opreturnData,
       utxoMaxCount: 1,
     })
-    return estimateSatoshis1 + estimateSatoshis2
+    return estimateSatoshis1 + estimateSatoshis2 + 2000 // TODO
   }
 
   private async _calSellEstimateFee({
