@@ -6,17 +6,14 @@ contract NftSell {
     bytes nftCodeHash;
     bytes nftID;
 
-    // only cancel need
-    // only cancel need
-    // only cancel need
-    // only cancel need
-    // 1 sell 2 cancel
-    public function unlock(SigHashPreimage txPreimage,
-        bytes nftScript,
-        PubKey senderPubKey,
-        Sig senderSig,
-        int nftOutputSatoshis,
-        int op) {
+    public function unlock(
+        SigHashPreimage txPreimage,
+        bytes nftScript,    // only cancel need
+        PubKey senderPubKey,    // only cancel need
+        Sig senderSig,    // only cancel need
+        int nftOutputSatoshis,    // only cancel need
+        int op    // 1 sell 2 cancel
+    ) {
         bytes outputs = b'';
         if (op == 1) {
             bytes outputScript = Utils.buildPublicKeyHashScript(this.senderAddress);

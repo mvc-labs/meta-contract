@@ -68,6 +68,7 @@ export type NftSellUtxo = {
   outputIndex: number
   sellerAddress: string
   satoshisPrice: number
+  price: number
 }
 export type AuthorizationOption = {
   /**

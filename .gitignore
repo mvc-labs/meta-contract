@@ -8,3 +8,4 @@ docs/build
 coverage
 .env
 tests/unit/mvc
+tests/*

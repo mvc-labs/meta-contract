@@ -7,7 +7,6 @@ export class DustCalculator {
   }
 
   getDustThreshold(s: number) {
-    // return 3000
     if (this.dustAmount) {
       return this.dustAmount
     } else {

@@ -1,6 +1,6 @@
-import {buildTypeClasses, Bytes} from '../scryptlib'
-import {crypto, encoding, Transaction} from '../mvc'
-import {BN} from '..'
+import { buildTypeClasses, Bytes } from '../scryptlib'
+import { crypto, encoding, Transaction } from '../mvc'
+import { BN } from '..'
 
 const jsonDescr = require('../mcp01/contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
@@ -82,6 +82,12 @@ export function createTxInputProof(tx: Transaction, inputIndex: number) {
 export function createTxOutputProof(tx: Transaction, outputIndex: number) {
   const info = getTxidInfo(tx)
   const output = tx.outputs[outputIndex]
+  // console.log({
+  //   sats: output.satoshis,
+  //   satsInBytes: new Bytes(getUInt64Buf(output.satoshis).toString('hex')).toString('hex'),
+  //   outputIndex,
+  //   txId: tx.id,
+  // })
   const res = {
     txHeader: new Bytes(info.txHeader),
     hashProof: new Bytes(info.outputHashProof),

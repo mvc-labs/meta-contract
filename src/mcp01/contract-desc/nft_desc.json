@@ -2,7 +2,7 @@
     "version": 9,
     "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "Nft",
-    "md5": "410693e458e432ccef67b8da51778673",
+    "md5": "c455fa421b920c4a75793eeaf8f3c965",
     "structs": [
         {
             "name": "LockingScriptParts",

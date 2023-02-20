@@ -26,9 +26,9 @@ export function newDataPart(dataPart: FormatedDataPart): Buffer {
       tokenAmount.toBuffer({ endian: 'little', size: 8 }),
     ])
   })
-  let recervierArrayBuf = Buffer.alloc(0)
+  let receiverArrayBuf = Buffer.alloc(0)
   dataPart.receiverArray.map((address) => {
-    recervierArrayBuf = Buffer.concat([recervierArrayBuf, address.hashBuffer])
+    receiverArrayBuf = Buffer.concat([receiverArrayBuf, address.hashBuffer])
   })
   let nReceiversBuf = TokenUtil.getUInt32Buf(dataPart.nReceivers)
   let tokenCodeHashBuf = Buffer.from(dataPart.tokenCodeHash, 'hex')
@@ -36,7 +36,7 @@ export function newDataPart(dataPart: FormatedDataPart): Buffer {
   const buf = Buffer.concat([
     nSendersBuf,
     receiverTokenAmountArrayBuf,
-    recervierArrayBuf,
+    receiverArrayBuf,
     nReceiversBuf,
     tokenCodeHashBuf,
     tokenIDBuf,

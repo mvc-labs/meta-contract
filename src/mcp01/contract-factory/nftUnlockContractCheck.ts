@@ -70,50 +70,49 @@ export class NftUnlockContractCheck extends ContractAdapter {
 
   public unlock({
     txPreimage,
+    prevouts,
+
     nftInputIndex,
     nftScript,
-    prevouts,
-    rabinMsg,
-    rabinPaddingArray,
-    rabinSigArray,
-    rabinPubKeyIndexArray,
-    rabinPubKeyVerifyArray,
-    rabinPubKeyHashArray,
+    nftTxHeader,
+    nftTxHashProof,
+    nftSatoshiBytes,
+
     nOutputs,
-    nftOutputIndex,
+    txNftOutputIndex,
     nftOutputAddress,
     nftOutputSatoshis,
     otherOutputArray,
   }: {
     txPreimage: SigHashPreimage
+    prevouts: Bytes
+
     nftInputIndex: number
     nftScript: Bytes
-    prevouts: Bytes
-    rabinMsg: Bytes
-    rabinPaddingArray: Bytes[]
-    rabinSigArray: Int[]
-    rabinPubKeyIndexArray: number[]
-    rabinPubKeyVerifyArray: Int[]
-    rabinPubKeyHashArray: Bytes
+    nftTxHeader: Bytes
+    nftTxHashProof: Bytes
+    nftSatoshiBytes: Bytes
+
     nOutputs: number
-    nftOutputIndex: number
+    txNftOutputIndex: number
     nftOutputAddress: Bytes
     nftOutputSatoshis: number
     otherOutputArray: Bytes
   }) {
     return this._contract.unlock(
       txPreimage,
+      prevouts,
+
+      // nft
       nftInputIndex,
       nftScript,
-      prevouts,
-      rabinMsg,
-      rabinPaddingArray,
-      rabinSigArray,
-      rabinPubKeyIndexArray,
-      rabinPubKeyVerifyArray,
-      rabinPubKeyHashArray,
+      nftTxHeader,
+      nftTxHashProof,
+      nftSatoshiBytes,
+
+      // output
       nOutputs,
-      nftOutputIndex,
+      txNftOutputIndex,
       nftOutputAddress,
       nftOutputSatoshis,
       otherOutputArray
@@ -207,40 +206,41 @@ export class NftUnlockContractCheckFactory {
     prevouts: Bytes,
     otherOutputArray: Bytes
   ): number {
-    let contract = this.getDummyInstance(unlockType)
-    let nftContractInstance = NftFactory.getDummyInstance()
+    return 10000 // TODO
+    // let contract = this.getDummyInstance(unlockType)
+    // let nftContractInstance = NftFactory.getDummyInstance()
 
-    const preimage = getPreimage(dummyTx, contract.lockingScript.toASM(), 1)
-    const rabinMsg = new Bytes(dummyPayload)
-    let paddingCountBuf = Buffer.alloc(2, 0)
-    paddingCountBuf.writeUInt16LE(dummyPadding.length / 2)
-    const padding = Buffer.alloc(dummyPadding.length / 2, 0)
-    padding.write(dummyPadding, 'hex')
+    // const preimage = getPreimage(dummyTx, contract.lockingScript.toASM(), 1)
+    // const rabinMsg = new Bytes(dummyPayload)
+    // let paddingCountBuf = Buffer.alloc(2, 0)
+    // paddingCountBuf.writeUInt16LE(dummyPadding.length / 2)
+    // const padding = Buffer.alloc(dummyPadding.length / 2, 0)
+    // padding.write(dummyPadding, 'hex')
 
-    const rabinPaddingArray: Bytes[] = []
-    const rabinSigArray: Int[] = []
-    const rabinPubKeyIndexArray: number[] = []
-    const rabinPubKeyArray: Int[] = []
-    let tokenAmount = Buffer.alloc(8)
-    tokenAmount.writeInt32BE(100000)
+    // const rabinPaddingArray: Bytes[] = []
+    // const rabinSigArray: Int[] = []
+    // const rabinPubKeyIndexArray: number[] = []
+    // const rabinPubKeyArray: Int[] = []
+    // let tokenAmount = Buffer.alloc(8)
+    // tokenAmount.writeInt32BE(100000)
 
-    let unlockedContract = contract.unlock({
-      txPreimage: new SigHashPreimage(toHex(preimage)),
-      nftInputIndex: 0,
-      nftScript: new Bytes(nftContractInstance.lockingScript.toHex()),
-      prevouts: prevouts,
-      rabinMsg: rabinMsg,
-      rabinPaddingArray: rabinPaddingArray,
-      rabinSigArray: rabinSigArray,
-      rabinPubKeyIndexArray,
-      rabinPubKeyVerifyArray: rabinPubKeyArray,
-      rabinPubKeyHashArray: new Bytes(toHex(dummyRabinPubKeyHashArray)),
-      nOutputs: 2,
-      nftOutputIndex: 0,
-      nftOutputAddress: new Bytes(toHex(dummyAddress.hashBuffer)),
-      nftOutputSatoshis: 1000,
-      otherOutputArray,
-    })
-    return (unlockedContract.toScript() as mvc.Script).toBuffer().length
+    // let unlockedContract = contract.unlock({
+    //   txPreimage: new SigHashPreimage(toHex(preimage)),
+    //   nftInputIndex: 0,
+    //   nftScript: new Bytes(nftContractInstance.lockingScript.toHex()),
+    //   prevouts: prevouts,
+    //   rabinMsg: rabinMsg,
+    //   rabinPaddingArray: rabinPaddingArray,
+    //   rabinSigArray: rabinSigArray,
+    //   rabinPubKeyIndexArray,
+    //   rabinPubKeyVerifyArray: rabinPubKeyArray,
+    //   rabinPubKeyHashArray: new Bytes(toHex(dummyRabinPubKeyHashArray)),
+    //   nOutputs: 2,
+    //   nftOutputIndex: 0,
+    //   nftOutputAddress: new Bytes(toHex(dummyAddress.hashBuffer)),
+    //   nftOutputSatoshis: 1000,
+    //   otherOutputArray,
+    // })
+    // return (unlockedContract.toScript() as mvc.Script).toBuffer().length
   }
 }

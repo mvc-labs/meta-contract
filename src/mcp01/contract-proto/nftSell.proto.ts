@@ -1,3 +1,4 @@
+import { buildScriptData } from '../../common/tokenUtil'
 import BN = require('../../bn.js/index.js')
 import * as proto from '../../common/protoheader'
 import { toHex } from '../../scryptlib'
@@ -128,7 +129,8 @@ export function newDataPart({
   if (protoType) {
     protoTypeBuf.writeUInt32LE(protoType)
   }
-  return Buffer.concat([
+
+  const buf = Buffer.concat([
     codehashBuf,
     genesisBuf,
     tokenIndexBuf,
@@ -139,6 +141,8 @@ export function newDataPart({
     protoTypeBuf,
     proto.PROTO_FLAG,
   ])
+
+  return buildScriptData(buf)
 }
 
 export function parseDataPart(scriptBuf: Buffer): FormatedDataPart {

@@ -73,6 +73,7 @@ export function getTokenIndex(script: Buffer): BN {
   )
 }
 
+// sensibleID
 export function getNftID(script: Buffer) {
   return mvc.crypto.Hash.sha256ripemd160(
     script.slice(script.length - TOKEN_INDEX_OFFSET, script.length - proto.getHeaderLen())

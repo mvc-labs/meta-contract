@@ -380,6 +380,7 @@ export class MVC implements ApiBase {
         outputIndex: v.txIndex,
         sellerAddress: v.address,
         satoshisPrice: v.price,
+        price: v.price,
       }))[0]
     return ret
   }
@@ -404,6 +405,7 @@ export class MVC implements ApiBase {
         outputIndex: v.txIndex,
         sellerAddress: v.address,
         satoshisPrice: v.price,
+        price: v.price,
       }))[0]
     return ret
   }
@@ -422,6 +424,7 @@ export class MVC implements ApiBase {
         outputIndex: v.txIndex,
         sellerAddress: v.address,
         satoshisPrice: v.price,
+        price: v.price,
       }))
     return ret
   }

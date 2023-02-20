@@ -2,7 +2,7 @@
     "version": 9,
     "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "NftSell",
-    "md5": "c104ebb9ffe9f8eed3b3954100e6d719",
+    "md5": "d546c73b76c3a61fd075b09a27a71297",
     "structs": [],
     "library": [
         {

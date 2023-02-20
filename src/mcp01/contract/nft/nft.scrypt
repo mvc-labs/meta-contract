@@ -40,23 +40,26 @@ contract Nft {
         TxInputProof nftTxInputProof,
         TxOutputProof prevNftTxProof,
         bytes genesisScript,
-        // contract
+
+        // contract,op=2
         int contractInputIndex,
         TxOutputProof contractTxProof,
-        // unlockCheck
+        // unlockCheck, op=2
         int amountCheckHashIndex,
         int amountCheckInputIndex,
         TxOutputProof amountCheckTxProof,
         bytes amountCheckScript,
-        // sig
+
+        // sig, op=1
         PubKey senderPubKey,
         Sig senderSig,
         // output
-        bytes receiverAddress,
-        int nftOutputSatoshis,
-        bytes opReturnScript,
-        Ripemd160 changeAddress,
-        int changeSatoshis,
+        bytes receiverAddress, // op=1
+        int nftOutputSatoshis, // op=1
+        bytes opReturnScript, // op=1
+        Ripemd160 changeAddress, // op=1
+        int changeSatoshis, // op=1
+
         int operation) {
 
         // verify this tx's version

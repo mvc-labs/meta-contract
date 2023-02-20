@@ -69,7 +69,10 @@ function checkParamCodehash(codehash) {
   $.checkArgument(_.isString(codehash), 'Invalid Argument: codehash should be a string')
   $.checkArgument(codehash.length == 40, `Invalid Argument: codehash.length must be 40`)
   $.checkArgument(
-    codehash == ContractUtil.tokenCodeHash || codehash == ContractUtil.tokenGenesisCodeHash,
+    codehash == ContractUtil.tokenCodeHash ||
+      codehash == ContractUtil.tokenGenesisCodeHash ||
+      codehash === '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04' ||
+      codehash === 'a2421f1e90c6048c36745edd44fad682e8644693',
     `a valid codehash should be ${ContractUtil.tokenCodeHash}, but the provided is ${codehash} `
   )
 }
@@ -1663,9 +1666,8 @@ export class FtManager {
           inputIndex: inputIndex,
           inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
         }
-        // let ret = unlockingContract.verify(txContext)
-        // console.log({ tokenVerify: ret })
-        // if (ret.success == false) console.log(ret)
+        let ret = unlockingContract.verify(txContext)
+        console.log({ ret })
         // }
 
         txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)

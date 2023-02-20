@@ -16,7 +16,7 @@ import {
   toHex,
   AbstractContract,
 } from '../../scryptlib'
-import * as nftSellProto from '../../bcp01/contract-proto/nftSell.proto'
+import * as nftSellProto from '../../mcp01/contract-proto/nftSell.proto'
 import { NftFactory } from './nft'
 
 export enum NFT_SELL_OP {

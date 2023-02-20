@@ -84,7 +84,7 @@ export class Nft extends ContractAdapter {
     // unlockCheck
     amountCheckHashIndex,
     amountCheckInputIndex,
-    amountcheckTxProof,
+    amountCheckTxProof,
     amountCheckScrypt,
 
     // sig
@@ -125,7 +125,7 @@ export class Nft extends ContractAdapter {
     // unlockCheck
     amountCheckHashIndex: number
     amountCheckInputIndex: number
-    amountcheckTxProof: Bytes
+    amountCheckTxProof: Bytes
     amountCheckScrypt: Bytes
 
     senderPubKey?: PubKey //only transfer need
@@ -160,15 +160,6 @@ export class Nft extends ContractAdapter {
       changeSatoshis = new Int(0)
     }
 
-    // if (operation != NFT_OP_TYPE.UNLOCK_FROM_CONTRACT) {
-    //   checkInputIndex = 0
-    //   checkScriptTx = new Bytes('')
-    //   checkScriptTxOutIndex = 0
-    //   lockContractInputIndex = 0
-    //   lockContractTx = new Bytes('')
-    //   lockContractTxOutIndex = 0
-    // }
-
     return this._contract.unlock(
       txPreimage,
       prevouts,
@@ -188,7 +179,7 @@ export class Nft extends ContractAdapter {
       // unlockCheck
       amountCheckHashIndex,
       amountCheckInputIndex,
-      amountcheckTxProof,
+      amountCheckTxProof,
       amountCheckScrypt,
 
       // sig

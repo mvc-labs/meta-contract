@@ -61,7 +61,7 @@ export async function prepareUtxos(
 }
 
 export function addP2PKHInputs(txComposer: TxComposer, utxos: Utxo[]) {
-  const p2pkhInputIndexs = utxos.map((utxo) => {
+  const p2pkhInputIndexes = utxos.map((utxo) => {
     const inputIndex = txComposer.appendP2PKHInput(utxo)
     txComposer.addSigHashInfo({
       inputIndex,
@@ -73,7 +73,7 @@ export function addP2PKHInputs(txComposer: TxComposer, utxos: Utxo[]) {
     return inputIndex
   })
 
-  return p2pkhInputIndexs
+  return p2pkhInputIndexes
 }
 
 export function addContractInput(

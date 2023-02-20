@@ -4,6 +4,7 @@ import * as mvc from '../mvc'
 import { BN, API_NET, Api, API_TARGET } from '..'
 
 import { NftGenesis, NftGenesisFactory } from './contract-factory/nftGenesis'
+import { NFT_SELL_OP, NftSellFactory, NftSell } from './contract-factory/nftSell'
 import {
   addChangeOutput,
   addContractInput,
@@ -32,6 +33,9 @@ import {
 import { Address, Transaction } from '../mvc'
 import * as TokenUtil from '../common/tokenUtil'
 import * as nftProto from './contract-proto/nft.proto'
+import * as nftSellProto from './contract-proto/nftSell.proto'
+import * as nftCheckProto from './contract-proto/nftUnlockContractCheck.proto'
+const Signature = mvc.crypto.Signature
 
 import { ContractUtil } from './contractUtil'
 import {
@@ -51,8 +55,17 @@ import {
   rebuildNftLockingScript,
   getGenesisIdentifiers,
 } from '../helpers/contractHelpers'
-import { createGenesisTxInputProof, createPrevGenesisTxOutputProof } from '../helpers/proofHelpers'
+import {
+  createGenesisTxInputProof,
+  createPrevGenesisTxOutputProof,
+  createTxOutputProof,
+} from '../helpers/proofHelpers'
 import { FEEB } from '../mcp02/constants'
+import {
+  NftUnlockContractCheckFactory,
+  NFT_UNLOCK_CONTRACT_TYPE,
+} from './contract-factory/nftUnlockContractCheck'
+import { dummyTxId } from '../common/dummy'
 ContractUtil.init()
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
@@ -68,6 +81,13 @@ type Utxo = {
   outputIndex: number
   satoshis: number
   address: mvc.Address
+}
+
+type SellUtxo = {
+  txId: string
+  outputIndex: number
+  sellerAddress: string
+  price: number
 }
 
 export type NftUtxo = {
@@ -328,7 +348,7 @@ export class NftManager {
     const genesisContract = createNftGenesisContract({ totalSupply, address: this.purse.address })
 
     // 添加付钱输入、添加创世输出、添加找零输出、解锁输入
-    const p2pkhInputIndexs = addP2PKHInputs(txComposer, utxos)
+    const p2pkhInputIndexes = addP2PKHInputs(txComposer, utxos)
     addContractOutput({
       txComposer,
       contract: genesisContract,
@@ -341,7 +361,7 @@ export class NftManager {
     }
 
     addChangeOutput(txComposer, changeAddress, this.feeb)
-    unlockP2PKHInputs(txComposer, p2pkhInputIndexs, utxoPrivateKeys)
+    unlockP2PKHInputs(txComposer, p2pkhInputIndexes, utxoPrivateKeys)
 
     // 检查最终费率
     checkFeeRate(txComposer, this.feeb)
@@ -428,7 +448,7 @@ export class NftManager {
 
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
-      await this.api.broadcast(txHex)
+      const res = await this.api.broadcast(txHex)
     }
 
     return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx(), tokenIndex }
@@ -459,16 +479,7 @@ export class NftManager {
       this.network,
       utxosInput
     )
-    const changeAddress = this.purse.address
-    const nftPrivateKey = this.purse.privateKey
-    let { nftUtxo } = await getNftInfo({
-      tokenIndex,
-      codehash,
-      genesis,
-      api: this.api,
-      network: this.network,
-    })
-    nftUtxo.publicKey = this.purse.privateKey.toPublicKey()
+
     receiverAddress = new mvc.Address(receiverAddress, this.network)
     const { txComposer } = await this.createTransferTx({
       utxos,
@@ -480,24 +491,750 @@ export class NftManager {
       opreturnData,
     })
 
-    // let { txComposer } = await this._transfer({
-    //   genesis,
-    //   codehash,
-    //   nftUtxo,
-    //   nftPrivateKey,
-    //   receiverAddress,
-    //   opreturnData,
-    //   utxos,
-    //   utxoPrivateKeys,
-    //   changeAddress,
-    // })
-
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
       await this.api.broadcast(txHex)
     }
 
     return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
+  }
+
+  public async sell({
+    genesis,
+    codehash,
+    tokenIndex,
+    sellerWif,
+    price,
+
+    changeAddress,
+    opreturnData,
+    utxos: utxosInput,
+    noBroadcast = false,
+
+    middleChangeAddress,
+    middleWif,
+  }: {
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    sellerWif: string
+    price: number
+
+    changeAddress?: string | mvc.Address
+    opreturnData?: string[] | string
+    utxos?: any[]
+    noBroadcast?: boolean
+
+    middleChangeAddress?: string | mvc.Address
+    middleWif?: string
+  }) {
+    // checkParamGenesis(genesis)
+    // checkParamCodehash(codehash)
+
+    // 准备钱💰；utxo不能超过3个
+    const { utxos, utxoPrivateKeys } = await prepareUtxos(
+      this.purse,
+      this.api,
+      this.network,
+      utxosInput
+    )
+    if (utxos.length > 3) {
+      throw new CodeError(
+        ErrCode.EC_UTXOS_MORE_THAN_3,
+        '销售合约使用的utxo数量应当少于等于3个，请先归集utxo。MVC utxos should be no more than 3 in this operation, please merge it first.'
+      )
+    }
+
+    // 检查此NFT是否属于卖家
+    const sellerPrivateKey = new mvc.PrivateKey(sellerWif)
+    const sellerPublicKey = sellerPrivateKey.publicKey
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+
+    if (nftUtxo.nftAddress.toString() != sellerPublicKey.toAddress(this.network).toString()) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'nft销售者应当为nft持有者！nft seller should be the nft owner!'
+      )
+    }
+
+    // 准备找零地址
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxos[0].address
+    }
+
+    // 准备中间找零地址
+    let middlePrivateKey: mvc.PrivateKey
+    if (middleChangeAddress) {
+      middleChangeAddress = new mvc.Address(middleChangeAddress, this.network)
+      middlePrivateKey = new mvc.PrivateKey(middleWif)
+    } else {
+      middleChangeAddress = utxos[0].address
+      middlePrivateKey = utxoPrivateKeys[0]
+    }
+
+    const { sellTxComposer, txComposer } = await this.createSellTx({
+      utxos,
+      utxoPrivateKeys,
+
+      genesis,
+      codehash,
+      tokenIndex,
+
+      price,
+      opreturnData,
+
+      changeAddress,
+      middlePrivateKey,
+      middleChangeAddress,
+    })
+
+    let nftSellTxHex = sellTxComposer.getRawHex()
+    let txHex = txComposer.getRawHex()
+    if (!noBroadcast) {
+      await this.api.broadcast(nftSellTxHex)
+      await this.api.broadcast(txHex)
+    }
+    return {
+      tx: txComposer.tx,
+      txHex,
+      txid: txComposer.tx.id,
+      sellTxId: sellTxComposer.getTxId(),
+      sellTx: sellTxComposer.getTx(),
+      sellTxHex: nftSellTxHex,
+    }
+  }
+
+  public async buy({
+    genesis,
+    codehash,
+    tokenIndex,
+
+    buyerWif,
+
+    sellUtxo,
+    opreturnData,
+    utxos: utxosInput,
+    changeAddress,
+    noBroadcast = false,
+
+    middleChangeAddress,
+    middleWif,
+  }: {
+    genesis: string
+    codehash: string
+    tokenIndex: string
+
+    buyerWif: string
+
+    sellUtxo?: SellUtxo
+    opreturnData?: any
+    utxos?: any[]
+    changeAddress?: string | mvc.Address
+    noBroadcast?: boolean
+
+    middleChangeAddress?: string | mvc.Address
+    middleWif?: string
+  }) {
+    // checkParamGenesis(genesis)
+    // checkParamCodehash(codehash)
+
+    // 准备钱💰
+    const { utxos, utxoPrivateKeys } = await prepareUtxos(
+      this.purse,
+      this.api,
+      this.network,
+      utxosInput
+    )
+    if (utxos.length > 3) {
+      throw new CodeError(
+        ErrCode.EC_UTXOS_MORE_THAN_3,
+        '销售合约使用的utxo数量应当少于等于3个，请先归集utxo。MVC utxos should be no more than 3 in this operation, please merge it first.'
+      )
+    }
+
+    const buyerPrivateKey = new mvc.PrivateKey(buyerWif)
+    const buyerPublicKey = buyerPrivateKey.publicKey
+
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+
+    // 准备找零地址
+    if (changeAddress) {
+      changeAddress = new mvc.Address(changeAddress, this.network)
+    } else {
+      changeAddress = utxos[0].address
+    }
+
+    // 准备中间找零地址
+    let middlePrivateKey: mvc.PrivateKey
+    if (middleChangeAddress) {
+      middleChangeAddress = new mvc.Address(middleChangeAddress, this.network)
+      middlePrivateKey = new mvc.PrivateKey(middleWif)
+    } else {
+      middleChangeAddress = utxos[0].address
+      middlePrivateKey = utxoPrivateKeys[0]
+    }
+
+    let { unlockCheckTxComposer, txComposer } = await this.createBuyTx({
+      utxos,
+      utxoPrivateKeys,
+
+      genesis,
+      codehash,
+      tokenIndex,
+      sellUtxo,
+
+      buyerPrivateKey: buyerPrivateKey as mvc.PrivateKey,
+      opreturnData,
+
+      changeAddress,
+      middlePrivateKey,
+      middleChangeAddress,
+    })
+
+    let unlockCheckTxHex = unlockCheckTxComposer.getRawHex()
+    let txHex = txComposer.getRawHex()
+    if (!noBroadcast) {
+      await this.api.broadcast(unlockCheckTxHex)
+      await this.api.broadcast(txHex)
+    }
+    return {
+      tx: txComposer.tx,
+      txHex,
+      txid: txComposer.tx.id,
+      unlockCheckTxId: unlockCheckTxComposer.getTxId(),
+      unlockCheckTx: unlockCheckTxComposer.getTx(),
+      unlockCheckTxHex: unlockCheckTxHex,
+    }
+  }
+
+  private async createBuyTx({
+    utxos,
+    utxoPrivateKeys,
+
+    genesis,
+    codehash,
+    tokenIndex,
+    sellUtxo,
+
+    buyerPrivateKey,
+    opreturnData,
+
+    changeAddress,
+    middlePrivateKey,
+    middleChangeAddress,
+  }: {
+    utxos: Utxo[]
+    utxoPrivateKeys: mvc.PrivateKey[]
+
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    sellUtxo?: SellUtxo
+
+    buyerPrivateKey?: mvc.PrivateKey
+    opreturnData?: any
+
+    changeAddress: mvc.Address
+    middlePrivateKey?: mvc.PrivateKey
+    middleChangeAddress: mvc.Address
+  }): Promise<{ unlockCheckTxComposer: TxComposer; txComposer: TxComposer }> {
+    // 第一步：找回并准备NFT Utxo
+    // 1.1 找回nft Utxo
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+
+    // 1.2 验证nft Utxo
+    nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
+
+    // 第二步：找到并重建销售utxo
+    // 2.1 查找销售utxo
+    if (!sellUtxo) {
+      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
+    }
+    if (!sellUtxo) {
+      throw new CodeError(
+        ErrCode.EC_NFT_NOT_ON_SELL,
+        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+      )
+    }
+    // 2.2 重建销售utxo
+    let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
+    let nftSellTx = new mvc.Transaction(nftSellTxHex)
+    let nftSellUtxo = {
+      txId: sellUtxo.txId,
+      outputIndex: sellUtxo.outputIndex,
+      satoshis: nftSellTx.outputs[sellUtxo.outputIndex].satoshis,
+      lockingScript: nftSellTx.outputs[sellUtxo.outputIndex].script,
+    }
+
+    // 第三步：确保余额充足（需要构造三个交易）
+    const genesisScript = new Bytes(nftUtxo.preLockingScript.toHex())
+    let balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    let estBuyFee = await this._calBuyEstimateFee({
+      codehash,
+      nftUtxoSatoshis: nftUtxo.satoshis,
+      nftSellUtxo,
+      sellUtxo,
+      genesisScript,
+      utxoMaxCount: utxos.length,
+      opreturnData,
+    })
+    if (balance < estBuyFee) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_BSV,
+        `Insufficient balance.It take more than ${estBuyFee}, but only ${balance}.余额不足，需要${estBuyFee}，但是只有${balance}。`
+      )
+    }
+
+    // 第四步：构建解锁交易
+    // 4.1 准备nft解锁数据
+    let nftInput = nftUtxo
+    let nftID = nftProto.getNftID(nftInput.lockingScript.toBuffer())
+
+    let unlockContract = NftUnlockContractCheckFactory.createContract(
+      NFT_UNLOCK_CONTRACT_TYPE.OUT_6
+    )
+    unlockContract.setFormatedDataPart({
+      nftCodeHash: Buffer.from(codehash, 'hex'),
+      nftID,
+    })
+
+    // 解锁合约交易构建器
+    const unlockCheckTxComposer = new TxComposer()
+
+    // 4.2 往解锁合约交易中塞钱💰
+    const unlockCheck_p2pkhInputIndexes = addP2PKHInputs(unlockCheckTxComposer, utxos)
+
+    // 4.3 往解锁合约交易中添加解锁输出（重要）
+    const unlockCheckOutputIndex = addContractOutput({
+      txComposer: unlockCheckTxComposer,
+      lockingScript: unlockContract.lockingScript,
+      dustCalculator: this.dustCalculator,
+    })
+
+    // 4.4 解锁交易找零
+    let changeOutputIndex = addChangeOutput(unlockCheckTxComposer, middleChangeAddress, this.feeb)
+    unlockP2PKHInputs(unlockCheckTxComposer, unlockCheck_p2pkhInputIndexes, utxoPrivateKeys)
+
+    // 4.5 检查费率
+    checkFeeRate(unlockCheckTxComposer, this.feeb)
+
+    // 4.6 重新集结此次操作后的钱
+    utxos = [
+      {
+        txId: unlockCheckTxComposer.getTxId(),
+        satoshis: unlockCheckTxComposer.getOutput(changeOutputIndex).satoshis,
+        outputIndex: changeOutputIndex,
+        address: middleChangeAddress,
+      },
+    ]
+    utxoPrivateKeys = utxos.map((v) => middlePrivateKey).filter((v) => v)
+
+    // 4.7 构建解锁交易的Utxo
+    let unlockCheckUtxo = {
+      txId: unlockCheckTxComposer.getTxId(),
+      outputIndex: unlockCheckOutputIndex,
+      satoshis: unlockCheckTxComposer.getOutput(unlockCheckOutputIndex).satoshis,
+      lockingScript: unlockCheckTxComposer.getOutput(unlockCheckOutputIndex).script,
+    }
+
+    // 第五步：构建NFT转移交易
+    // 输入：1.销售 2.nft 3.钱 4.解锁合约
+    // 输出：1.销售者所得 2.nft 3.opreturn 4.找零
+    // 转移合约交易构建器
+    const txComposer = new TxComposer()
+    let prevouts = new Prevouts()
+
+    // 5.1 放入销售输入
+    const sellInputIndex = txComposer.appendInput(nftSellUtxo)
+    prevouts.addVout(nftSellUtxo.txId, nftSellUtxo.outputIndex)
+
+    // 5.2 放入NFT输入
+    const nftInputIndex = txComposer.appendInput(nftInput)
+    prevouts.addVout(nftInput.txId, nftInput.outputIndex)
+
+    // 5.3 放入钱输入
+    const p2pkhInputIndexes = addP2PKHInputs(txComposer, utxos)
+    utxos.forEach((utxo) => {
+      prevouts.addVout(utxo.txId, utxo.outputIndex)
+    })
+
+    // 5.4 放入解锁合约输入
+    const unlockCheckInputIndex = txComposer.appendInput(unlockCheckUtxo)
+    prevouts.addVout(unlockCheckUtxo.txId, unlockCheckUtxo.outputIndex)
+
+    // 5.5 重建销售合约
+    let nftSellContract = NftSellFactory.createContract(
+      new Ripemd160(toHex(new mvc.Address(sellUtxo.sellerAddress, this.network).hashBuffer)),
+      sellUtxo.price,
+      new Bytes(codehash),
+      new Bytes(toHex(nftID))
+    )
+    const parsed = nftSellProto.parseDataPart(nftSellUtxo.lockingScript.toBuffer())
+
+    nftSellContract.setFormatedDataPart(parsed)
+
+    // 5.6 取得销售者地址，将销售所得构建输出
+    const sellerAddress = mvc.Address.fromPublicKeyHash(
+      Buffer.from(nftSellContract.constuctParams.senderAddress.value as string, 'hex'),
+      this.network
+    )
+    const sellerSatoshis = nftSellContract.constuctParams.bsvRecAmount
+    txComposer.appendP2PKHOutput({
+      address: sellerAddress,
+      satoshis: sellerSatoshis,
+    })
+
+    // 5.7 添加nft输出
+    // 5.7.1 构造nft脚本
+    const buyerAddress = buyerPrivateKey.toAddress(this.network)
+    const lockingScriptBuf = rebuildNftLockingScript(nftInput, buyerAddress)
+
+    // 5.7.2 添加进输出
+    const nftOutputIndex = addContractOutput({
+      txComposer,
+      lockingScript: mvc.Script.fromBuffer(lockingScriptBuf),
+      dustCalculator: this.dustCalculator,
+    })
+
+    // 5.8 添加opreturn输出
+    let opreturnScriptHex = ''
+    if (opreturnData) {
+      const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
+      opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
+    }
+
+    // 5.9 解锁nft合约，并找零
+    for (let c = 0; c < 2; c++) {
+      /** 5.9.1 解锁NFT合约 */
+      txComposer.clearChangeOutput()
+      const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
+
+      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, codehash)
+      let dataPartObj = nftProto.parseDataPart(nftUtxo.lockingScript.toBuffer())
+      nftContract.setFormatedDataPart(dataPartObj)
+
+      // 准备数据
+      const prevNftInputIndex = nftUtxo.satotxInfo.preNftInputIndex
+      const nftTx = new mvc.Transaction(nftUtxo.satotxInfo.txHex)
+      const inputRes = TokenUtil.getTxInputProof(nftTx, prevNftInputIndex)
+      const nftTxInputProof = new TxInputProof(inputRes[0])
+      const nftTxHeader = inputRes[1] as Bytes
+
+      const prevNftTxProof = new TxOutputProof(
+        TokenUtil.getTxOutputProof(nftUtxo.satotxInfo.preTx, nftUtxo.satotxInfo.preOutputIndex)
+      )
+
+      // 重要：解锁相关参数
+      const contractInputIndex = sellInputIndex
+      const contractTxProof = new TxOutputProof(
+        TokenUtil.getTxOutputProof(nftSellTx, nftSellUtxo.outputIndex)
+      )
+      const amountCheckHashIndex = 1 // 对应out_6
+      const amountCheckInputIndex = unlockCheckInputIndex
+      const unlockCheckTx = unlockCheckTxComposer.getTx()
+      const amountCheckTxProof = new TxOutputProof(
+        TokenUtil.getTxOutputProof(unlockCheckTx, unlockCheckOutputIndex)
+      )
+      const amountCheckScriptBuf = unlockCheckTx.outputs[unlockCheckOutputIndex].script.toBuffer()
+      const amountCheckScrypt = new Bytes(amountCheckScriptBuf.toString('hex'))
+
+      const unlockingContract = nftContract.unlock({
+        txPreimage: txComposer.getInputPreimage(nftInputIndex),
+        prevouts: new Bytes(prevouts.toHex()),
+
+        prevNftInputIndex,
+        prevNftAddress: new Bytes(toHex(nftUtxo.preNftAddress.hashBuffer)),
+        nftTxHeader,
+        nftTxInputProof,
+        prevNftTxProof,
+        genesisScript,
+
+        contractInputIndex, // 销售合约输入index
+        contractTxProof, // 销售和约输出证明
+
+        amountCheckHashIndex, // 哈希列表中的索引（？）
+        amountCheckInputIndex, // 解锁检查中的输入索引
+        amountCheckTxProof, // 解锁检查输出证明
+        amountCheckScrypt, // 解锁检查Scrypt
+
+        operation: nftProto.NFT_OP_TYPE.UNLOCK_FROM_CONTRACT,
+      })
+
+      if (true) {
+        let txContext = {
+          tx: txComposer.tx,
+          inputIndex: nftInputIndex,
+          inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
+        }
+        let ret = unlockingContract.verify(txContext)
+        if (ret.success == false) {
+          console.log({ ret })
+        }
+      }
+
+      txComposer.getInput(nftInputIndex).setScript(unlockingContract.toScript() as mvc.Script)
+
+      /** 5.9.1.5 其他输出 */
+      let otherOutputs = Buffer.alloc(0)
+      txComposer.tx.outputs.forEach((output, index) => {
+        if (index != nftOutputIndex) {
+          let outputBuf = output.toBufferWriter().toBuffer()
+          let lenBuf = Buffer.alloc(4)
+          lenBuf.writeUInt32LE(outputBuf.length)
+          otherOutputs = Buffer.concat([otherOutputs, lenBuf, outputBuf])
+        }
+      })
+
+      /** 5.9.2 解锁检查合约 */
+      const nftOutputProof = createTxOutputProof(nftTx, nftUtxo.satotxInfo.outputIndex)
+      let sub: any = unlockCheckUtxo.lockingScript
+      sub = sub.subScript(0)
+      const txPreimage = new SigHashPreimage(
+        toHex(
+          getPreimage(
+            txComposer.getTx(),
+            sub,
+            unlockCheckUtxo.satoshis,
+            unlockCheckInputIndex
+            // Signature.SIGHASH_ALL
+          )
+        )
+      )
+      let unlockCall = unlockContract.unlock({
+        // txPreimage: txComposer.getInputPreimage(unlockCheckInputIndex),
+        txPreimage,
+        prevouts: new Bytes(prevouts.toHex()),
+
+        nftInputIndex,
+        nftScript: new Bytes(nftInput.lockingScript.toHex()),
+        nftTxHeader: nftOutputProof.txHeader,
+        nftTxHashProof: nftOutputProof.hashProof,
+        nftSatoshiBytes: nftOutputProof.satoshiBytes,
+
+        nOutputs: txComposer.tx.outputs.length,
+        txNftOutputIndex: nftOutputIndex,
+        nftOutputAddress: new Bytes(toHex(buyerAddress.hashBuffer)),
+        nftOutputSatoshis: txComposer.getOutput(nftOutputIndex).satoshis,
+        otherOutputArray: new Bytes(toHex(otherOutputs)),
+      })
+
+      if (true) {
+        let txContext = {
+          tx: txComposer.getTx(),
+          inputIndex: unlockCheckInputIndex,
+          inputSatoshis: txComposer.getInput(unlockCheckInputIndex).output.satoshis,
+        }
+        let ret = unlockCall.verify(txContext)
+        if (ret.success == false) throw ret
+      }
+      txComposer.getInput(unlockCheckInputIndex).setScript(unlockCall.toScript() as mvc.Script)
+
+      /** 5.9.3 解锁销售合约 */
+      let sellUtxo = txComposer.getInput(sellInputIndex).output
+      let sellSubScript: any = sellUtxo.script
+      sellSubScript = sellSubScript.subScript(0)
+      const sellTxPreimage = new SigHashPreimage(
+        toHex(
+          getPreimage(
+            txComposer.getTx(),
+            sellSubScript,
+            sellUtxo.satoshis,
+            sellInputIndex,
+            Signature.SIGHASH_SINGLE | Signature.SIGHASH_FORKID
+          )
+        )
+      )
+      const unlockCall2 = nftSellContract.unlock({
+        txPreimage: sellTxPreimage,
+        op: NFT_SELL_OP.SELL,
+      })
+      if (true) {
+        let txContext = {
+          tx: txComposer.getTx(),
+          inputIndex: sellInputIndex,
+          inputSatoshis: txComposer.getInput(sellInputIndex).output.satoshis,
+        }
+        let ret = unlockCall2.verify(txContext)
+        if (ret.success == false) throw ret
+      }
+      txComposer.getInput(sellInputIndex).setScript(unlockCall2.toScript() as mvc.Script)
+    }
+
+    // 6. 解锁输入，检查费率
+    unlockP2PKHInputs(txComposer, p2pkhInputIndexes, utxoPrivateKeys)
+    checkFeeRate(txComposer, this.feeb)
+
+    return { unlockCheckTxComposer, txComposer }
+  }
+
+  private async createSellTx({
+    utxos,
+    utxoPrivateKeys,
+
+    genesis,
+    codehash,
+    tokenIndex,
+
+    price,
+    opreturnData,
+
+    changeAddress,
+    middlePrivateKey,
+    middleChangeAddress,
+  }: {
+    utxos: Utxo[]
+    utxoPrivateKeys: mvc.PrivateKey[]
+
+    genesis: string
+    codehash: string
+    tokenIndex: string
+
+    price: number
+    opreturnData?: string[] | string
+
+    changeAddress: mvc.Address
+    middlePrivateKey: mvc.PrivateKey
+    middleChangeAddress: mvc.Address
+  }) {
+    const priceNum = price
+
+    // 第一步：找回nft Utxo并验证，验证钱是否足够
+    // 1.1 找回nft Utxo
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+
+    // 1.2 验证nft Utxo
+    nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
+
+    // 1.3 确保余额充足（需要构造两个交易）
+    const genesisScript = new Bytes(nftUtxo.preLockingScript.toHex())
+    let balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
+    const estSellFee = await this._calSellEstimateFee({
+      utxoMaxCount: utxos.length,
+      opreturnData,
+    })
+    const estTransferFee = await this._calTransferEstimateFee({
+      nftUtxoSatoshis: nftUtxo.satoshis,
+      genesisScript,
+      opreturnData,
+      utxoMaxCount: utxos.length,
+    })
+    const totalFee = estSellFee + estTransferFee
+    if (balance < totalFee) {
+      throw new CodeError(
+        ErrCode.EC_INSUFFICIENT_BSV,
+        `Insufficient balance.It take more than ${totalFee}, but only ${balance}. 余额不足，需要${totalFee}，但是只有${balance}。`
+      )
+    }
+
+    // 第二步：构造nft销售交易
+    let sellTxComposer: TxComposer
+    let nftSellContract: NftSell
+    {
+      const txComposer = new TxComposer()
+
+      // 2.1 塞入钱
+      const p2pkhInputIndexes = addP2PKHInputs(txComposer, utxos)
+
+      // 2.2 添加销售输出
+      // 2.2.1 构造销售合约脚本
+      nftSellContract = NftSellFactory.createContract(
+        new Ripemd160(toHex(nftUtxo.nftAddress.hashBuffer)),
+        priceNum,
+        new Bytes(codehash),
+        new Bytes(toHex(nftProto.getNftID(nftUtxo.lockingScript.toBuffer())))
+      )
+      nftSellContract.setFormatedDataPart({
+        codehash,
+        genesis,
+        tokenIndex: BN.fromString(tokenIndex, 10),
+        sellerAddress: toHex(nftUtxo.nftAddress.hashBuffer),
+        satoshisPrice: BN.fromNumber(priceNum),
+        nftID: toHex(nftProto.getNftID(nftUtxo.lockingScript.toBuffer())),
+      })
+      // 2.2.2 添加输出
+      addContractOutput({
+        txComposer,
+        lockingScript: nftSellContract.lockingScript,
+        dustCalculator: this.dustCalculator,
+      })
+
+      // 2.3 添加找零输出
+      const changeOutputIndex = addChangeOutput(txComposer, changeAddress, this.feeb)
+      unlockP2PKHInputs(txComposer, p2pkhInputIndexes, utxoPrivateKeys)
+
+      // 2.4检查最终费率
+      checkFeeRate(txComposer, this.feeb)
+
+      // 2.5 重新获取钱
+      utxos = [
+        {
+          txId: txComposer.getTxId(),
+          satoshis: txComposer.getOutput(changeOutputIndex).satoshis,
+          outputIndex: changeOutputIndex,
+          address: middleChangeAddress,
+        },
+      ]
+      utxoPrivateKeys = utxos.map((v) => middlePrivateKey).filter((v) => v)
+
+      sellTxComposer = txComposer
+    }
+
+    // 第三步：构造nft转移交易
+    // 接收地址为销售合约地址
+    const receiverAddress = new mvc.Address(
+      TokenUtil.getScriptHashBuf(nftSellContract.lockingScript.toBuffer()),
+      this.network
+    )
+    console.log({ receiverAddress: receiverAddress.toString() })
+    const { txComposer } = await this.createTransferTx({
+      genesis,
+      codehash,
+      tokenIndex,
+
+      utxos,
+      utxoPrivateKeys,
+
+      receiverAddress,
+      opreturnData,
+    })
+
+    const parsed0 = nftSellProto.parseDataPart(nftSellContract.lockingScript.toBuffer())
+    console.log({
+      parsed0,
+      genesis: parsed0.genesis.toString(),
+      tokenIndex: parsed0.tokenIndex.toString(),
+      satoshisPrice: parsed0.satoshisPrice.toString(),
+      nftId: toHex(nftUtxo.nftAddress.hashBuffer),
+      genesis2: genesis,
+    })
+
+    return { sellTxComposer, txComposer }
   }
 
   private async pretreatNftUtxo(nftUtxo, codehash: string, genesis: string) {
@@ -621,7 +1358,7 @@ export class NftManager {
 
     // 第二步：付钱
     // 2.1 添加付钱输入
-    const p2pkhInputIndexs = addP2PKHInputs(txComposer, utxos)
+    const p2pkhInputIndexes = addP2PKHInputs(txComposer, utxos)
 
     // 2.2 prevouts添加付钱utxo
     utxos.forEach((utxo) => {
@@ -661,7 +1398,7 @@ export class NftManager {
     })
 
     // 第七步：解锁付钱输入
-    unlockP2PKHInputs(txComposer, p2pkhInputIndexs, utxoPrivateKeys)
+    unlockP2PKHInputs(txComposer, p2pkhInputIndexes, utxoPrivateKeys)
 
     // 第八步：检查最终费率
     checkFeeRate(txComposer, this.feeb)
@@ -744,7 +1481,7 @@ export class NftManager {
     )
 
     // 第二步：添加付钱输入
-    const p2pkhInputIndexs = addP2PKHInputs(txComposer, utxos)
+    const p2pkhInputIndexes = addP2PKHInputs(txComposer, utxos)
 
     // 第三步：复制创世合约，添加创世输出
     const sensibleID = {
@@ -802,7 +1539,7 @@ export class NftManager {
     )
 
     // 第七步：解锁付钱输入
-    unlockP2PKHInputs(txComposer, p2pkhInputIndexs, utxoPrivateKeys)
+    unlockP2PKHInputs(txComposer, p2pkhInputIndexes, utxoPrivateKeys)
 
     // 第八步：检查最终费率
     checkFeeRate(txComposer, this.feeb)
@@ -910,7 +1647,7 @@ export class NftManager {
         inputSatoshis: txComposer.getInput(genesisInputIndex).output.satoshis,
         // inputSatoshis: genesisSatoshis,
       })
-      if (ret.success == false) console.log(ret)
+      // if (ret.success == false) console.log(ret)
 
       txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as mvc.Script)
     }
@@ -970,10 +1707,10 @@ export class NftManager {
       const amountCheckScriptBuf = Buffer.alloc(0)
       const amountCheckHashIndex = 0
       const amountCheckInputIndex = txComposer.getTx().inputs.length - 1
-      // const amountcheckTxProof = new TxOutputProof(
+      // const amountCheckTxProof = new TxOutputProof(
       //   TokenUtil.getTxOutputProof(amountCheckTx, amountCheckOutputIndex)
       // )
-      const amountcheckTxProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
+      const amountCheckTxProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
       const amountCheckScrypt = new Bytes(amountCheckScriptBuf.toString('hex'))
 
       const unlockingContract = nftContract.unlock({
@@ -992,7 +1729,7 @@ export class NftManager {
 
         amountCheckHashIndex,
         amountCheckInputIndex,
-        amountcheckTxProof,
+        amountCheckTxProof,
         amountCheckScrypt,
 
         senderPubKey: new PubKey(toHex(senderPubkey)),
@@ -1016,7 +1753,116 @@ export class NftManager {
         inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
       }
       let ret = unlockingContract.verify(txContext)
-      if (ret.success == false) console.log(ret)
+      // if (ret.success == false) console.log(ret)
+      // }
+
+      txComposer.getInput(nftInputIndex).setScript(unlockingContract.toScript() as mvc.Script)
+    }
+  }
+
+  // 解锁NFT合约并找零(合约)
+  private unlockNftAndChangeFromContract({
+    txComposer,
+    nftUtxo,
+    nftInputIndex,
+    codehash,
+    prevouts,
+    genesisScript,
+    nftOutputIndex,
+    sellInputIndex,
+    receiverAddress,
+    changeAddress,
+    opreturnScriptHex,
+  }: {
+    txComposer: TxComposer
+    nftUtxo: any
+    nftInputIndex: number
+    codehash: string
+    prevouts: any
+    genesisScript: any
+    nftOutputIndex: number
+    sellInputIndex: number
+    receiverAddress: Address
+    changeAddress: Address
+    opreturnScriptHex: string
+  }) {
+    const nftPrivateKey = this.purse.privateKey
+    const senderPubkey = nftPrivateKey.toPublicKey()
+
+    for (let c = 0; c < 2; c++) {
+      txComposer.clearChangeOutput()
+      const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
+
+      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, codehash)
+      let dataPartObj = nftProto.parseDataPart(nftUtxo.lockingScript.toBuffer())
+      nftContract.setFormatedDataPart(dataPartObj)
+
+      // 准备数据
+      const prevNftInputIndex = nftUtxo.satotxInfo.preNftInputIndex
+      const nftTx = new mvc.Transaction(nftUtxo.satotxInfo.txHex)
+      const inputRes = TokenUtil.getTxInputProof(nftTx, prevNftInputIndex)
+      const nftTxInputProof = new TxInputProof(inputRes[0])
+      const nftTxHeader = inputRes[1] as Bytes
+
+      const prevNftTxProof = new TxOutputProof(
+        TokenUtil.getTxOutputProof(nftUtxo.satotxInfo.preTx, nftUtxo.satotxInfo.preOutputIndex)
+      )
+
+      // 重要：解锁相关参数
+      const contractInputIndex = sellInputIndex
+      const contractTxProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
+      const amountCheckOutputIndex = 0
+      // const amountCheckScriptBuf = amountCheckTx.outputs[amountCheckOutputIndex].script.toBuffer()
+      const amountCheckScriptBuf = Buffer.alloc(0)
+      const amountCheckHashIndex = 0
+      const amountCheckInputIndex = txComposer.getTx().inputs.length - 1
+      // const amountCheckTxProof = new TxOutputProof(
+      //   TokenUtil.getTxOutputProof(amountCheckTx, amountCheckOutputIndex)
+      // )
+      const amountCheckTxProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
+      const amountCheckScrypt = new Bytes(amountCheckScriptBuf.toString('hex'))
+
+      const unlockingContract = nftContract.unlock({
+        txPreimage: txComposer.getInputPreimage(nftInputIndex),
+        prevouts: new Bytes(prevouts.toHex()),
+
+        prevNftInputIndex,
+        prevNftAddress: new Bytes(toHex(nftUtxo.preNftAddress.hashBuffer)),
+        nftTxHeader,
+        nftTxInputProof,
+        prevNftTxProof,
+        genesisScript,
+
+        contractInputIndex, // 销售合约输入index
+        contractTxProof,
+
+        amountCheckHashIndex,
+        amountCheckInputIndex,
+        amountCheckTxProof,
+        amountCheckScrypt,
+
+        senderPubKey: new PubKey(toHex(senderPubkey)),
+        senderSig: new Sig(toHex(txComposer.getTxFormatSig(nftPrivateKey, nftInputIndex))),
+
+        receiverAddress: new Bytes(toHex(receiverAddress.hashBuffer)),
+        nftOutputSatoshis: new Int(txComposer.getOutput(nftOutputIndex).satoshis),
+        opReturnScript: new Bytes(opreturnScriptHex),
+        changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
+        changeSatoshis: new Int(
+          changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0
+        ),
+
+        operation: nftProto.NFT_OP_TYPE.TRANSFER,
+      })
+
+      // if (this.debug && nftPrivateKey) {
+      let txContext = {
+        tx: txComposer.tx,
+        inputIndex: nftInputIndex,
+        inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
+      }
+      let ret = unlockingContract.verify(txContext)
+      // if (ret.success == false) console.log(ret)
       // }
 
       txComposer.getInput(nftInputIndex).setScript(unlockingContract.toScript() as mvc.Script)
@@ -1148,5 +1994,148 @@ export class NftManager {
       protoVersion: dataPart.protoVersion,
       protoType: dataPart.protoType,
     }
+  }
+
+  private async _calSellEstimateFee({
+    utxoMaxCount,
+    opreturnData,
+  }: {
+    utxoMaxCount: number
+    opreturnData: any
+  }) {
+    let p2pkhInputNum = utxoMaxCount
+
+    let stx = new SizeTransaction(this.feeb, this.dustCalculator)
+
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx.addP2PKHInput()
+    }
+    stx.addOutput(NftSellFactory.getLockingScriptSize())
+    if (opreturnData) {
+      stx.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+    }
+    stx.addP2PKHOutput()
+
+    return stx.getFee()
+  }
+
+  private async _calBuyEstimateFee({
+    codehash,
+    nftUtxoSatoshis,
+    nftSellUtxo,
+    sellUtxo,
+    genesisScript,
+    opreturnData,
+    utxoMaxCount,
+  }: {
+    codehash: string
+    nftUtxoSatoshis: number
+    sellUtxo: SellUtxo
+    nftSellUtxo: {
+      txId: string
+      outputIndex: number
+      satoshis: number
+      lockingScript: any
+    }
+    genesisScript: Bytes
+    opreturnData: any
+    utxoMaxCount: number
+  }) {
+    return 10000 // TODO
+    let p2pkhInputNum = utxoMaxCount
+
+    if (p2pkhInputNum > 3) {
+      throw new CodeError(
+        ErrCode.EC_UTXOS_MORE_THAN_3,
+        'Bsv utxos should be no more than 3 in this operation.'
+      )
+    }
+
+    let nftUnlockingSize = NftFactory.calUnlockingScriptSize(
+      p2pkhInputNum,
+      genesisScript,
+      opreturnData,
+      nftProto.NFT_OP_TYPE.UNLOCK_FROM_CONTRACT
+    )
+    let nftSize = NftFactory.getLockingScriptSize()
+
+    let unlockContractSize = NftUnlockContractCheckFactory.getLockingScriptSize(
+      NFT_UNLOCK_CONTRACT_TYPE.OUT_6
+    )
+
+    let dataPart = nftSellProto.parseDataPart(nftSellUtxo.lockingScript.toBuffer())
+    // let nftSellContract = NftSellFactory.createFromASM(
+    //   nftSellUtxo.lockingScript.toASM()
+    // );
+    let nftSellContract = NftSellFactory.createContract(
+      new Ripemd160(toHex(new mvc.Address(sellUtxo.sellerAddress, this.network).hashBuffer)),
+      sellUtxo.price,
+      new Bytes(codehash),
+      new Bytes(dataPart.nftID)
+    )
+    nftSellContract.setFormatedDataPart(
+      nftSellProto.parseDataPart(nftSellUtxo.lockingScript.toBuffer())
+    )
+
+    let nftSellUnlockingSize = NftSellFactory.calUnlockingScriptSize(NFT_SELL_OP.SELL)
+
+    let stx1 = new SizeTransaction(this.feeb, this.dustCalculator)
+    for (let i = 0; i < p2pkhInputNum; i++) {
+      stx1.addP2PKHInput()
+    }
+    stx1.addOutput(unlockContractSize)
+    stx1.addP2PKHOutput()
+
+    let stx2 = new SizeTransaction(this.feeb, this.dustCalculator)
+    stx2.addInput(nftSellUnlockingSize, nftSellUtxo.satoshis)
+    stx2.addInput(nftUnlockingSize, nftUtxoSatoshis)
+
+    stx2.addP2PKHInput()
+
+    let prevouts = new Prevouts()
+    prevouts.addVout(dummyTxId, 0)
+    prevouts.addVout(dummyTxId, 0)
+    prevouts.addVout(dummyTxId, 0)
+    prevouts.addVout(dummyTxId, 0)
+
+    let otherOutputsLen = 0
+    if (opreturnData) {
+      otherOutputsLen =
+        otherOutputsLen + 4 + 8 + 4 + mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length
+    }
+    otherOutputsLen = otherOutputsLen + 4 + 8 + 4 + 25
+    let otherOutputs = new Bytes(toHex(Buffer.alloc(otherOutputsLen, 0)))
+
+    let unlockContractUnlockingSize = NftUnlockContractCheckFactory.calUnlockingScriptSize(
+      NFT_UNLOCK_CONTRACT_TYPE.OUT_6,
+      new Bytes(prevouts.toHex()),
+      otherOutputs
+    )
+
+    stx2.addInput(
+      unlockContractUnlockingSize,
+      this.dustCalculator.getDustThreshold(unlockContractSize)
+    )
+
+    stx2.addP2PKHOutput()
+    stx2.addOutput(nftSize)
+
+    if (opreturnData) {
+      stx2.addOpReturnOutput(mvc.Script.buildSafeDataOut(opreturnData).toBuffer().length)
+    }
+
+    stx2.addP2PKHOutput()
+
+    //dummy
+    stx2.addP2PKHInput()
+    stx2.addP2PKHInput()
+    stx2.addP2PKHInput()
+    stx2.addP2PKHInput()
+    stx2.addP2PKHInput()
+    stx2.addP2PKHInput()
+    stx2.addP2PKHInput()
+    stx2.addP2PKHInput()
+
+    return stx1.getFee() + stx2.getFee() + nftSellContract.constuctParams.bsvRecAmount
   }
 }
