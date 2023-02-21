@@ -2434,6 +2434,149 @@ export class NftManager {
     }
   }
 
+  public async getCancelSellEstimateFee({
+    genesis,
+    codehash,
+    tokenIndex,
+
+    sellerWif,
+    sellUtxo,
+
+    opreturnData,
+    utxoMaxCount = 3,
+  }: {
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    sellerWif: string
+    sellUtxo?: SellUtxo
+    opreturnData?: any
+
+    utxoMaxCount?: number
+  }) {
+    // checkParamGenesis(genesis)
+    // checkParamCodehash(codehash)
+
+    const sellerPrivateKey = new mvc.PrivateKey(sellerWif)
+    const sellerPublicKey = sellerPrivateKey.publicKey
+
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+
+    // 第二步：找到并重建销售utxo
+    // 2.1 查找销售utxo
+    if (!sellUtxo) {
+      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
+    }
+    if (!sellUtxo) {
+      throw new CodeError(
+        ErrCode.EC_NFT_NOT_ON_SELL,
+        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+      )
+    }
+
+    let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
+    let nftSellTx = new mvc.Transaction(nftSellTxHex)
+    let nftSellUtxo = {
+      txId: sellUtxo.txId,
+      outputIndex: sellUtxo.outputIndex,
+      satoshis: nftSellTx.outputs[sellUtxo.outputIndex].satoshis,
+      lockingScript: nftSellTx.outputs[sellUtxo.outputIndex].script,
+    }
+
+    let genesisScript = nftUtxo.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
+      ? new Bytes(nftUtxo.preLockingScript.toHex())
+      : new Bytes('')
+
+    let estimateSatoshis = await this._calCancelSellEstimateFee({
+      codehash,
+      nftUtxoSatoshis: nftUtxo.satoshis,
+      nftSellUtxo,
+      genesisScript,
+      utxoMaxCount,
+      opreturnData,
+    })
+    return estimateSatoshis
+  }
+
+  public async getBuyEstimateFee({
+    genesis,
+    codehash,
+    tokenIndex,
+
+    buyerWif,
+    sellUtxo,
+
+    opreturnData,
+    utxoMaxCount = 3,
+  }: {
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    buyerWif: string
+    sellUtxo?: SellUtxo
+    opreturnData?: any
+
+    utxoMaxCount?: number
+  }) {
+    // checkParamGenesis(genesis)
+    // checkParamCodehash(codehash)
+
+    const buyerPrivateKey = new mvc.PrivateKey(buyerWif)
+    const buyerPublicKey = buyerPrivateKey.publicKey
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+
+    // 1.2 验证nft Utxo
+    nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
+
+    // 第二步：找到并重建销售utxo
+    // 2.1 查找销售utxo
+    if (!sellUtxo) {
+      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
+    }
+    if (!sellUtxo) {
+      throw new CodeError(
+        ErrCode.EC_NFT_NOT_ON_SELL,
+        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+      )
+    }
+
+    let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
+    let nftSellTx = new mvc.Transaction(nftSellTxHex)
+    let nftSellUtxo = {
+      txId: sellUtxo.txId,
+      outputIndex: sellUtxo.outputIndex,
+      satoshis: nftSellTx.outputs[sellUtxo.outputIndex].satoshis,
+      lockingScript: nftSellTx.outputs[sellUtxo.outputIndex].script,
+    }
+
+    let genesisScript = nftUtxo.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
+      ? new Bytes(nftUtxo.preLockingScript.toHex())
+      : new Bytes('')
+
+    let estimateSatoshis = await this._calBuyEstimateFee({
+      codehash,
+      nftUtxoSatoshis: nftUtxo.satoshis,
+      nftSellUtxo,
+      sellUtxo,
+      genesisScript,
+      utxoMaxCount,
+      opreturnData,
+    })
+    return estimateSatoshis
+  }
+
   public async getSellEstimateFee({
     genesis,
     codehash,
