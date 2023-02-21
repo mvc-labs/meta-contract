@@ -178,6 +178,23 @@ export class MVC implements ApiBase {
   }
 
   /**
+   * 快速查询txid是否存在
+   * @param {string} txid
+   */
+  public async checkTxSeen(txid: string): Promise<boolean> {
+    let path = `/tx/${txid}/seen`
+    let url = this.serverBase + path
+    let _res: any = await Net.httpGet(
+      url,
+      {},
+      {
+        headers: this._getHeaders(path),
+      }
+    )
+    return _res
+  }
+
+  /**
    * 通过FT合约CodeHash+溯源genesis获取某地址的utxo列表
    */
   public async getFungibleTokenUnspents(

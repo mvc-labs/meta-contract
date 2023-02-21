@@ -89,6 +89,7 @@ export interface ApiBase {
   authorize: (options: AuthorizationOption) => void
   getUnspents: (address: string) => Promise<SA_utxo[]>
   getRawTxData: (txid: string) => Promise<string>
+  checkTxSeen: (txid: string) => Promise<boolean>
   broadcast: (hex: string) => Promise<string>
   getFungibleTokenUnspents: (
     codehash: string,
@@ -177,6 +178,10 @@ export class Api implements ApiBase {
 
   async getRawTxData(txid: string) {
     return this.apiHandler.getRawTxData(txid)
+  }
+
+  async checkTxSeen(txid: string) {
+    return this.apiHandler.checkTxSeen(txid)
   }
 
   async broadcast(hex: string) {
