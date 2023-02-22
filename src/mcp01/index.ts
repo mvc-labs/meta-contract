@@ -143,7 +143,7 @@ export class NftManager {
     apiTarget: API_TARGET
     feeb?: number
   }) {
-    this.dustCalculator = new DustCalculator(300, null)
+    this.dustCalculator = new DustCalculator(Transaction.DUST_AMOUNT, null)
     this.network = network
     this._api = new Api(network, apiTarget)
     this.unlockContractCodeHashArray = ContractUtil.unlockContractCodeHashArray
@@ -530,6 +530,14 @@ export class NftManager {
   }) {
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
+
+    // 检查售价：不能低于22000聪
+    if (price < 22000) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'Selling Price must be greater than or equals to 22000 satoshis. 销售价格最低为22000聪。'
+      )
+    }
 
     // 准备钱💰；utxo不能超过3个
     const { utxos, utxoPrivateKeys } = await prepareUtxos(
@@ -1083,6 +1091,13 @@ export class NftManager {
 
     middleChangeAddress,
     middleWif,
+
+    publisherAddress,
+    publisherFee,
+    publisherFeeRate,
+    creatorAddress,
+    creatorFee,
+    creatorFeeRate,
   }: {
     genesis: string
     codehash: string
@@ -1098,6 +1113,13 @@ export class NftManager {
 
     middleChangeAddress?: string | mvc.Address
     middleWif?: string
+
+    publisherAddress?: string
+    publisherFee?: number
+    publisherFeeRate?: number
+    creatorAddress?: string
+    creatorFee?: number
+    creatorFeeRate?: number
   }) {
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
@@ -1135,6 +1157,29 @@ export class NftManager {
       middlePrivateKey = utxoPrivateKeys[0]
     }
 
+    // 查找销售utxo
+    if (!sellUtxo) {
+      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
+    }
+    if (!sellUtxo) {
+      throw new CodeError(
+        ErrCode.EC_NFT_NOT_ON_SELL,
+        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+      )
+    }
+    const price = sellUtxo.price
+
+    // 检查发行者和创作者的地址和费率参数
+    this._checkRoyaltyParams({
+      price,
+      publisherAddress,
+      publisherFee,
+      publisherFeeRate,
+      creatorAddress,
+      creatorFee,
+      creatorFeeRate,
+    })
+
     let { unlockCheckTxComposer, txComposer } = await this.createBuyTx({
       utxos,
       utxoPrivateKeys,
@@ -1150,6 +1195,13 @@ export class NftManager {
       changeAddress,
       middlePrivateKey,
       middleChangeAddress,
+
+      publisherAddress,
+      publisherFee,
+      publisherFeeRate,
+      creatorAddress,
+      creatorFee,
+      creatorFeeRate,
     })
 
     let unlockCheckTxHex = unlockCheckTxComposer.getRawHex()
@@ -1183,6 +1235,13 @@ export class NftManager {
     changeAddress,
     middlePrivateKey,
     middleChangeAddress,
+
+    publisherAddress,
+    publisherFee,
+    publisherFeeRate,
+    creatorAddress,
+    creatorFee,
+    creatorFeeRate,
   }: {
     utxos: Utxo[]
     utxoPrivateKeys: mvc.PrivateKey[]
@@ -1198,6 +1257,13 @@ export class NftManager {
     changeAddress: mvc.Address
     middlePrivateKey?: mvc.PrivateKey
     middleChangeAddress: mvc.Address
+
+    publisherAddress?: string
+    publisherFee?: number
+    publisherFeeRate?: number
+    creatorAddress?: string
+    creatorFee?: number
+    creatorFeeRate?: number
   }): Promise<{ unlockCheckTxComposer: TxComposer; txComposer: TxComposer }> {
     // 第一步：找回并准备NFT Utxo
     // 1.1 找回nft Utxo
@@ -1213,16 +1279,8 @@ export class NftManager {
     nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
 
     // 第二步：找到并重建销售utxo
-    // 2.1 查找销售utxo
-    if (!sellUtxo) {
-      sellUtxo = await this.api.getNftSellUtxo(codehash, genesis, tokenIndex)
-    }
-    if (!sellUtxo) {
-      throw new CodeError(
-        ErrCode.EC_NFT_NOT_ON_SELL,
-        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
-      )
-    }
+    // 2.1 查找销售utxo的步骤在上面已经完成（为了拿到价格，进行版税费用检查）
+
     // 2.2 重建销售utxo
     let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
     let nftSellTx = new mvc.Transaction(nftSellTxHex)
@@ -1306,7 +1364,7 @@ export class NftManager {
 
     // 第五步：构建NFT转移交易
     // 输入：1.销售 2.nft 3.钱 4.解锁合约
-    // 输出：1.销售者所得 2.nft 3.opreturn 4.找零
+    // 输出：1.销售者所得 (1.5 版税：发行者、创作者) 2.nft 3.opreturn 4.找零
     // 转移合约交易构建器
     const txComposer = new TxComposer()
     let prevouts = new Prevouts()
@@ -1350,6 +1408,24 @@ export class NftManager {
       address: sellerAddress,
       satoshis: sellerSatoshis,
     })
+
+    // 5.6.5 版税：发行者、创作者
+    if (publisherAddress) {
+      // 有发行者地址，则根据费用或费率构建发行者费用输出
+      const publisherAmount = publisherFee || Math.ceil(sellerSatoshis * publisherFeeRate)
+      txComposer.appendP2PKHOutput({
+        address: new mvc.Address(publisherAddress, this.network),
+        satoshis: publisherAmount,
+      })
+    }
+    if (creatorAddress) {
+      // 有创作者地址，则根据费用或费率构建创作者费用输出
+      const creatorAmount = creatorFee || Math.ceil(sellerSatoshis * creatorFeeRate)
+      txComposer.appendP2PKHOutput({
+        address: new mvc.Address(creatorAddress, this.network),
+        satoshis: creatorAmount,
+      })
+    }
 
     // 5.7 添加nft输出
     // 5.7.1 构造nft脚本（将nft的所有权转移给买家）
@@ -2790,5 +2866,93 @@ export class NftManager {
     stx2.addP2PKHInput()
 
     return stx1.getFee() + stx2.getFee() + nftSellContract.constuctParams.bsvRecAmount
+  }
+
+  private _checkRoyaltyParams({
+    price,
+    publisherAddress,
+    publisherFee,
+    publisherFeeRate,
+    creatorAddress,
+    creatorFee,
+    creatorFeeRate,
+  }: {
+    price: number
+    publisherAddress?: string
+    publisherFee?: number
+    publisherFeeRate?: number
+    creatorAddress?: string
+    creatorFee?: number
+    creatorFeeRate?: number
+  }) {
+    // 1. 当地址不存在时，不允许设置费率或者固定费用
+    if (!publisherAddress && (publisherFee || publisherFeeRate)) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'publisherAddress is not set, but publisherFee or publisherFeeRate is set. 需要先指定发行者地址，再设置费率或者固定费用。'
+      )
+    }
+    if (!creatorAddress && (creatorFee || creatorFeeRate)) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'creatorAddress is not set, but creatorFee or creatorFeeRate is set. 需要先指定创作者地址，再设置费率或者固定费用。'
+      )
+    }
+
+    // 2. 当地址存在时，必须设置费率或者固定费用，但不能同时设置
+    if (publisherAddress && !publisherFee && !publisherFeeRate) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'publisherAddress is set, but publisherFee and publisherFeeRate are not set. 需要设置发行者费率或者固定费用。'
+      )
+    }
+    if (publisherAddress && publisherFee && publisherFeeRate) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'publisherAddress is set, but publisherFee and publisherFeeRate are set. 不能同时设置发行者费率和固定费用。'
+      )
+    }
+    if (creatorAddress && !creatorFee && !creatorFeeRate) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'creatorAddress is set, but creatorFee and creatorFeeRate are not set. 需要设置创作者费率或者固定费用。'
+      )
+    }
+    if (creatorAddress && creatorFee && creatorFeeRate) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'creatorAddress is set, but creatorFee and creatorFeeRate are set. 不能同时设置创作者费率和固定费用。'
+      )
+    }
+
+    // 3. 固定费用或用费率算出来的费用，必须大于等于粉尘限制（546）
+    if (publisherFee && publisherFee < this.dustCalculator.getDustThreshold(1)) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'publisherFee is too small. 发行者固定费用太小。(需要大于等于 546 satoshis)'
+      )
+    }
+    if (publisherFeeRate && publisherFeeRate * price < this.dustCalculator.getDustThreshold(1)) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'publisherFeeRate is too small. 发行者费率太小。(计算的发行费需要大于等于 546 satoshis)'
+      )
+    }
+
+    if (creatorFee && creatorFee < this.dustCalculator.getDustThreshold(1)) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'creatorFee is too small. 创作者固定费用太小。(需要大于等于 546 satoshis)'
+      )
+    }
+
+    if (creatorFeeRate && creatorFeeRate * price < this.dustCalculator.getDustThreshold(1)) {
+      throw new CodeError(
+        ErrCode.EC_INVALID_ARGUMENT,
+        'creatorFeeRate is too small. 创作者费率太小。(计算的创作者费需要大于等于 546 satoshis)'
+      )
+    }
+
+    return true
   }
 }

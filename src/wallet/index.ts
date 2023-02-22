@@ -1,7 +1,7 @@
 import * as mvc from '../mvc'
-import {dumpTx, P2PKH_UNLOCK_SIZE} from '../common/utils'
-import {Api, API_NET, API_TARGET, ApiBase, SA_utxo} from '../api'
-import {TxComposer} from '../tx-composer'
+import { dumpTx, P2PKH_UNLOCK_SIZE } from '../common/utils'
+import { Api, API_NET, API_TARGET, ApiBase, SA_utxo } from '../api'
+import { TxComposer } from '../tx-composer'
 
 type Receiver = {
   amount: number
@@ -57,7 +57,7 @@ export class Wallet {
   public async send(address: string, amount: number, options?: BroadcastOptions) {
     const txComposer = new TxComposer()
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
-    const pickedUtxos = this.pickUtxo(utxos, amount);
+    const pickedUtxos = this.pickUtxo(utxos, amount)
     pickedUtxos.forEach((v) => {
       txComposer.appendP2PKHInput({
         address: new mvc.Address(v.address, this.network),
@@ -129,7 +129,7 @@ export class Wallet {
   public async evenSplit(shares: number, minShareValue = 0, options?: BroadcastOptions) {
     const txComposer = new TxComposer()
     const utxos = await this.blockChainApi.getUnspents(this.address.toString())
-    const sumAmount = utxos.map(utxo => utxo.satoshis).reduce((a, b) => a + b, 0);
+    const sumAmount = utxos.map((utxo) => utxo.satoshis).reduce((a, b) => a + b, 0)
     utxos.forEach((v) => {
       txComposer.appendP2PKHInput({
         address: new mvc.Address(v.address, this.network),
@@ -138,12 +138,12 @@ export class Wallet {
         satoshis: v.satoshis,
       })
     })
-    const shareValue = Math.floor(sumAmount / shares);
+    const shareValue = Math.floor(sumAmount / shares)
     if (shareValue < minShareValue) {
       throw new Error(`"Share value ${shareValue} is less than minShareValue ${minShareValue}"`)
     }
     for (let i = 0; i < shares - 1; i++) {
-      txComposer.appendP2PKHOutput({address: this.address, satoshis:shareValue});
+      txComposer.appendP2PKHOutput({ address: this.address, satoshis: shareValue })
     }
     txComposer.appendChangeOutput(this.address, this.feeb)
     utxos.forEach((v, index) => {
@@ -190,10 +190,18 @@ export class Wallet {
   private pickUtxo(utxos: SA_utxo[], amount: number) {
     // amount + 2 outputs + buffer
     let requiredAmount = amount + 34 * 2 * this.feeb + 100
-    const candidateUtxos: SA_utxo[] = [];
+    const candidateUtxos: SA_utxo[] = []
     // split utxo to confirmed and unconfirmed and shuffle them
-    const confirmedUtxos = utxos.filter(utxo => {return utxo.height > 0}).sort(() => Math.random() - 0.5)
-    const unconfirmedUtxos = utxos.filter(utxo => {return utxo.height < 0}).sort(() => Math.random() - 0.5)
+    const confirmedUtxos = utxos
+      .filter((utxo) => {
+        return utxo.height > 0
+      })
+      .sort(() => Math.random() - 0.5)
+    const unconfirmedUtxos = utxos
+      .filter((utxo) => {
+        return utxo.height < 0
+      })
+      .sort(() => Math.random() - 0.5)
 
     let current = 0
     // use confirmed first
