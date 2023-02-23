@@ -2530,7 +2530,7 @@ export class NftManager {
 
     utxoMaxCount?: number
   }) {
-    return 25000 // TODO
+    return 27000 // TODO
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
 
@@ -2602,19 +2602,6 @@ export class NftManager {
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
 
-    const buyerPrivateKey = new mvc.PrivateKey(buyerWif)
-    const buyerPublicKey = buyerPrivateKey.publicKey
-    let { nftUtxo } = await getNftInfo({
-      tokenIndex,
-      codehash,
-      genesis,
-      api: this.api,
-      network: this.network,
-    })
-
-    // 1.2 验证nft Utxo
-    nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
-
     // 第二步：找到并重建销售utxo
     // 2.1 查找销售utxo
     if (!sellUtxo) {
@@ -2627,6 +2614,8 @@ export class NftManager {
       )
     }
 
+    return Math.ceil(sellUtxo.price * 1.06) + 25000 // TODO
+
     let nftSellTxHex = await this.api.getRawTxData(sellUtxo.txId)
     let nftSellTx = new mvc.Transaction(nftSellTxHex)
     let nftSellUtxo = {
@@ -2635,6 +2624,19 @@ export class NftManager {
       satoshis: nftSellTx.outputs[sellUtxo.outputIndex].satoshis,
       lockingScript: nftSellTx.outputs[sellUtxo.outputIndex].script,
     }
+
+    const buyerPrivateKey = new mvc.PrivateKey(buyerWif)
+    const buyerPublicKey = buyerPrivateKey.publicKey
+    let { nftUtxo } = await getNftInfo({
+      tokenIndex,
+      codehash,
+      genesis,
+      api: this.api,
+      network: this.network,
+    })
+
+    // 1.2 验证nft Utxo
+    nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
 
     let genesisScript = nftUtxo.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
       ? new Bytes(nftUtxo.preLockingScript.toHex())
