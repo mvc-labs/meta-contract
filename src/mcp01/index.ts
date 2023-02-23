@@ -136,16 +136,18 @@ export class NftManager {
     purse,
     network = API_NET.MAIN,
     apiTarget = API_TARGET.MVC,
+    apiHost,
     feeb = FEEB,
   }: {
     purse: string
     network: API_NET
     apiTarget: API_TARGET
+    apiHost?: string
     feeb?: number
   }) {
     this.dustCalculator = new DustCalculator(Transaction.DUST_AMOUNT, null)
     this.network = network
-    this._api = new Api(network, apiTarget)
+    this._api = new Api(network, apiTarget, apiHost)
     this.unlockContractCodeHashArray = ContractUtil.unlockContractCodeHashArray
 
     if (feeb) this.feeb = feeb

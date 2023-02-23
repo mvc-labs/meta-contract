@@ -145,6 +145,7 @@ type Purse = {
 type Mcp02Options = {
   network?: API_NET
   apiTarget?: API_TARGET
+  apiHost?: string
   purse?: string
   feeb?: number
   dustLimitFactor?: number
@@ -221,12 +222,13 @@ export class FtManager {
     apiTarget = API_TARGET.MVC,
     purse,
     feeb = FEEB,
+    apiHost,
     dustLimitFactor = 300,
     dustAmount,
   }: Mcp02Options) {
     // 初始化API
     this.network = network
-    this._api = new Api(network, apiTarget)
+    this._api = new Api(network, apiTarget, apiHost)
 
     // 初始化钱包
     if (purse) {
