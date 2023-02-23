@@ -139,7 +139,7 @@ export function checkFeeRate(txComposer: TxComposer, feeb) {
   if (feeRate < feeb) {
     throw new CodeError(
       ErrCode.EC_INSUFFICIENT_BSV,
-      `Insufficient balance.The fee rate should not be less than ${feeb}, but in the end it is ${feeRate}. 余额不足，需要${feeb} sat/byte的费率，实际为${feeRate} sat/byte`
+      `Insufficient balance.The fee rate should not be less than ${feeb}, but in the end it is ${feeRate}.`
     )
   }
 }

@@ -770,7 +770,7 @@ export class NftManager {
     if (!sellUtxo) {
       throw new CodeError(
         ErrCode.EC_NFT_NOT_ON_SELL,
-        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+        'The NFT is not for sale because the corresponding SellUtxo cannot be found.'
       )
     }
     // 2.2 重建销售utxo
@@ -801,7 +801,7 @@ export class NftManager {
     if (balance < estCancelSellFee) {
       throw new CodeError(
         ErrCode.EC_INSUFFICIENT_BSV,
-        `Insufficient balance.It take more than ${estCancelSellFee}, but only ${balance}. 余额不足，需要${estCancelSellFee}，但是只有${balance}。`
+        `Insufficient balance.It take more than ${estCancelSellFee}, but only ${balance}.`
       )
     }
 
@@ -2530,6 +2530,7 @@ export class NftManager {
 
     utxoMaxCount?: number
   }) {
+    return 25000 // TODO
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
 
@@ -2565,9 +2566,7 @@ export class NftManager {
       lockingScript: nftSellTx.outputs[sellUtxo.outputIndex].script,
     }
 
-    let genesisScript = nftUtxo.preNftAddress.hashBuffer.equals(Buffer.alloc(20, 0))
-      ? new Bytes(nftUtxo.preLockingScript.toHex())
-      : new Bytes('')
+    let genesisScript = new Bytes(nftUtxo.preLockingScript.toHex())
 
     let estimateSatoshis = await this._calCancelSellEstimateFee({
       codehash,
@@ -2745,7 +2744,7 @@ export class NftManager {
     opreturnData: any
     utxoMaxCount: number
   }) {
-    return 15000 // TODO
+    return 25000 // TODO
   }
 
   private async _calBuyEstimateFee({
