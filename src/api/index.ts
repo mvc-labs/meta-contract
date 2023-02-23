@@ -7,6 +7,7 @@ export enum API_NET {
 
 export enum API_TARGET {
   MVC = 'mvc',
+  PROXY = 'proxy',
 }
 
 export type NonFungibleTokenUnspent = {

@@ -19,16 +19,16 @@ type ResData = {
   msg: string
 }
 
-export class MVC implements ApiBase {
+export class MVCProxy implements ApiBase {
   serverBase: string
   authorization: string
   privateKey: any
   publicKey: any
   constructor(apiNet: API_NET, serverBase?: string) {
     if (apiNet == API_NET.MAIN) {
-      this.serverBase = 'https://api-mvc.metasv.com'
+      this.serverBase = 'https://api.show3.io/metasv'
     } else {
-      this.serverBase = 'https://api-mvc-testnet.metasv.com'
+      this.serverBase = 'https://testmvc.showmoney.app/metasv'
     }
     if (serverBase) {
       this.serverBase = serverBase

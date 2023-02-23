@@ -2530,7 +2530,7 @@ export class NftManager {
 
     utxoMaxCount?: number
   }) {
-    return 27000 // TODO
+    return 32000 // TODO
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
 
