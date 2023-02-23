@@ -1134,7 +1134,7 @@ export class NftManager {
     if (utxos.length > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        '销售合约使用的utxo数量应当少于等于3个，请先归集utxo。MVC utxos should be no more than 3 in this operation, please merge it first.'
+        'MVC utxos should be no more than 3 in this operation, please merge it first.'
       )
     }
 
@@ -1164,7 +1164,7 @@ export class NftManager {
     if (!sellUtxo) {
       throw new CodeError(
         ErrCode.EC_NFT_NOT_ON_SELL,
-        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+        'The NFT is not for sale because the corresponding SellUtxo cannot be found.'
       )
     }
     const price = sellUtxo.price
@@ -1306,7 +1306,7 @@ export class NftManager {
     if (balance < estBuyFee) {
       throw new CodeError(
         ErrCode.EC_INSUFFICIENT_BSV,
-        `Insufficient balance.It take more than ${estBuyFee}, but only ${balance}.余额不足，需要${estBuyFee}，但是只有${balance}。`
+        `Insufficient balance.It take more than ${estBuyFee}, but only ${balance}.`
       )
     }
 
@@ -1663,7 +1663,7 @@ export class NftManager {
     if (balance < totalFee) {
       throw new CodeError(
         ErrCode.EC_INSUFFICIENT_BSV,
-        `Insufficient balance.It take more than ${totalFee}, but only ${balance}. 余额不足，需要${totalFee}，但是只有${balance}。`
+        `Insufficient balance.It take more than ${totalFee}, but only ${balance}.`
       )
     }
 
@@ -1853,7 +1853,7 @@ export class NftManager {
     if (balance < estimateSatoshis) {
       throw new CodeError(
         ErrCode.EC_INSUFFICIENT_BSV,
-        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}. 余额不足，需要${estimateSatoshis}，但是只有${balance}。`
+        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
 
@@ -1981,7 +1981,7 @@ export class NftManager {
     if (balance < estimateSatoshis) {
       throw new CodeError(
         ErrCode.EC_INSUFFICIENT_BSV,
-        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}. 余额不足，需要${estimateSatoshis}，但是只有${balance}。`
+        `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
 
@@ -2552,7 +2552,7 @@ export class NftManager {
     if (!sellUtxo) {
       throw new CodeError(
         ErrCode.EC_NFT_NOT_ON_SELL,
-        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+        'The NFT is not for sale because the corresponding SellUtxo cannot be found.'
       )
     }
 
@@ -2624,7 +2624,7 @@ export class NftManager {
     if (!sellUtxo) {
       throw new CodeError(
         ErrCode.EC_NFT_NOT_ON_SELL,
-        '找不到此NFT对应的销售合约（NFT当前不在售，或数据服务商未响应）。The NFT is not for sale because the corresponding SellUtxo cannot be found.'
+        'The NFT is not for sale because the corresponding SellUtxo cannot be found.'
       )
     }
 
@@ -2770,7 +2770,7 @@ export class NftManager {
     opreturnData: any
     utxoMaxCount: number
   }) {
-    return 10000 // TODO
+    return Math.ceil(sellUtxo.price * 1.06) + 25000 // TODO
     let p2pkhInputNum = utxoMaxCount
 
     if (p2pkhInputNum > 3) {
@@ -2889,13 +2889,13 @@ export class NftManager {
     if (!publisherAddress && (publisherFee || publisherFeeRate)) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'publisherAddress is not set, but publisherFee or publisherFeeRate is set. 需要先指定发行者地址，再设置费率或者固定费用。'
+        'publisherAddress is not set, but publisherFee or publisherFeeRate is set.'
       )
     }
     if (!creatorAddress && (creatorFee || creatorFeeRate)) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'creatorAddress is not set, but creatorFee or creatorFeeRate is set. 需要先指定创作者地址，再设置费率或者固定费用。'
+        'creatorAddress is not set, but creatorFee or creatorFeeRate is set.'
       )
     }
 
@@ -2903,25 +2903,25 @@ export class NftManager {
     if (publisherAddress && !publisherFee && !publisherFeeRate) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'publisherAddress is set, but publisherFee and publisherFeeRate are not set. 需要设置发行者费率或者固定费用。'
+        'publisherAddress is set, but publisherFee and publisherFeeRate are not set.'
       )
     }
     if (publisherAddress && publisherFee && publisherFeeRate) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'publisherAddress is set, but publisherFee and publisherFeeRate are set. 不能同时设置发行者费率和固定费用。'
+        'publisherAddress is set, but publisherFee and publisherFeeRate are set.'
       )
     }
     if (creatorAddress && !creatorFee && !creatorFeeRate) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'creatorAddress is set, but creatorFee and creatorFeeRate are not set. 需要设置创作者费率或者固定费用。'
+        'creatorAddress is set, but creatorFee and creatorFeeRate are not set.'
       )
     }
     if (creatorAddress && creatorFee && creatorFeeRate) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'creatorAddress is set, but creatorFee and creatorFeeRate are set. 不能同时设置创作者费率和固定费用。'
+        'creatorAddress is set, but creatorFee and creatorFeeRate are set.'
       )
     }
 
@@ -2929,27 +2929,27 @@ export class NftManager {
     if (publisherFee && publisherFee < this.dustCalculator.getDustThreshold(1)) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'publisherFee is too small. 发行者固定费用太小。(需要大于等于 546 satoshis)'
+        'publisherFee is too small. It should be at least 546 satoshis.'
       )
     }
     if (publisherFeeRate && publisherFeeRate * price < this.dustCalculator.getDustThreshold(1)) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'publisherFeeRate is too small. 发行者费率太小。(计算的发行费需要大于等于 546 satoshis)'
+        'publisherFeeRate is too small. It should be at least 546 satoshis.'
       )
     }
 
     if (creatorFee && creatorFee < this.dustCalculator.getDustThreshold(1)) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'creatorFee is too small. 创作者固定费用太小。(需要大于等于 546 satoshis)'
+        'creatorFee is too small. It should be at least 546 satoshis.'
       )
     }
 
     if (creatorFeeRate && creatorFeeRate * price < this.dustCalculator.getDustThreshold(1)) {
       throw new CodeError(
         ErrCode.EC_INVALID_ARGUMENT,
-        'creatorFeeRate is too small. 创作者费率太小。(计算的创作者费需要大于等于 546 satoshis)'
+        'creatorFeeRate is too small. It should be at least 546 satoshis.'
       )
     }
 

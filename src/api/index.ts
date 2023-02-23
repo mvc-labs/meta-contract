@@ -67,6 +67,7 @@ export type NftSellUtxo = {
   txId: string
   outputIndex: number
   sellerAddress: string
+  contractAddress?: string
   satoshisPrice: number
   price: number
 }
@@ -123,7 +124,12 @@ export interface ApiBase {
     pendingBalance: number
   }>
 
-  getNftSellUtxo(codehash: string, genesis: string, tokenIndex: string): Promise<NftSellUtxo>
+  getNftSellUtxo(
+    codehash: string,
+    genesis: string,
+    tokenIndex: string,
+    includesNotReady?: boolean
+  ): Promise<NftSellUtxo>
 
   getNftSellList(
     codehash: string,
@@ -220,8 +226,13 @@ export class Api implements ApiBase {
     return this.apiHandler.getNonFungibleTokenSummary(address)
   }
 
-  async getNftSellUtxo(codehash: string, genesis: string, tokenIndex: string) {
-    return this.apiHandler.getNftSellUtxo(codehash, genesis, tokenIndex)
+  async getNftSellUtxo(
+    codehash: string,
+    genesis: string,
+    tokenIndex: string,
+    includesNotReady?: boolean
+  ) {
+    return this.apiHandler.getNftSellUtxo(codehash, genesis, tokenIndex, includesNotReady)
   }
 
   async getNftSellList(codehash: string, genesis: string, cursor?: number, size?: number) {

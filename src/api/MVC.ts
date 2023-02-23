@@ -382,13 +382,20 @@ export class MVC implements ApiBase {
     }
   }
 
-  public async getNftSellUtxo(codehash: string, genesis: string, tokenIndex: string) {
+  public async getNftSellUtxo(
+    codehash: string,
+    genesis: string,
+    tokenIndex: string,
+    includesNotReady?: boolean
+  ) {
     let path = `/contract/nft/sell/genesis/${codehash}/${genesis}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, { tokenIndex }, { headers: this._getHeaders(path) })
 
     let ret = _res
-      .filter((v) => v.isReady == true)
+      .filter((v) => {
+        return includesNotReady || v.isReady == true
+      })
       .map((v) => ({
         codehash,
         genesis,
@@ -396,6 +403,7 @@ export class MVC implements ApiBase {
         txId: v.txid,
         outputIndex: v.txIndex,
         sellerAddress: v.address,
+        contractAddress: v.contractAddress,
         satoshisPrice: v.price,
         price: v.price,
       }))[0]
