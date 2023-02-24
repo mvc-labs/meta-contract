@@ -110,5 +110,5 @@
     "buildType": "debug",
     "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp01/contract/txUtil.scrypt",
     "hex": "",
-    "sourceMapFile": ""
+    "sourceMapFile": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp01/contract-desc/txUtil.map.json"
 }

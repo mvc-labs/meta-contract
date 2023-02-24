@@ -28,6 +28,6 @@
     "stateProps": [],
     "buildType": "debug",
     "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/token/tokenAmountCheckProto.scrypt",
-    "hex": "515301405501149376011493",
-    "sourceMapFile": ""
+    "hex": "51530140550114930079011493",
+    "sourceMapFile": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract-desc/tokenAmountCheckProto.map.json"
 }

@@ -23,5 +23,5 @@
     "buildType": "debug",
     "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/protoheader.scrypt",
     "hex": "51530140",
-    "sourceMapFile": ""
+    "sourceMapFile": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract-desc/protoheader.map.json"
 }

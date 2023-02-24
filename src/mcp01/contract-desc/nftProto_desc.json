@@ -28,6 +28,6 @@
     "stateProps": [],
     "buildType": "debug",
     "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp01/contract/nft/nftProto.scrypt",
-    "hex": "515301400114559376012493760114937658937658937601149376012493",
-    "sourceMapFile": ""
+    "hex": "515301400114559300790124930079011493007958930079589300790114930079012493",
+    "sourceMapFile": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp01/contract-desc/nftProto.map.json"
 }
