@@ -20,14 +20,14 @@ export class Wallet {
   network: API_NET
 
   constructor(
-    privwif: string,
+    wif: string,
     network: API_NET = API_NET.MAIN,
     feeb: number,
     apiTarget: API_TARGET = API_TARGET.MVC,
     apiUrl?: string
   ) {
-    if (privwif) {
-      this.privateKey = new mvc.PrivateKey(privwif, network)
+    if (wif) {
+      this.privateKey = mvc.PrivateKey.fromWIF(wif)
     } else {
       this.privateKey = mvc.PrivateKey.fromRandom(network)
     }

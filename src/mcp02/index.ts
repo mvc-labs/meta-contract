@@ -1669,8 +1669,7 @@ export class FtManager {
           inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
         }
         let ret = unlockingContract.verify(txContext)
-        console.log({ ret })
-        // }
+        if (!ret.success) console.log({ ret })
 
         txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
       })
