@@ -1229,7 +1229,6 @@ export class FtManager {
         if (script.chunks.length > 0) {
           const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
           if (lockingScriptBuf) {
-            console.log(ftProto.getQueryGenesis(lockingScriptBuf), genesis)
             if (ftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
               prevTokenInputIndex = inputIndex
               return true
@@ -1239,7 +1238,6 @@ export class FtManager {
             dataPartObj.sensibleID = curDataPartObj.sensibleID
             const newScriptBuf = ftProto.updateScript(lockingScriptBuf, dataPartObj)
             let genesisHash = toHex(mvc.crypto.Hash.sha256ripemd160(newScriptBuf))
-            // console.log(genesisHash, curDataPartObj.genesisHash, curDataPartObj, dataPartObj)
             if (genesisHash == curDataPartObj.genesisHash) {
               prevTokenInputIndex = inputIndex
               return true
