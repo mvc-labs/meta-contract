@@ -1,10 +1,6 @@
 import 'dotenv/config'
 import { Wallet, API_NET, API_TARGET, NftManager, mvc } from '../../../src'
-import { MVC } from '../../../src/api/MVC'
-import { getGenesisIdentifiers } from '../../../src/helpers/contractHelpers'
-import { Transaction } from '../../../src/mvc'
 import { ContractUtil } from '../../../src/mcp01/contractUtil'
-import * as nftProto from '../../../src/mcp01/contract-proto/nft.proto'
 ContractUtil.init()
 
 let wallet: Wallet
@@ -62,7 +58,7 @@ async function mintSomeNfts(reGenesis: boolean = false) {
 }
 
 describe('NFT 销售测试', () => {
-  it('基础售卖', async () => {
+  it.skip('基础售卖', async () => {
     const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
     console.log({ tokenIndex })
 
@@ -106,5 +102,51 @@ describe('NFT 销售测试', () => {
     ).rejects.toThrow(
       'Selling Price must be greater than or equals to 22000 satoshis. 销售价格最低为22000聪。'
     )
+  })
+
+  it.skip('速度测试', async () => {
+    const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
+
+    const timerName = 'sell'
+    console.time(timerName)
+    const { txid, sellTxId } = await nftManager.sell({
+      genesis,
+      codehash,
+      tokenIndex,
+      sellerWif: process.env.WIF,
+      price: 25600,
+    })
+    console.timeEnd(timerName)
+  })
+
+  it('速度测试 - 代理', async () => {
+    const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
+    const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
+
+    const apiHost =
+      network === API_NET.MAIN
+        ? 'https://api.show3.io/metasv'
+        : 'https://testmvc.showmoney.app/metasv'
+
+    const proxy = new NftManager({
+      network,
+      apiTarget: API_TARGET.MVC,
+      apiHost,
+      purse: process.env.WIF!,
+      feeb: 1,
+    })
+    proxy.api.authorize({ authorization: process.env.METASV_BEARER })
+
+    const timerName = 'sell'
+    console.time(timerName)
+
+    const { txid, sellTxId } = await nftManager.sell({
+      genesis,
+      codehash,
+      tokenIndex,
+      sellerWif: process.env.WIF,
+      price: 25600,
+    })
+    console.timeEnd(timerName)
   })
 })

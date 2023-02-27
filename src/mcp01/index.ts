@@ -554,6 +554,7 @@ export class NftManager {
         '销售合约使用的utxo数量应当少于等于3个，请先归集utxo。MVC utxos should be no more than 3 in this operation, please merge it first.'
       )
     }
+    console.timeLog('sell', '准备utxo')
 
     // 检查此NFT是否属于卖家
     const sellerPrivateKey = new mvc.PrivateKey(sellerWif)
@@ -590,6 +591,8 @@ export class NftManager {
       middlePrivateKey = utxoPrivateKeys[0]
     }
 
+    console.timeLog('sell', '准备NFT')
+
     const { sellTxComposer, txComposer } = await this.createSellTx({
       utxos,
       utxoPrivateKeys,
@@ -606,12 +609,16 @@ export class NftManager {
       middleChangeAddress,
     })
 
+    console.timeLog('sell', '构建销售合约')
+
     let nftSellTxHex = sellTxComposer.getRawHex()
     let txHex = txComposer.getRawHex()
     if (!noBroadcast) {
       await this.api.broadcast(nftSellTxHex)
       await this.api.broadcast(txHex)
     }
+
+    console.timeLog('sell', '广播')
     return {
       tx: txComposer.tx,
       txHex,
@@ -1728,7 +1735,6 @@ export class NftManager {
       TokenUtil.getScriptHashBuf(nftSellContract.lockingScript.toBuffer()),
       this.network
     )
-    console.log({ receiverAddress: receiverAddress.toString() })
     const { txComposer } = await this.createTransferTx({
       genesis,
       codehash,
