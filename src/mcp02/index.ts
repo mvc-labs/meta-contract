@@ -1229,7 +1229,6 @@ export class FtManager {
         if (script.chunks.length > 0) {
           const lockingScriptBuf = TokenUtil.getLockingScriptFromPreimage(script.chunks[0].buf)
           if (lockingScriptBuf) {
-            return true
             // console.log(ftProto.getQueryGenesis(lockingScriptBuf), genesis)
             if (ftProto.getQueryGenesis(lockingScriptBuf) == genesis) {
               prevTokenInputIndex = inputIndex

@@ -7,5 +7,4 @@ docs/build
 
 coverage
 .env
-tests/unit/mvc
-tests/*
+tests/acceptance/mvc
