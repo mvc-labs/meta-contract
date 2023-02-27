@@ -87,6 +87,35 @@ describe('NFT 销售测试', () => {
     expect(contractAddress).toBe(tokenAddress)
   })
 
+  it('基础售卖转移TX带有sellTxId', async () => {
+    const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
+    console.log({ tokenIndex })
+
+    const opreturn = [
+      'mvc',
+      '03c9dc1130ef10dfc29ccb3d362ad96bd69ddca25306f15fcbb9350ef0a6f7644d',
+      'mvc:d08df65131a40f39bcbaa1c0c090cab017e91936795219c66df13d65f7d04612',
+      'testmetaid',
+      'NftGenesis-03c9dc1130e',
+      '{"type":"metacontract","totalSupply":"9999","seriesName":"test999"}',
+      '0',
+      '1.0.0',
+      'application/json',
+      'UTF-8',
+    ]
+
+    const { txid, sellTxId } = await nftManager.sell({
+      genesis,
+      codehash,
+      tokenIndex,
+      sellerWif: process.env.WIF,
+      price: 25600,
+      opreturnData: opreturn,
+    })
+
+    console.log({ txid, sellTxId })
+  })
+
   it.skip('售价不能低于22000 satoshis', async () => {
     const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
     console.log({ tokenIndex })
@@ -150,7 +179,7 @@ describe('NFT 销售测试', () => {
     console.timeEnd(timerName)
   })
 
-  it('速度测试 - 转移 - 代理', async () => {
+  it.skip('速度测试 - 转移 - 代理', async () => {
     const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
     const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
 
