@@ -194,10 +194,16 @@ describe('NFT 购买', () => {
       .getBalance(process.env.ADDRESS)
       .then((res) => res.balance + res.pendingBalance)
 
+    const apiHost =
+      process.env.NETWORK === API_NET.MAIN
+        ? 'https://api.show3.io/metasv'
+        : 'https://testmvc.showmoney.app/metasv'
+
     const other = new NftManager({
       network: process.env.NETWORK as API_NET,
       apiTarget: API_TARGET.MVC,
-      purse: process.env.WIF2,
+      purse: process.env.WIF2!,
+      apiHost,
       feeb: 1,
     })
     const publisherBalance = await nftManager.api
@@ -209,6 +215,8 @@ describe('NFT 购买', () => {
 
     // 等待15秒
     await new Promise((resolve) => setTimeout(resolve, 15000))
+    const timerName = 'buy'
+    console.time(timerName)
     const res = await other.buy({
       genesis,
       codehash,
@@ -219,6 +227,7 @@ describe('NFT 购买', () => {
       creatorAddress: process.env.ADDRESS4,
       creatorFeeRate,
     })
+    console.timeEnd(timerName)
     console.log({ txId: res.txid, checkTxId: res.unlockCheckTxId })
 
     // 验证两个tx均在链上

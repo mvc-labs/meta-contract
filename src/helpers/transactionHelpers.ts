@@ -48,7 +48,9 @@ export async function prepareUtxos(
     }
   }
 
+  console.time('请求1')
   const utxos: any[] = await api.getUnspents(purse.address.toString())
+  console.timeEnd('请求1')
   utxos.forEach((utxo) => {
     utxoPrivateKeys.push(purse.privateKey)
     utxo.address = new Address(utxo.address, network)

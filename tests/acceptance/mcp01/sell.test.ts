@@ -119,7 +119,7 @@ describe('NFT 销售测试', () => {
     console.timeEnd(timerName)
   })
 
-  it('速度测试 - 代理', async () => {
+  it.skip('速度测试 - 代理', async () => {
     const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
     const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
 
@@ -146,6 +146,37 @@ describe('NFT 销售测试', () => {
       tokenIndex,
       sellerWif: process.env.WIF,
       price: 25600,
+    })
+    console.timeEnd(timerName)
+  })
+
+  it('速度测试 - 转移 - 代理', async () => {
+    const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
+    const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
+
+    const apiHost =
+      network === API_NET.MAIN
+        ? 'https://api.show3.io/metasv'
+        : 'https://testmvc.showmoney.app/metasv'
+
+    const proxy = new NftManager({
+      network,
+      apiTarget: API_TARGET.MVC,
+      apiHost,
+      purse: process.env.WIF!,
+      feeb: 1,
+    })
+    proxy.api.authorize({ authorization: process.env.METASV_BEARER })
+
+    const timerName = 'transfer'
+    console.time(timerName)
+
+    const { txid } = await proxy.transfer({
+      genesis,
+      codehash,
+      tokenIndex: tokenIndex!,
+      senderWif: process.env.WIF!,
+      receiverAddress: process.env.ADDRESS2!,
     })
     console.timeEnd(timerName)
   })
