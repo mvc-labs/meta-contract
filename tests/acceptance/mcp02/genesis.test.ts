@@ -1,5 +1,6 @@
 import 'dotenv/config'
-import { FtManager, Wallet, API_NET, API_TARGET } from '../../../src'
+import { FtManager, Wallet, API_NET, API_TARGET, TxComposer, mvc } from '../../../src'
+import { getGenesisIdentifiers } from '../../../src/helpers/contractHelpers'
 
 let wallet: Wallet
 let wallet2: Wallet
@@ -30,7 +31,7 @@ describe('FT 创世测试', () => {
     expect(ftManager).toBeInstanceOf(FtManager)
   })
 
-  it('正常创世', async () => {
+  it.skip('正常创世', async () => {
     const tokenName = 'TEST_FT'
     const tokenSymbol = 'TEST'
     const decimalNum = 18
@@ -44,5 +45,23 @@ describe('FT 创世测试', () => {
     })
 
     console.log(genesis)
+  })
+
+  it('创世后正确返回genesis信息', async () => {
+    const genesisTxId = '4196f2af1ee24d66fa6bf8e425a7140ece0236a789146678610f55b52579a927'
+    const genesisTxRaw = await ftManager.api.getRawTxData(genesisTxId)
+    const genesisTx = new mvc.Transaction(genesisTxRaw)
+    const { codehash, genesis, sensibleId } = getGenesisIdentifiers({
+      genesisTx,
+      purse: { address: wallet.address },
+      transferCheckCodeHashArray: ftManager.transferCheckCodeHashArray,
+      unlockContractCodeHashArray: ftManager.unlockContractCodeHashArray,
+      type: 'ft',
+    })
+    expect(sensibleId).toBe(
+      '27a97925b5550f6178661489a73602ce0e14a725e4f86bfa664de21eaff2964100000000'
+    )
+    expect(codehash).toBe('57344f46cc0d0c8dfea7af3300b1b3a0f4216c04')
+    expect(genesis).toBe('728996c04c1571b122f20f466698c55c7dbcca5e')
   })
 })
