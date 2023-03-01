@@ -122,6 +122,7 @@ export class NftManager {
   private purse: Purse
   private feeb: number
   private _api: Api
+  private debug: boolean
   private unlockContractCodeHashArray: Bytes[]
 
   get api() {
@@ -138,12 +139,14 @@ export class NftManager {
     apiTarget = API_TARGET.MVC,
     apiHost,
     feeb = FEEB,
+    debug = false,
   }: {
     purse: string
     network: API_NET
     apiTarget: API_TARGET
     apiHost?: string
     feeb?: number
+    debug?: boolean
   }) {
     this.dustCalculator = new DustCalculator(Transaction.DUST_AMOUNT, null)
     this.network = network
@@ -151,6 +154,8 @@ export class NftManager {
     this.unlockContractCodeHashArray = ContractUtil.unlockContractCodeHashArray
 
     if (feeb) this.feeb = feeb
+
+    this.debug = debug
 
     if (purse) {
       const privateKey = mvc.PrivateKey.fromWIF(purse)
@@ -597,6 +602,7 @@ export class NftManager {
       genesis,
       codehash,
       tokenIndex,
+      nftUtxo,
 
       price,
       opreturnData,
@@ -657,7 +663,6 @@ export class NftManager {
     // checkParamCodehash(codehash)
 
     const sellerPrivateKey = new mvc.PrivateKey(sellerWif)
-    const sellerPublicKey = sellerPrivateKey.publicKey
 
     // 准备钱💰；utxo不能超过3个
     const { utxos, utxoPrivateKeys } = await prepareUtxos(
@@ -972,16 +977,14 @@ export class NftManager {
         operation: nftProto.NFT_OP_TYPE.UNLOCK_FROM_CONTRACT,
       })
 
-      if (true) {
+      if (this.debug) {
         let txContext = {
           tx: txComposer.tx,
           inputIndex: nftInputIndex,
           inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
         }
         let ret = unlockingContract.verify(txContext)
-        if (ret.success == false) {
-          console.log({ ret })
-        }
+        if (ret.success == false) throw ret
       }
 
       txComposer.getInput(nftInputIndex).setScript(unlockingContract.toScript() as mvc.Script)
@@ -1021,16 +1024,14 @@ export class NftManager {
         otherOutputArray: new Bytes(toHex(otherOutputs)),
       })
 
-      if (true) {
+      if (this.debug) {
         let txContext = {
           tx: txComposer.getTx(),
           inputIndex: unlockCheckInputIndex,
           inputSatoshis: txComposer.getInput(unlockCheckInputIndex).output.satoshis,
         }
         let ret = unlockCall.verify(txContext)
-        if (ret.success == false) {
-          console.log({ ret })
-        }
+        if (ret.success == false) throw ret
       }
       txComposer.getInput(unlockCheckInputIndex).setScript(unlockCall.toScript() as mvc.Script)
 
@@ -1058,16 +1059,14 @@ export class NftManager {
         nftOutputSatoshis: txComposer.getOutput(nftOutputIndex).satoshis,
         op: NFT_SELL_OP.CANCEL,
       })
-      if (true) {
+      if (this.debug) {
         let txContext = {
           tx: txComposer.getTx(),
           inputIndex: sellInputIndex,
           inputSatoshis: txComposer.getInput(sellInputIndex).output.satoshis,
         }
         let ret = unlockCall2.verify(txContext)
-        if (ret.success == false) {
-          console.log({ ret })
-        }
+        if (ret.success == false) throw ret
       }
       txComposer.getInput(sellInputIndex).setScript(unlockCall2.toScript() as mvc.Script)
     }
@@ -1506,16 +1505,14 @@ export class NftManager {
         operation: nftProto.NFT_OP_TYPE.UNLOCK_FROM_CONTRACT,
       })
 
-      if (true) {
+      if (this.debug) {
         let txContext = {
           tx: txComposer.tx,
           inputIndex: nftInputIndex,
           inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
         }
         let ret = unlockingContract.verify(txContext)
-        if (ret.success == false) {
-          console.log({ ret })
-        }
+        if (ret.success == false) throw ret
       }
 
       txComposer.getInput(nftInputIndex).setScript(unlockingContract.toScript() as mvc.Script)
@@ -1556,7 +1553,7 @@ export class NftManager {
         otherOutputArray: new Bytes(toHex(otherOutputs)),
       })
 
-      if (true) {
+      if (this.debug) {
         let txContext = {
           tx: txComposer.getTx(),
           inputIndex: unlockCheckInputIndex,
@@ -1586,7 +1583,7 @@ export class NftManager {
         txPreimage: sellTxPreimage,
         op: NFT_SELL_OP.SELL,
       })
-      if (true) {
+      if (this.debug) {
         let txContext = {
           tx: txComposer.getTx(),
           inputIndex: sellInputIndex,
@@ -1612,6 +1609,7 @@ export class NftManager {
     genesis,
     codehash,
     tokenIndex,
+    nftUtxo,
 
     price,
     opreturnData,
@@ -1626,6 +1624,7 @@ export class NftManager {
     genesis: string
     codehash: string
     tokenIndex: string
+    nftUtxo?: any
 
     price: number
     opreturnData?: string[] | string
@@ -1638,13 +1637,16 @@ export class NftManager {
 
     // 第一步：找回nft Utxo并验证，验证钱是否足够
     // 1.1 找回nft Utxo
-    let { nftUtxo } = await getNftInfo({
-      tokenIndex,
-      codehash,
-      genesis,
-      api: this.api,
-      network: this.network,
-    })
+    if (!nftUtxo) {
+      let nftRes = await getNftInfo({
+        tokenIndex,
+        codehash,
+        genesis,
+        api: this.api,
+        network: this.network,
+      })
+      nftUtxo = nftRes.nftUtxo
+    }
 
     // 1.2 验证nft Utxo
     nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
@@ -1749,6 +1751,7 @@ export class NftManager {
       genesis,
       codehash,
       tokenIndex,
+      nftUtxo,
 
       utxos,
       utxoPrivateKeys,
@@ -1824,11 +1827,26 @@ export class NftManager {
   private async createTransferTx({
     utxos,
     utxoPrivateKeys,
+
     genesis,
     codehash,
     tokenIndex,
+    nftUtxo,
+
     opreturnData = null,
     receiverAddress,
+  }: {
+    utxos: Utxo[]
+    utxoPrivateKeys: mvc.PrivateKey[]
+
+    genesis: string
+    codehash: string
+    tokenIndex: string
+    nftUtxo?: any
+
+    opreturnData?: string[] | string
+
+    receiverAddress: mvc.Address
   }) {
     const txComposer = new TxComposer()
     const changeAddress = this.purse.address
@@ -1836,18 +1854,20 @@ export class NftManager {
     // prevouts
     let prevouts = new Prevouts()
 
-    // 第一步：找回nft Utxo并验证，放入第一个输入
-    // 1.1 找回nft Utxo
-    let { nftUtxo } = await getNftInfo({
-      tokenIndex,
-      codehash,
-      genesis,
-      api: this.api,
-      network: this.network,
-    })
+    if (!nftUtxo) {
+      // 第一步：找回nft Utxo并验证，放入第一个输入
+      // 1.1 找回nft Utxo
+      let { nftUtxo } = await getNftInfo({
+        tokenIndex,
+        codehash,
+        genesis,
+        api: this.api,
+        network: this.network,
+      })
 
-    // 1.2 验证nft Utxo
-    nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
+      // 1.2 验证nft Utxo
+      nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)
+    }
 
     // 1.3 确保余额充足
     const genesisScript = new Bytes(nftUtxo.preLockingScript.toHex())
@@ -1904,7 +1924,6 @@ export class NftManager {
       const opreturnOutputIndex = addOpreturnOutput(txComposer, opreturnData)
       opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
     }
-
     // 第六步：解锁nft合约，并找零
     this.unlockNftAndChange({
       txComposer,
@@ -2163,13 +2182,14 @@ export class NftManager {
         opReturnScript: new Bytes(opreturnScriptHex),
       })
 
-      let ret = unlockResult.verify({
-        tx: txComposer.getTx(),
-        inputIndex: 0,
-        inputSatoshis: txComposer.getInput(genesisInputIndex).output.satoshis,
-        // inputSatoshis: genesisSatoshis,
-      })
-      // if (ret.success == false) console.log(ret)
+      if (this.debug && genesisPrivateKey && c == 1) {
+        let ret = unlockResult.verify({
+          tx: txComposer.getTx(),
+          inputIndex: 0,
+          inputSatoshis: txComposer.getInput(genesisInputIndex).output.satoshis,
+        })
+        if (ret.success == false) throw ret
+      }
 
       txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as mvc.Script)
     }
@@ -2268,15 +2288,15 @@ export class NftManager {
         operation: nftProto.NFT_OP_TYPE.TRANSFER,
       })
 
-      // if (this.debug && nftPrivateKey) {
-      let txContext = {
-        tx: txComposer.tx,
-        inputIndex: nftInputIndex,
-        inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
+      if (this.debug && nftPrivateKey) {
+        let txContext = {
+          tx: txComposer.tx,
+          inputIndex: nftInputIndex,
+          inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
+        }
+        let ret = unlockingContract.verify(txContext)
+        if (ret.success == false) throw ret
       }
-      let ret = unlockingContract.verify(txContext)
-      // if (ret.success == false) console.log(ret)
-      // }
 
       txComposer.getInput(nftInputIndex).setScript(unlockingContract.toScript() as mvc.Script)
     }
@@ -2377,15 +2397,15 @@ export class NftManager {
         operation: nftProto.NFT_OP_TYPE.TRANSFER,
       })
 
-      // if (this.debug && nftPrivateKey) {
-      let txContext = {
-        tx: txComposer.tx,
-        inputIndex: nftInputIndex,
-        inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
+      if (this.debug && nftPrivateKey) {
+        let txContext = {
+          tx: txComposer.tx,
+          inputIndex: nftInputIndex,
+          inputSatoshis: txComposer.getInput(nftInputIndex).output.satoshis,
+        }
+        let ret = unlockingContract.verify(txContext)
+        if (ret.success == false) throw ret
       }
-      let ret = unlockingContract.verify(txContext)
-      // if (ret.success == false) console.log(ret)
-      // }
 
       txComposer.getInput(nftInputIndex).setScript(unlockingContract.toScript() as mvc.Script)
     }

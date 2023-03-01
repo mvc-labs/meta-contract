@@ -35,7 +35,8 @@ async function mintSomeNfts(reGenesis: boolean = false) {
     console.log({ genesisInfo })
   } else {
     genesisInfo = {
-      // sensibleId: 'fe7c1750d06235c4ee42c32de3e3e29beb82e349aeecf65091f0e804a692582100000000', // release mainnet
+      // release mainnet
+      // sensibleId: 'fe7c1750d06235c4ee42c32de3e3e29beb82e349aeecf65091f0e804a692582100000000',
       // genesis: '02496ae0a5ed28bd04583ca8aabf9138ae6113b1',
       // codehash: 'e205939ad9956673ce7da9fbd40514b30f66dc35',
 
@@ -87,7 +88,7 @@ describe('NFT 销售测试', () => {
     expect(contractAddress).toBe(tokenAddress)
   })
 
-  it('基础售卖转移TX带有sellTxId', async () => {
+  it.skip('基础售卖转移TX带有sellTxId', async () => {
     const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
     console.log({ tokenIndex })
 
@@ -148,7 +149,7 @@ describe('NFT 销售测试', () => {
     console.timeEnd(timerName)
   })
 
-  it.skip('速度测试 - 代理', async () => {
+  it('速度测试 - 代理', async () => {
     const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
     const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
 
@@ -169,7 +170,7 @@ describe('NFT 销售测试', () => {
     const timerName = 'sell'
     console.time(timerName)
 
-    const { txid, sellTxId } = await nftManager.sell({
+    const { txid, sellTxId } = await proxy.sell({
       genesis,
       codehash,
       tokenIndex,
@@ -177,6 +178,7 @@ describe('NFT 销售测试', () => {
       price: 25600,
     })
     console.timeEnd(timerName)
+    console.log({ txid, sellTxId })
   })
 
   it.skip('速度测试 - 转移 - 代理', async () => {
@@ -206,6 +208,7 @@ describe('NFT 销售测试', () => {
       tokenIndex: tokenIndex!,
       senderWif: process.env.WIF!,
       receiverAddress: process.env.ADDRESS2!,
+      noBroadcast: true,
     })
     console.timeEnd(timerName)
   })

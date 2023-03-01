@@ -150,6 +150,7 @@ type Mcp02Options = {
   feeb?: number
   dustLimitFactor?: number
   dustAmount?: number
+  debug?: boolean
 }
 
 type TokenReceiver = {
@@ -225,6 +226,7 @@ export class FtManager {
     apiHost,
     dustLimitFactor = 300,
     dustAmount,
+    debug = false,
   }: Mcp02Options) {
     // 初始化API
     this.network = network
@@ -578,9 +580,7 @@ export class FtManager {
         tokenSatoshis: txComposer.getOutput(tokenOutputIndex).satoshis,
         changeSatoshis:
           changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0,
-        // genesisSatoshis: 100000,
-        // tokenSatoshis: 100000,
-        // changeSatoshis: 100000,
+
         changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
         opReturnScript: new Bytes(opreturnScriptHex),
       })
@@ -592,14 +592,14 @@ export class FtManager {
       // const verify = unlockResult.verify(txContext)
       // console.log({ verify })
 
-      // if (this.debug && genesisPrivateKey && c == 1) {
-      //   let ret = unlockResult.verify({
-      //     tx: txComposer.tx,
-      //     inputIndex: genesisInputIndex,
-      //     inputSatoshis: txComposer.getInput(genesisInputIndex).output.satoshis,
-      //   })
-      //   if (ret.success == false) throw ret
-      // }
+      if (this.debug && genesisPrivateKey && c == 1) {
+        let ret = unlockResult.verify({
+          tx: txComposer.tx,
+          inputIndex: genesisInputIndex,
+          inputSatoshis: txComposer.getInput(genesisInputIndex).output.satoshis,
+        })
+        if (ret.success == false) throw ret
+      }
 
       txComposer.getInput(genesisInputIndex).setScript(unlockResult.toScript() as mvc.Script)
     }
@@ -1659,14 +1659,15 @@ export class FtManager {
           operation: ftProto.OP_TRANSFER,
         })
 
-        // if (this.debug && senderPrivateKey) {
-        let txContext = {
-          tx: txComposer.getTx(),
-          inputIndex: inputIndex,
-          inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
+        if (this.debug && senderPrivateKey) {
+          let txContext = {
+            tx: txComposer.getTx(),
+            inputIndex: inputIndex,
+            inputSatoshis: txComposer.getInput(inputIndex).output.satoshis,
+          }
+          let ret = unlockingContract.verify(txContext)
+          if (!ret.success) throw ret
         }
-        let ret = unlockingContract.verify(txContext)
-        if (!ret.success) console.log({ ret })
 
         txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
       })
@@ -1710,16 +1711,15 @@ export class FtManager {
         opReturnScript: new Bytes(opreturnScriptHex),
       })
 
-      // if (this.debug) {
-      let txContext = {
-        tx: txComposer.getTx(),
-        inputIndex: transferCheckInputIndex,
-        inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
+      if (this.debug) {
+        let txContext = {
+          tx: txComposer.getTx(),
+          inputIndex: transferCheckInputIndex,
+          inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
+        }
+        let ret = unlockingContract.verify(txContext)
+        if (ret.success == false) throw ret
       }
-      // let ret = unlockingContract.verify(txContext)
-      // console.log({ tokenTransferCheckVerify: ret })
-      // if (ret.success == false) console.log(ret)
-      // }
 
       txComposer
         .getInput(transferCheckInputIndex)

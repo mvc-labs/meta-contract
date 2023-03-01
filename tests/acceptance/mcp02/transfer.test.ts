@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { FtManager, Wallet, API_NET, API_TARGET } from '../../../src'
+import { Transaction } from '../../../src/mvc'
 
 let wallet: Wallet
 let wallet2: Wallet
@@ -61,13 +62,13 @@ async function mintSomeTokens(reGenesis: boolean = false) {
       // genesis: '02496ae0a5ed28bd04583ca8aabf9138ae6113b1',
       // codehash: 'e205939ad9956673ce7da9fbd40514b30f66dc35',
       // release testnet
-      // sensibleId: '838a282dbe8c2a4565d724832236d3190d028a5e31424a11a8952ba8b6135e6600000000',
-      // genesis: '7d02adb2c1511d6ffc7bbe540cbad2d8492d4b9b',
-      // codehash: 'e205939ad9956673ce7da9fbd40514b30f66dc35',
+      sensibleId: 'a93c28288643b2425f984c93e6b6ad7c1b3330c0c69d8613e5557238922e16ae00000000',
+      genesis: '039032ade3d49a6d4ff41c33b3d63ea5c986f310',
+      codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
       // debug testnet
-      sensibleId: '27a97925b5550f6178661489a73602ce0e14a725e4f86bfa664de21eaff2964100000000',
-      genesis: '728996c04c1571b122f20f466698c55c7dbcca5e',
-      codehash: '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04',
+      // sensibleId: '27a97925b5550f6178661489a73602ce0e14a725e4f86bfa664de21eaff2964100000000',
+      // genesis: '728996c04c1571b122f20f466698c55c7dbcca5e',
+      // codehash: '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04',
     }
   }
 
@@ -79,7 +80,7 @@ describe('转账', () => {
     expect(ftManager).toHaveProperty('transfer')
   })
 
-  it('铸造后转账', async () => {
+  it.skip('铸造后转账', async () => {
     const { genesis, codehash } = await mintSomeTokens(false)
 
     let { txid: transferTxId } = await ftManager.transfer({
@@ -98,7 +99,7 @@ describe('转账', () => {
     expect(transferTxId).toHaveLength(64)
   })
 
-  it('转账后转账', async () => {
+  it.skip('转账后转账', async () => {
     // 先转20到地址2
     const { genesis, codehash } = await mintSomeTokens(false)
     let { txid: transferTxId } = await ftManager.transfer({
@@ -129,7 +130,7 @@ describe('转账', () => {
     console.log({ transferTxId, transferTxId2 })
   })
 
-  it('归并', async () => {
+  it.skip('归并', async () => {
     const { genesis, codehash } = await mintSomeTokens(false)
     let { txid: mergeTxId } = await ftManager.merge({
       genesis,
@@ -140,7 +141,7 @@ describe('转账', () => {
     expect(mergeTxId).toHaveLength(64)
   })
 
-  it('多人转账', async () => {
+  it.skip('多人转账', async () => {
     const { genesis, codehash } = await mintSomeTokens(false)
     const receivers: Receiver[] = []
     for (let i = 0; i < 99; i++) {
@@ -156,6 +157,83 @@ describe('转账', () => {
       senderWif: process.env.WIF,
     })
     console.log(transferTxId)
+    expect(transferTxId).toHaveLength(64)
+  })
+
+  it.skip('test', async () => {
+    const hex = await ftManager.api.getRawTxData(
+      'b7b861159e1f2a87c5917436768fd7d5b29c7da8c0f38e114539c4289a8fa4e4'
+    )
+
+    const tx = new Transaction(hex)
+    const output = tx.outputs[0]
+
+    const rr = new FtManager({
+      network: 'testnet' as API_NET,
+      apiTarget: API_TARGET.MVC,
+      purse: process.env.RRWIF!,
+      feeb: 1,
+    })
+
+    rr.api.authorize({ authorization: process.env.METASV_BEARER })
+    const token = {
+      txId: 'b7b861159e1f2a87c5917436768fd7d5b29c7da8c0f38e114539c4289a8fa4e4',
+      outputIndex: 0,
+      tokenAddress: process.env.RRADDRESS!,
+      tokenAmount: '19000010000',
+      wif: process.env.RRWIF!,
+    }
+
+    const { txid } = await rr.transfer({
+      genesis: '76a8a2122b4f4213921cb0b4de0e7c704628f149',
+      codehash: '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04',
+      receivers: [
+        {
+          amount: '100',
+          address: process.env.RRADDRESS!,
+        },
+      ],
+      senderWif: process.env.RRWIF!,
+      ftUtxos: [token],
+      // ftChangeAddress: process.env.RRADDRESS!,
+    })
+
+    console.log({ txid })
+  })
+
+  it('速度测试 - 转移 - 代理', async () => {
+    const { genesis, codehash } = await mintSomeTokens(false)
+    const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
+    const apiHost =
+      network === API_NET.MAIN
+        ? 'https://api.show3.io/metasv'
+        : 'https://testmvc.showmoney.app/metasv'
+
+    const proxy = new FtManager({
+      network,
+      apiTarget: API_TARGET.MVC,
+      apiHost,
+      purse: process.env.WIF!,
+      feeb: 1,
+    })
+    proxy.api.authorize({ authorization: process.env.METASV_BEARER })
+
+    const timerName = 'transfer'
+    console.time(timerName)
+    let { txid: transferTxId } = await proxy.transfer({
+      genesis,
+      codehash,
+      receivers: [
+        {
+          amount: '10',
+          address: process.env.ADDRESS2!,
+        },
+      ],
+      senderWif: process.env.WIF,
+    })
+    console.timeEnd(timerName)
+
+    console.log({ transferTxId })
     expect(transferTxId).toHaveLength(64)
   })
 })

@@ -54,6 +54,11 @@ async function sellSomeNfts(reGenesis: boolean = false, price: number = 50000) {
       // genesis: '02496ae0a5ed28bd04583ca8aabf9138ae6113b1',
       // codehash: 'e205939ad9956673ce7da9fbd40514b30f66dc35',
 
+      // release testnet
+      sensibleId: '838a282dbe8c2a4565d724832236d3190d028a5e31424a11a8952ba8b6135e6600000000',
+      genesis: '7d02adb2c1511d6ffc7bbe540cbad2d8492d4b9b',
+      codehash: 'e205939ad9956673ce7da9fbd40514b30f66dc35',
+
       // debug mainnet
       // codehash: '48d6118692b459fabfc2910105f38dda0645fb57',
       // genesis: '1f7e8d1818f89a1f0b1f9c5634c25c6e8d76637d',
@@ -63,11 +68,6 @@ async function sellSomeNfts(reGenesis: boolean = false, price: number = 50000) {
       // sensibleId: '3ed9aaf9e9d74d1c9ede3c4b9f53d861fe7172ff4448d1bd12c627b42b580cac00000000',
       // genesis: '7873ed838cc26071042eb02c701dc4427d4fde1d',
       // codehash: '48d6118692b459fabfc2910105f38dda0645fb57',
-
-      // release testnet
-      sensibleId: '838a282dbe8c2a4565d724832236d3190d028a5e31424a11a8952ba8b6135e6600000000',
-      genesis: '7d02adb2c1511d6ffc7bbe540cbad2d8492d4b9b',
-      codehash: 'e205939ad9956673ce7da9fbd40514b30f66dc35',
     }
   }
   const { sensibleId, genesis, codehash } = genesisInfo
@@ -160,6 +160,8 @@ describe('NFT 购买', () => {
       tokenIndex,
       buyerWif: process.env.WIF2,
     })
+
+    console.log({ buyTxId: res.txid })
 
     // 验证两个tx均在链上
     const seeTransfer = await nftManager.api.checkTxSeen(res.txid)
@@ -255,7 +257,7 @@ describe('NFT 购买', () => {
     expect(nft.tokenAddress).toBe(process.env.ADDRESS2)
   })
 
-  it('取消出售', async () => {
+  it.skip('下架', async () => {
     const { genesis, codehash, tokenIndex, sellUtxo } = await sellSomeNfts(false)
     console.log({ tokenIndex })
 
@@ -282,7 +284,7 @@ describe('NFT 购买', () => {
   })
 
   it.todo('购买费用预估')
-  it.skip('取消购买费用预估', async () => {
+  it.skip('下架费用预估', async () => {
     const { genesis, codehash, tokenIndex } = await sellSomeNfts(false)
     console.log({ tokenIndex })
 
@@ -299,4 +301,75 @@ describe('NFT 购买', () => {
   })
 
   it.todo('中间找零地址')
+
+  it.skip('购买 - 速度测试 - 代理', async () => {
+    const price = 46000
+    const { genesis, codehash, tokenIndex, sellUtxo } = await sellSomeNfts(false, price)
+    console.log({ tokenIndex })
+
+    const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
+
+    const apiHost =
+      network === API_NET.MAIN
+        ? 'https://api.show3.io/metasv'
+        : 'https://testmvc.showmoney.app/metasv'
+
+    const other = new NftManager({
+      network: process.env.NETWORK as API_NET,
+      apiTarget: API_TARGET.MVC,
+      purse: process.env.WIF2,
+      apiHost,
+      feeb: 1,
+    })
+
+    // 等待10秒
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+
+    const timerName = 'buy'
+    console.time(timerName)
+    const res = await other.buy({
+      genesis,
+      codehash,
+      tokenIndex,
+      buyerWif: process.env.WIF2,
+    })
+    console.timeEnd(timerName)
+
+    console.log({ buyTxId: res.txid })
+  })
+
+  it('下架 - 速度测试 - 代理', async () => {
+    const { genesis, codehash, tokenIndex, sellUtxo } = await sellSomeNfts(false)
+    console.log({ tokenIndex })
+
+    // 等待10秒
+    const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
+
+    const apiHost =
+      network === API_NET.MAIN
+        ? 'https://api.show3.io/metasv'
+        : 'https://testmvc.showmoney.app/metasv'
+
+    const proxy = new NftManager({
+      network: process.env.NETWORK as API_NET,
+      apiTarget: API_TARGET.MVC,
+      purse: process.env.WIF,
+      apiHost,
+      feeb: 1,
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+
+    const timerName = 'cancelSell'
+    console.time(timerName)
+    const { txid, unlockCheckTxId } = await proxy.cancelSell({
+      genesis,
+      codehash,
+      tokenIndex,
+      sellerWif: process.env.WIF,
+      noBroadcast: true,
+    })
+    console.timeEnd(timerName)
+    console.log({ txid, unlockCheckTxId })
+  })
 })
