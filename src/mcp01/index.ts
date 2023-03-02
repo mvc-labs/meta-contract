@@ -480,6 +480,7 @@ export class NftManager {
     utxos?: any[]
     noBroadcast?: boolean
   }) {
+    const startTime = Date.now()
     const { utxos, utxoPrivateKeys } = await prepareUtxos(
       this.purse,
       this.api,
@@ -503,7 +504,9 @@ export class NftManager {
       await this.api.broadcast(txHex)
     }
 
-    return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx() }
+    const runtime = Date.now() - startTime
+
+    return { txHex, txid: txComposer.getTxId(), tx: txComposer.getTx(), runtime }
   }
 
   public async sell({
@@ -535,6 +538,7 @@ export class NftManager {
     middleChangeAddress?: string | mvc.Address
     middleWif?: string
   }) {
+    const startTime = Date.now()
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
 
@@ -619,6 +623,8 @@ export class NftManager {
       await this.api.broadcast(txHex)
     }
 
+    const runtime = Date.now() - startTime
+
     return {
       tx: txComposer.tx,
       txHex,
@@ -626,6 +632,7 @@ export class NftManager {
       sellTxId: sellTxComposer.getTxId(),
       sellTx: sellTxComposer.getTx(),
       sellTxHex: nftSellTxHex,
+      runtime,
     }
   }
 
@@ -659,6 +666,7 @@ export class NftManager {
     middleChangeAddress?: string | mvc.Address
     middlePrivateKey?: string | mvc.PrivateKey
   }) {
+    const startTime = Date.now()
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
 
@@ -717,6 +725,8 @@ export class NftManager {
       await this.api.broadcast(unlockCheckTxHex)
       await this.api.broadcast(txHex)
     }
+
+    const runtime = Date.now() - startTime
     return {
       tx: txComposer.tx,
       txHex,
@@ -724,6 +734,7 @@ export class NftManager {
       unlockCheckTxId: unlockCheckTxComposer.getTxId(),
       unlockCheckTx: unlockCheckTxComposer.getTx(),
       unlockCheckTxHex: unlockCheckTxHex,
+      runtime,
     }
   }
 
@@ -1123,6 +1134,7 @@ export class NftManager {
     creatorFee?: number
     creatorFeeRate?: number
   }) {
+    const startTime = Date.now()
     // checkParamGenesis(genesis)
     // checkParamCodehash(codehash)
 
@@ -1212,6 +1224,8 @@ export class NftManager {
       await this.api.broadcast(unlockCheckTxHex)
       await this.api.broadcast(txHex)
     }
+
+    const runtime = Date.now() - startTime
     return {
       tx: txComposer.tx,
       txHex,
@@ -1219,6 +1233,7 @@ export class NftManager {
       unlockCheckTxId: unlockCheckTxComposer.getTxId(),
       unlockCheckTx: unlockCheckTxComposer.getTx(),
       unlockCheckTxHex: unlockCheckTxHex,
+      runtime,
     }
   }
 
@@ -1857,13 +1872,14 @@ export class NftManager {
     if (!nftUtxo) {
       // 第一步：找回nft Utxo并验证，放入第一个输入
       // 1.1 找回nft Utxo
-      let { nftUtxo } = await getNftInfo({
+      const nftRes = await getNftInfo({
         tokenIndex,
         codehash,
         genesis,
         api: this.api,
         network: this.network,
       })
+      nftUtxo = nftRes.nftUtxo
 
       // 1.2 验证nft Utxo
       nftUtxo = await this.pretreatNftUtxo(nftUtxo, codehash, genesis)

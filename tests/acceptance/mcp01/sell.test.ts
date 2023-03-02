@@ -167,21 +167,18 @@ describe('NFT 销售测试', () => {
     })
     proxy.api.authorize({ authorization: process.env.METASV_BEARER })
 
-    const timerName = 'sell'
-    console.time(timerName)
-
-    const { txid, sellTxId } = await proxy.sell({
+    const { txid, sellTxId, runtime } = await proxy.sell({
       genesis,
       codehash,
       tokenIndex,
       sellerWif: process.env.WIF,
       price: 25600,
+      noBroadcast: true,
     })
-    console.timeEnd(timerName)
-    console.log({ txid, sellTxId })
+    console.log({ txid, sellTxId, runtime })
   })
 
-  it.skip('速度测试 - 转移 - 代理', async () => {
+  it('速度测试 - 转移 - 代理', async () => {
     const { genesis, codehash, tokenIndex } = await mintSomeNfts(false)
     const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
 
@@ -199,10 +196,7 @@ describe('NFT 销售测试', () => {
     })
     proxy.api.authorize({ authorization: process.env.METASV_BEARER })
 
-    const timerName = 'transfer'
-    console.time(timerName)
-
-    const { txid } = await proxy.transfer({
+    const { txid, runtime } = await proxy.transfer({
       genesis,
       codehash,
       tokenIndex: tokenIndex!,
@@ -210,6 +204,7 @@ describe('NFT 销售测试', () => {
       receiverAddress: process.env.ADDRESS2!,
       noBroadcast: true,
     })
-    console.timeEnd(timerName)
+
+    console.log({ txid, runtime })
   })
 })
