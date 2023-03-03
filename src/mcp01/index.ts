@@ -1095,6 +1095,7 @@ export class NftManager {
     tokenIndex,
 
     buyerWif,
+    buyerAddress,
 
     sellUtxo,
     opreturnData,
@@ -1116,7 +1117,8 @@ export class NftManager {
     codehash: string
     tokenIndex: string
 
-    buyerWif: string
+    buyerWif?: string
+    buyerAddress?: string | mvc.Address
 
     sellUtxo?: SellUtxo
     opreturnData?: any
@@ -1152,7 +1154,12 @@ export class NftManager {
       )
     }
 
-    const buyerPrivateKey = new mvc.PrivateKey(buyerWif)
+    if (!buyerAddress) {
+      const buyerPrivateKey = new mvc.PrivateKey(buyerWif)
+      buyerAddress = buyerPrivateKey.toAddress(this.network)
+    } else {
+      buyerAddress = new mvc.Address(buyerAddress, this.network)
+    }
 
     // 准备找零地址
     if (changeAddress) {
@@ -1203,7 +1210,7 @@ export class NftManager {
       tokenIndex,
       sellUtxo,
 
-      buyerPrivateKey: buyerPrivateKey as mvc.PrivateKey,
+      buyerAddress,
       opreturnData,
 
       changeAddress,
@@ -1246,7 +1253,7 @@ export class NftManager {
     tokenIndex,
     sellUtxo,
 
-    buyerPrivateKey,
+    buyerAddress,
     opreturnData,
 
     changeAddress,
@@ -1268,7 +1275,7 @@ export class NftManager {
     tokenIndex: string
     sellUtxo?: SellUtxo
 
-    buyerPrivateKey?: mvc.PrivateKey
+    buyerAddress: mvc.Address
     opreturnData?: any
 
     changeAddress: mvc.Address
@@ -1446,7 +1453,6 @@ export class NftManager {
 
     // 5.7 添加nft输出
     // 5.7.1 构造nft脚本（将nft的所有权转移给买家）
-    const buyerAddress = buyerPrivateKey.toAddress(this.network)
     const lockingScriptBuf = rebuildNftLockingScript(nftInput, buyerAddress)
 
     // 5.7.2 添加进输出

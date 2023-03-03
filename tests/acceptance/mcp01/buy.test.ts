@@ -36,10 +36,18 @@ beforeAll(async () => {
 })
 
 async function sellSomeNfts(reGenesis: boolean = false, price: number = 50000) {
+  const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
+
+  const apiHost =
+    network === API_NET.MAIN
+      ? 'https://api.show3.io/metasv'
+      : 'https://testmvc.showmoney.app/metasv'
+
   const nftManager = new NftManager({
     network: process.env.NETWORK as API_NET,
     apiTarget: API_TARGET.MVC,
-    purse: process.env.WIF,
+    apiHost,
+    purse: process.env.WIF!,
     feeb: 1,
   })
 
@@ -284,7 +292,7 @@ describe('NFT 购买', () => {
   })
 
   it.todo('购买费用预估')
-  it.skip('下架费用预估', async () => {
+  it('下架费用预估', async () => {
     const { genesis, codehash, tokenIndex } = await sellSomeNfts(false)
     console.log({ tokenIndex })
 
@@ -302,7 +310,7 @@ describe('NFT 购买', () => {
 
   it.todo('中间找零地址')
 
-  it.skip('购买 - 速度测试 - 代理', async () => {
+  it('购买 - 速度测试 - 代理', async () => {
     const price = 46000
     const { genesis, codehash, tokenIndex, sellUtxo } = await sellSomeNfts(false, price)
     console.log({ tokenIndex })
@@ -325,17 +333,14 @@ describe('NFT 购买', () => {
     // 等待10秒
     await new Promise((resolve) => setTimeout(resolve, 10000))
 
-    const timerName = 'buy'
-    console.time(timerName)
     const res = await other.buy({
       genesis,
       codehash,
       tokenIndex,
       buyerWif: process.env.WIF2,
     })
-    console.timeEnd(timerName)
 
-    console.log({ buyTxId: res.txid })
+    console.log({ buyTxId: res.txid, runtime: res.runtime })
   })
 
   it('下架 - 速度测试 - 代理', async () => {
@@ -360,16 +365,13 @@ describe('NFT 购买', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 10000))
 
-    const timerName = 'cancelSell'
-    console.time(timerName)
-    const { txid, unlockCheckTxId } = await proxy.cancelSell({
+    const { txid, unlockCheckTxId, runtime } = await proxy.cancelSell({
       genesis,
       codehash,
       tokenIndex,
       sellerWif: process.env.WIF,
       noBroadcast: true,
     })
-    console.timeEnd(timerName)
-    console.log({ txid, unlockCheckTxId })
+    console.log({ txid, unlockCheckTxId, runtime })
   })
 })
