@@ -1755,7 +1755,7 @@ export class NftManager {
 
     // 将销售合约txId写入opreturn
     if (typeof opreturnData === 'object' && opreturnData.constructor === Array) {
-      const data = opreturnData.at(5)
+      const data = opreturnData[5]
       let parsed: object
       if (data) {
         try {
