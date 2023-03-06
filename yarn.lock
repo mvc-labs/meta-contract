@@ -4829,10 +4829,10 @@ mvc-lib@^1.0.5:
     inherits "2.0.3"
     unorm "1.4.1"
 
-mvc-scrypt@0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/mvc-scrypt/-/mvc-scrypt-0.1.1.tgz#841a8179be9cc6bdb0b60200ba5dbb716e5eb53f"
-  integrity sha512-csJ5QVontTNHTRKR/Mmh9r0JMg6vBFoEFa99Ey5D/9BwhoxFQ73/jtvzEC6WcG9xsWoLwisVh65WXN418sKsYw==
+mvc-scrypt@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/mvc-scrypt/-/mvc-scrypt-0.1.2.tgz#760e04ade5dfd49839b048ae7256e3edd54faa8d"
+  integrity sha512-DLuebJn21VOZhyEUhDxmlPdIJeBfr1KEwIu42r1eJyaxsmuJ1KkWZVRw/sWrBD+rNN+WLkxURZyn+rXw2peylg==
   dependencies:
     "@discoveryjs/json-ext" "^0.5.7"
     compare-versions "^3.6.0"
@@ -4842,18 +4842,6 @@ mvc-scrypt@0.1.1:
     node-fetch "^3.0.0"
     patch-package "^6.4.7"
     sourcemap-codec "^1.4.8"
-
-mvc-scryptlib@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmmirror.com/mvc-scryptlib/-/mvc-scryptlib-1.0.0.tgz#ccd478f5b8e294fd2b45ccb850b7b6fb1f73784a"
-  integrity sha512-xyOXh20kwyQRc4yAmgxg4vMCquYFozo3gjBkSf8bK8zx1mTzmo07+NXO0HXpE0UhMSo/Tz6l2USk6TIfG7KhMg==
-  dependencies:
-    compare-versions "^3.6.0"
-    json-bigint "^1.0.0"
-    md5 "^2.2.1"
-    mvc-lib "^1.0.5"
-    node-fetch "^3.0.0"
-    patch-package "^6.4.7"
 
 nan@^2.12.1:
   version "2.16.0"

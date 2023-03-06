@@ -1,4 +1,4 @@
-import { mvc } from 'mvc-scryptlib'
+import { mvc } from 'mvc-scrypt'
 
 export const FEEB = 1
 

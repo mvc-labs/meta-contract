@@ -1,6 +1,6 @@
 {
   "name": "meta-contract",
-  "version": "0.3.22",
+  "version": "0.3.23",
   "description": "Meta Contract SDK",
   "main": "dist/index.js",
   "browser": "dist/metaContract.browser.min.js",
@@ -42,8 +42,7 @@
   "author": "Showpay",
   "license": "MIT",
   "dependencies": {
-    "mvc-scrypt": "0.1.1",
-    "mvc-scryptlib": "^1.0.0",
+    "mvc-scrypt": "^0.1.2",
     "node-fetch": "2"
   },
   "devDependencies": {
