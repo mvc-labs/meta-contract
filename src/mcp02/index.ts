@@ -1,42 +1,23 @@
-import {
-  buildTypeClasses,
-  Bytes,
-  getPreimage,
-  Int,
-  PubKey,
-  Ripemd160,
-  Sig,
-  SigHashPreimage,
-  toHex,
-} from '../scryptlib'
-import { CodeError, ErrCode } from '../common/error'
+import {buildTypeClasses, Bytes, getPreimage, Int, PubKey, Ripemd160, Sig, SigHashPreimage, toHex,} from '../scryptlib'
+import {CodeError, ErrCode} from '../common/error'
 import * as mvc from '../mvc'
-import { Api, API_NET, API_TARGET } from '..'
+import {Api, API_NET, API_TARGET} from '..'
 
-import { FEEB } from './constants'
+import {FEEB} from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
 import * as $ from '../common/argumentCheck'
-import { Prevouts } from '../common/Prevouts'
-import { TxComposer } from '../tx-composer'
-import { TokenFactory } from './contract-factory/token'
-import { ContractUtil } from './contractUtil'
-import {
-  CONTRACT_TYPE,
-  isNull,
-  P2PKH_UNLOCK_SIZE,
-  PLACE_HOLDER_PUBKEY,
-  PLACE_HOLDER_SIG,
-} from '../common/utils'
-import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
-import {
-  TOKEN_TRANSFER_TYPE,
-  TokenTransferCheckFactory,
-} from './contract-factory/tokenTransferCheck'
+import {Prevouts} from '../common/Prevouts'
+import {TxComposer} from '../tx-composer'
+import {TokenFactory} from './contract-factory/token'
+import {ContractUtil} from './contractUtil'
+import {CONTRACT_TYPE, isNull, P2PKH_UNLOCK_SIZE, PLACE_HOLDER_PUBKEY, PLACE_HOLDER_SIG,} from '../common/utils'
+import {TokenGenesisFactory} from './contract-factory/tokenGenesis'
+import {TOKEN_TRANSFER_TYPE, TokenTransferCheckFactory,} from './contract-factory/tokenTransferCheck'
 import * as ftProto from './contract-proto/token.proto'
-import { DustCalculator } from '../common/DustCalculator'
-import { SizeTransaction } from '../common/SizeTransaction'
-import { FungibleTokenUnspent } from '../api'
+import {DustCalculator} from '../common/DustCalculator'
+import {SizeTransaction} from '../common/SizeTransaction'
+import {FungibleTokenUnspent} from '../api'
 import {
   addChangeOutput,
   addContractInput,
@@ -47,9 +28,9 @@ import {
   prepareUtxos,
   unlockP2PKHInputs,
 } from '../helpers/transactionHelpers'
-import { getGenesisIdentifiers } from '../helpers/contractHelpers'
-import { dummyTxId } from '../common/dummy'
-import { hasProtoFlag } from '../common/protoheader'
+import {getGenesisIdentifiers} from '../helpers/contractHelpers'
+import {dummyTxId} from '../common/dummy'
+import {hasProtoFlag} from '../common/protoheader'
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
@@ -1001,12 +982,6 @@ export class FtManager {
     })
     let routeCheckTxHex = transferCheckTxComposer.getRawHex()
     let txHex = txComposer.getRawHex()
-    const inSats = transferCheckTxComposer
-      .getTx()
-      .inputs.reduce((pre, input) => pre + input.output.satoshis, 0)
-    const outSats = transferCheckTxComposer
-      .getTx()
-      .outputs.reduce((pre, output) => pre + output.satoshis, 0)
 
     if (!noBroadcast) {
       await this.api.broadcast(routeCheckTxHex)
@@ -1080,6 +1055,7 @@ export class FtManager {
 
     return { ftUtxos, ftUtxoPrivateKeys }
   }
+
 
   private async _prepareTransferTokens({
     codehash,
@@ -1302,6 +1278,25 @@ export class FtManager {
     return ftUtxos
   }
 
+
+  /**
+   * composite a token transfer transaction and amount check transaction
+   * @param codehash codehash of the token
+   * @param genesis genesis of the token
+   * @param receivers token receivers
+   * @param ftUtxos input ftUtxos
+   * @param ftPrivateKeys private keys of ftUtxos
+   * @param ftChangeAddress change address of ftUtxos
+   * @param utxos utxos for paying fee
+   * @param utxoPrivateKeys private keys of utxos(fee paying)
+   * @param changeAddress change address of utxos(fee paying)
+   * @param middlePrivateKey
+   * @param middleChangeAddress
+   * @param isMerge whether to merge the token utxos
+   * @param opreturnData opreturn data to be added to the transaction
+   * @param minUtxoSet
+   * @private
+   */
   private async _transfer({
     codehash,
     genesis,
@@ -1346,7 +1341,7 @@ export class FtManager {
     if (utxos.length > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in the transfer operation, please merge it first '
+        'Mvc utxos should be no more than 3 in the transfer operation, please merge it first '
       )
     }
 
@@ -1737,6 +1732,15 @@ export class FtManager {
     return { transferCheckTxComposer, txComposer }
   }
 
+  /**
+   * calculate transfer fee for ft transfer
+   * @param p2pkhInputNum
+   * @param tokenInputArray
+   * @param tokenOutputArray
+   * @param tokenTransferType
+   * @param opreturnData
+   * @private
+   */
   private _calTransferEstimateFee({
     p2pkhInputNum = 10,
     tokenInputArray,
@@ -1931,7 +1935,7 @@ export class FtManager {
     if (p2pkhInputNum > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in the transfer operation. '
+        'Mvc utxos should be no more than 3 in the transfer operation. '
       )
     }
 

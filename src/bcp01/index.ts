@@ -1595,7 +1595,7 @@ export class SensibleNFT {
     if (utxos.length > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in this operation, please merge it first '
+        'Mvc utxos should be no more than 3 in this operation, please merge it first '
       )
     }
 
@@ -1832,7 +1832,7 @@ export class SensibleNFT {
     if (utxos.length > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in this operation, please merge it first '
+        'Mvc utxos should be no more than 3 in this operation, please merge it first '
       )
     }
 
@@ -2059,7 +2059,7 @@ export class SensibleNFT {
     if (utxos.length > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in this operation, please merge it first '
+        'Mvc utxos should be no more than 3 in this operation, please merge it first '
       )
     }
 
@@ -2478,7 +2478,7 @@ export class SensibleNFT {
     if (utxos.length > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in this operation, please merge it first '
+        'Mvc utxos should be no more than 3 in this operation, please merge it first '
       )
     }
 
@@ -3090,7 +3090,7 @@ export class SensibleNFT {
     if (p2pkhInputNum > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in this operation.'
+        'Mvc utxos should be no more than 3 in this operation.'
       )
     }
 
@@ -3278,7 +3278,7 @@ export class SensibleNFT {
     if (p2pkhInputNum > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in this operation.'
+        'Mvc utxos should be no more than 3 in this operation.'
       )
     }
 

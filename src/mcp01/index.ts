@@ -2827,7 +2827,7 @@ export class NftManager {
     if (p2pkhInputNum > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in this operation.'
+        'Mvc utxos should be no more than 3 in this operation.'
       )
     }
 

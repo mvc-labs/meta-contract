@@ -121,7 +121,7 @@ contract TokenTransferCheck {
     }
 
     // mvc change output
-    bytes changeOutput = TxUtil.genBsvOutput(changeSatoshis, changeAddress);
+    bytes changeOutput = TxUtil.genMvcOutput(changeSatoshis, changeAddress);
     outputs = outputs +  changeOutput;
 
     bytes hashOutputs = hash256(outputs);
