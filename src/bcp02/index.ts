@@ -398,7 +398,7 @@ export class SensibleFT {
       })
     })
 
-    if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_BSV, 'Insufficient balance.')
+    if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_MVC, 'Insufficient balance.')
     return { utxos, utxoPrivateKeys }
   }
 
@@ -658,7 +658,7 @@ export class SensibleFT {
     const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -976,7 +976,7 @@ export class SensibleFT {
     })
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -1697,7 +1697,7 @@ export class SensibleFT {
     const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -2142,7 +2142,7 @@ export class SensibleFT {
   /**
    * Estimate the cost of genesis
    * @param opreturnData
-   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @param utxoMaxCount Maximum number of MVC UTXOs supported
    * @returns
    */
   public async getGenesisEstimateFee({
@@ -2172,7 +2172,7 @@ export class SensibleFT {
    * @param sensibleId
    * @param genesisPublicKey
    * @param opreturnData
-   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @param utxoMaxCount Maximum number of MVC UTXOs supported
    * @returns
    */
   public async getIssueEstimateFee({
@@ -2585,7 +2585,7 @@ export class SensibleFT {
     let feeRate = txComposer.getFeeRate()
     if (feeRate < this.feeb) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.The fee rate should not be less than ${this.feeb}, but in the end it is ${feeRate}.`
       )
     }

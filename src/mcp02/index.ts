@@ -470,7 +470,7 @@ export class FtManager {
     })
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -807,14 +807,14 @@ export class FtManager {
       })
     })
 
-    if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_BSV, 'Insufficient balance.')
+    if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_MVC, 'Insufficient balance.')
     return { utxos, utxoPrivateKeys }
   }
 
   /**
    * Estimate the cost of genesis
    * @param opreturnData
-   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @param utxoMaxCount Maximum number of MVC UTXOs supported
    * @returns
    */
   public async getGenesisEstimateFee({
@@ -874,7 +874,7 @@ export class FtManager {
 
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -1377,7 +1377,7 @@ export class FtManager {
     const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }

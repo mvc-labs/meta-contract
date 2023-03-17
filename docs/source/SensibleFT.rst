@@ -828,7 +828,7 @@ Parameters
 
 * ``options`` - ``Object``:
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
-    * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 10.
+    * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of MVC UTXOs supported, the default is 10.
 
 -------
 Returns
@@ -867,7 +867,7 @@ Parameters
     * ``genesisPublicKey`` - ``string|mvc.PublicKey``: the public key of token genesiser.
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
     * ``allowIncreaseIssues`` - ``boolean``:  (Optional) if allow increase issues , the default is true.
-    * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 10.
+    * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of MVC UTXOs supported, the default is 10.
 
 
 -------
@@ -924,7 +924,7 @@ Parameters
     * ``ftChangeAddress`` - ``string|mvc.Adderss``: (Optional) specify ft changeAddress
     * ``isMerge`` - ``boolean``: (Optional) do not use this param. Please use function Merge.
     * ``opreturnData`` - ``string[]|string|Buffer``: (Optional) append an opReturn output
-    * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 3.
+    * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of MVC UTXOs supported, the default is 3.
 
 The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
@@ -985,7 +985,7 @@ Parameters
     * ``ftChangeAddress`` - ``string|mvc.Adderss``: (Optional) specify ft changeAddress
     * ``isMerge`` - ``String``: (Optional) do not use this param. Please use function Merge.
     * ``opreturnData`` - ``Array``: (Optional) append an opReturn output
-    * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of BSV UTXOs supported, the default is 3.
+    * ``utxoMaxCount`` - ``number``: (Optional) Maximum number of MVC UTXOs supported, the default is 3.
 
 The number of mvc utxo inputs must not be greater than 3, or the transaction will failed.
 
@@ -1227,21 +1227,21 @@ Example
     Detail:   1 Inputs, 2 Outputs
     ----------------------------------------------------------------------------------------------
 
-    =>0    1MxFhEQ1fMkqaYJEKqRUGiz76ZjNJJ9ncm    9.13627305 BSV
+    =>0    1MxFhEQ1fMkqaYJEKqRUGiz76ZjNJJ9ncm    9.13627305 MVC
         lock-size:   25
         unlock-size: 107
         via 3d1ce4a600298cd960f713125d88e4cfefbfa116ac640a184fd1130b044b3fb0 [2]
 
-    Input total: 9.13627305 BSV
+    Input total: 9.13627305 MVC
     ----------------------------------------------------------------------------------------------
 
-    =>0    nonstandard                           0.00002784 BSV
+    =>0    nonstandard                           0.00002784 MVC
         size: 3555
 
-    =>1    1MxFhEQ1fMkqaYJEKqRUGiz76ZjNJJ9ncm    9.13622628 BSV
+    =>1    1MxFhEQ1fMkqaYJEKqRUGiz76ZjNJJ9ncm    9.13622628 MVC
         size: 25
 
-    Output total: 9.13625412 BSV
+    Output total: 9.13625412 MVC
     =============================================================================================
 
 ------------------------------------------------------------------------------

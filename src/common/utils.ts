@@ -125,7 +125,7 @@ export function sign(tx: mvc.Transaction, sigHashList: SigHashInfo[], sigList: S
   })
 }
 
-function satoshisToBSV(satoshis) {
+function satoshisToMVC(satoshis) {
   return (satoshis / 100000000).toFixed(8)
 }
 export function dumpTx(tx: mvc.Transaction, network = 'mainnet') {
@@ -142,7 +142,7 @@ export function dumpTx(tx: mvc.Transaction, network = 'mainnet') {
 Summary
   txid:     ${tx.id}
   Size:     ${size}
-  Fee Paid: ${satoshisToBSV(feePaid)}
+  Fee Paid: ${satoshisToMVC(feePaid)}
   Fee Rate: ${feeRate} sat/B
   Detail:   ${tx.inputs.length} Inputs, ${tx.outputs.length} Outputs
 ----------------------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ ${tx.inputs
         : type == 'OP_RETURN'
         ? 'OP_RETURN' + ' '.repeat(34 - 9)
         : 'nonstandard' + ' '.repeat(34 - 11)
-    }    ${satoshisToBSV(input.output.satoshis)} BSV
+    }    ${satoshisToMVC(input.output.satoshis)} MVC
        lock-size:   ${input.output.script.toBuffer().length}
        unlock-size: ${input.script.toBuffer().length}
        via ${input.prevTxId.toString('hex')} [${input.outputIndex}]
@@ -171,7 +171,7 @@ ${tx.inputs
     return str
   })
   .join('')}
-Input total: ${satoshisToBSV(tx.inputs.reduce((pre, cur) => pre + cur.output.satoshis, 0))} BSV
+Input total: ${satoshisToMVC(tx.inputs.reduce((pre, cur) => pre + cur.output.satoshis, 0))} MVC
 ----------------------------------------------------------------------------------------------
 ${tx.outputs
   .map((output, index) => {
@@ -190,13 +190,13 @@ ${tx.outputs
         : type == 'OP_RETURN'
         ? 'OP_RETURN' + ' '.repeat(34 - 9)
         : 'nonstandard' + ' '.repeat(34 - 11)
-    }    ${satoshisToBSV(output.satoshis)} BSV
+    }    ${satoshisToMVC(output.satoshis)} MVC
        size: ${output.script.toBuffer().length}
 		`
     return str
   })
   .join('')}
-Output total: ${satoshisToBSV(tx.outputs.reduce((pre, cur) => pre + cur.satoshis, 0))} BSV
+Output total: ${satoshisToMVC(tx.outputs.reduce((pre, cur) => pre + cur.satoshis, 0))} MVC
 =============================================================================================
 	 `)
 }

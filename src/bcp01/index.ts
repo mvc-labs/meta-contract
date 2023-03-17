@@ -409,7 +409,7 @@ export class SensibleNFT {
       })
     })
 
-    if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_BSV, 'Insufficient balance.')
+    if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_MVC, 'Insufficient balance.')
     return { utxos, utxoPrivateKeys }
   }
 
@@ -985,7 +985,7 @@ export class SensibleNFT {
     })
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -1319,7 +1319,7 @@ export class SensibleNFT {
     })
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -1625,7 +1625,7 @@ export class SensibleNFT {
     let estimateSatoshis = estimateSatoshis1 + estimateSatoshis2
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -1847,7 +1847,7 @@ export class SensibleNFT {
     let estimateSatoshis = estimateSatoshis1
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -2095,7 +2095,7 @@ export class SensibleNFT {
     })
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -2515,7 +2515,7 @@ export class SensibleNFT {
     })
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -2782,7 +2782,7 @@ export class SensibleNFT {
    * Estimate the cost of genesis
    * The minimum cost required in the case of 10 utxo inputs
    * @param opreturnData
-   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @param utxoMaxCount Maximum number of MVC UTXOs supported
    * @returns
    */
   async getGenesisEstimateFee({
@@ -2813,7 +2813,7 @@ export class SensibleNFT {
    * @param sensibleId
    * @param genesisPublicKey
    * @param opreturnData
-   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @param utxoMaxCount Maximum number of MVC UTXOs supported
    * @returns
    */
   async getIssueEstimateFee({
@@ -3485,7 +3485,7 @@ export class SensibleNFT {
     let feeRate = txComposer.getFeeRate()
     if (feeRate < this.feeb) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.The fee rate should not be less than ${this.feeb}, but in the end it is ${feeRate}.`
       )
     }
