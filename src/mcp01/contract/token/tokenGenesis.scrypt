@@ -79,7 +79,7 @@ contract TokenGenesis {
         }
 
         // bsv change output
-        bytes changeOutput = TxUtil.genBsvOutput(changeSatoshis, changeAddress);
+        bytes changeOutput = TxUtil.genMvcOutput(changeSatoshis, changeAddress);
 
         bytes hashOutput = hash256(genesisOutput + tokenOutput + opReturnOutput + changeOutput);
         require(hashOutput == SigHash.hashOutputs(txPreimage));

@@ -108,7 +108,7 @@ contract Nft {
                 opReturnOutput = Utils.buildOutput(opReturnScript, 0);
             }
 
-            bytes changeOutput = TxUtil.genBsvOutput(changeSatoshis, changeAddress);
+            bytes changeOutput = TxUtil.genMvcOutput(changeSatoshis, changeAddress);
 
             bytes outputs = nftOutput + opReturnOutput + changeOutput;
             bytes hashOutputs = hash256(outputs);

@@ -1,42 +1,23 @@
-import {
-  buildTypeClasses,
-  Bytes,
-  getPreimage,
-  Int,
-  PubKey,
-  Ripemd160,
-  Sig,
-  SigHashPreimage,
-  toHex,
-} from '../scryptlib'
-import { CodeError, ErrCode } from '../common/error'
+import {buildTypeClasses, Bytes, getPreimage, Int, PubKey, Ripemd160, Sig, SigHashPreimage, toHex,} from '../scryptlib'
+import {CodeError, ErrCode} from '../common/error'
 import * as mvc from '../mvc'
-import { Api, API_NET, API_TARGET } from '..'
+import {Api, API_NET, API_TARGET} from '..'
 
-import { FEEB } from './constants'
+import {FEEB} from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
 import * as $ from '../common/argumentCheck'
-import { Prevouts } from '../common/Prevouts'
-import { TxComposer } from '../tx-composer'
-import { TokenFactory } from './contract-factory/token'
-import { ContractUtil } from './contractUtil'
-import {
-  CONTRACT_TYPE,
-  isNull,
-  P2PKH_UNLOCK_SIZE,
-  PLACE_HOLDER_PUBKEY,
-  PLACE_HOLDER_SIG,
-} from '../common/utils'
-import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
-import {
-  TOKEN_TRANSFER_TYPE,
-  TokenTransferCheckFactory,
-} from './contract-factory/tokenTransferCheck'
+import {Prevouts} from '../common/Prevouts'
+import {TxComposer} from '../tx-composer'
+import {TokenFactory} from './contract-factory/token'
+import {ContractUtil} from './contractUtil'
+import {CONTRACT_TYPE, isNull, P2PKH_UNLOCK_SIZE, PLACE_HOLDER_PUBKEY, PLACE_HOLDER_SIG,} from '../common/utils'
+import {TokenGenesisFactory} from './contract-factory/tokenGenesis'
+import {TOKEN_TRANSFER_TYPE, TokenTransferCheckFactory,} from './contract-factory/tokenTransferCheck'
 import * as ftProto from './contract-proto/token.proto'
-import { DustCalculator } from '../common/DustCalculator'
-import { SizeTransaction } from '../common/SizeTransaction'
-import { FungibleTokenUnspent } from '../api'
+import {DustCalculator} from '../common/DustCalculator'
+import {SizeTransaction} from '../common/SizeTransaction'
+import {FungibleTokenUnspent} from '../api'
 import {
   addChangeOutput,
   addContractInput,
@@ -47,9 +28,9 @@ import {
   prepareUtxos,
   unlockP2PKHInputs,
 } from '../helpers/transactionHelpers'
-import { getGenesisIdentifiers } from '../helpers/contractHelpers'
-import { dummyTxId } from '../common/dummy'
-import { hasProtoFlag } from '../common/protoheader'
+import {getGenesisIdentifiers} from '../helpers/contractHelpers'
+import {dummyTxId} from '../common/dummy'
+import {hasProtoFlag} from '../common/protoheader'
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
@@ -470,7 +451,7 @@ export class FtManager {
     })
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -807,14 +788,14 @@ export class FtManager {
       })
     })
 
-    if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_BSV, 'Insufficient balance.')
+    if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_MVC, 'Insufficient balance.')
     return { utxos, utxoPrivateKeys }
   }
 
   /**
    * Estimate the cost of genesis
    * @param opreturnData
-   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @param utxoMaxCount Maximum number of MVC UTXOs supported
    * @returns
    */
   public async getGenesisEstimateFee({
@@ -874,7 +855,7 @@ export class FtManager {
 
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -1001,12 +982,6 @@ export class FtManager {
     })
     let routeCheckTxHex = transferCheckTxComposer.getRawHex()
     let txHex = txComposer.getRawHex()
-    const inSats = transferCheckTxComposer
-      .getTx()
-      .inputs.reduce((pre, input) => pre + input.output.satoshis, 0)
-    const outSats = transferCheckTxComposer
-      .getTx()
-      .outputs.reduce((pre, output) => pre + output.satoshis, 0)
 
     if (!noBroadcast) {
       await this.api.broadcast(routeCheckTxHex)
@@ -1081,6 +1056,18 @@ export class FtManager {
     return { ftUtxos, ftUtxoPrivateKeys }
   }
 
+
+  /**
+   * prepare transfer tokens, decide which transfer pattern to use, preprocess ft utxos(fetch previous transactions for tx building)
+   * @param codehash codehash of token
+   * @param genesis genesis of token
+   * @param receivers token receivers, will be ignored if isMerge is true
+   * @param ftUtxos input ft utxos
+   * @param ftChangeAddress change address of ft
+   * @param isMerge merge utxos, if true, all the token will be merged into one utxo and send to the change address
+   * @param minUtxoSet if true, will use minimum utxo set as possible
+   * @private
+   */
   private async _prepareTransferTokens({
     codehash,
     genesis,
@@ -1157,7 +1144,7 @@ export class FtManager {
     }
 
     ftUtxos = _ftUtxos
-    await this.perfectFtUtxosInfo(ftUtxos, codehash, genesis)
+    await this.perfectFtUtxosInfo(ftUtxos, genesis)
 
     let tokenInputArray = ftUtxos
 
@@ -1171,9 +1158,6 @@ export class FtManager {
         'Too many token-utxos, should merge them to continue.'
       )
     }
-    // console.log({ tokenTransferType })
-    // let tokenTransferType = TOKEN_TRANSFER_TYPE.IN_3_OUT_3
-
     return {
       tokenInputArray,
       tokenOutputArray,
@@ -1181,9 +1165,14 @@ export class FtManager {
     }
   }
 
+  /**
+   * Fetch previous transactions for each ft utxo
+   * @param ftUtxos ft utxos
+   * @param genesis genesis of token
+   * @private
+   */
   private async perfectFtUtxosInfo(
     ftUtxos: FtUtxo[],
-    codehash: string,
     genesis: string
   ): Promise<FtUtxo[]> {
     //Cache txHex to prevent redundant queries
@@ -1295,13 +1284,28 @@ export class FtManager {
       v.prevTokenTx = preTx
     })
 
-    // ftUtxos.forEach((v) => {
-    //   v.preTokenAmount = new BN(v.preTokenAmount.toString())
-    // })
-
     return ftUtxos
   }
 
+
+  /**
+   * composite a token transfer transaction and amount check transaction
+   * @param codehash codehash of the token
+   * @param genesis genesis of the token
+   * @param receivers token receivers
+   * @param ftUtxos input ftUtxos
+   * @param ftPrivateKeys private keys of ftUtxos
+   * @param ftChangeAddress change address of ftUtxos
+   * @param utxos utxos for paying fee
+   * @param utxoPrivateKeys private keys of utxos(fee paying)
+   * @param changeAddress change address of utxos(fee paying)
+   * @param middlePrivateKey
+   * @param middleChangeAddress
+   * @param isMerge whether to merge the token utxos
+   * @param opreturnData opreturn data to be added to the transaction
+   * @param minUtxoSet
+   * @private
+   */
   private async _transfer({
     codehash,
     genesis,
@@ -1343,10 +1347,11 @@ export class FtManager {
     opreturnData?: any
     minUtxoSet: boolean
   }) {
+    // limit the number of fee paying utxos
     if (utxos.length > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in the transfer operation, please merge it first '
+        'Mvc utxos should be no more than 3 in the transfer operation, please merge it first '
       )
     }
 
@@ -1355,6 +1360,7 @@ export class FtManager {
       middlePrivateKey = utxoPrivateKeys[0]
     }
 
+    // preprocess the ftUtxos, fetch previous tx hex and parse the token amount. decide the token transfer type.
     let { tokenInputArray, tokenOutputArray, tokenTransferType } =
       await this._prepareTransferTokens({
         codehash,
@@ -1366,6 +1372,7 @@ export class FtManager {
         minUtxoSet,
       })
 
+    // calculate the fee
     let estimateSatoshis = this._calTransferEstimateFee({
       p2pkhInputNum: utxos.length,
       tokenInputArray,
@@ -1374,10 +1381,11 @@ export class FtManager {
       opreturnData,
     })
 
+    // if fee is not enough, throw error
     const balance = utxos.reduce((pre, cur) => pre + cur.satoshis, 0)
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -1387,7 +1395,7 @@ export class FtManager {
     const ftUtxoTx = new mvc.Transaction(defaultFtUtxo.satotxInfo.txHex)
     const tokenLockingScript = ftUtxoTx.outputs[defaultFtUtxo.outputIndex].script
 
-    //create routeCheck contract
+    //create transferCheck contract
     let tokenTransferCheckContract = TokenTransferCheckFactory.createContract(tokenTransferType)
 
     tokenTransferCheckContract.setFormatedDataPart({
@@ -1402,7 +1410,7 @@ export class FtManager {
 
     const transferCheckTxComposer = new TxComposer()
 
-    //tx addInput utxo
+    // add utxo to provide fee for transfer check transaction
     const transferCheck_p2pkhInputIndexs = utxos.map((utxo) => {
       const inputIndex = transferCheckTxComposer.appendP2PKHInput(utxo as any)
       transferCheckTxComposer.addSigHashInfo({
@@ -1413,17 +1421,18 @@ export class FtManager {
       })
       return inputIndex
     })
-
+    // add outputs for transfer check transaction
     const transferCheckOutputIndex = transferCheckTxComposer.appendOutput({
       lockingScript: tokenTransferCheckContract.lockingScript,
       satoshis: this.getDustThreshold(tokenTransferCheckContract.lockingScript.toBuffer().length),
     })
-
+    // add change output for transfer check transaction
     let changeOutputIndex = transferCheckTxComposer.appendChangeOutput(
       middleChangeAddress,
       this.feeb
     )
 
+    // unlock the fee utxo for transfer check transaction
     let unsignSigPlaceHolderSize = 0
     if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
       transferCheck_p2pkhInputIndexs.forEach((inputIndex) => {
@@ -1439,6 +1448,7 @@ export class FtManager {
       unsignSigPlaceHolderSize = unsignSigPlaceHolderSize * ftUtxos.length
     }
 
+    // change utxo to the output of transfer check transaction
     utxos = [
       {
         txId: transferCheckTxComposer.getTxId(),
@@ -1449,6 +1459,7 @@ export class FtManager {
     ]
     utxoPrivateKeys = utxos.map((v) => middlePrivateKey).filter((v) => v)
 
+    // transfer check utxo in order to unlock the token utxo
     let transferCheckUtxo = {
       txId: transferCheckTxComposer.getTxId(),
       outputIndex: transferCheckOutputIndex,
@@ -1456,11 +1467,12 @@ export class FtManager {
       lockingScript: transferCheckTxComposer.getOutput(transferCheckOutputIndex).script,
     }
 
-    let transferCheckTx = transferCheckTxComposer.getTx()
 
+    // build token transfer transaction
     const txComposer = new TxComposer()
     let prevouts = new Prevouts()
 
+    // concat the token addresses and amounts for check
     let inputTokenScript: mvc.Script
     let inputTokenAmountArray = Buffer.alloc(0)
     let inputTokenAddressArray = Buffer.alloc(0)
@@ -1507,6 +1519,7 @@ export class FtManager {
     const transferCheckInputIndex = txComposer.appendInput(transferCheckUtxo)
     prevouts.addVout(transferCheckUtxo.txId, transferCheckUtxo.outputIndex)
 
+    // concat the token addresses and amounts for check
     let recervierArray = Buffer.alloc(0)
     let receiverTokenAmountArray = Buffer.alloc(0)
     let outputSatoshiArray = Buffer.alloc(0)
@@ -1548,7 +1561,7 @@ export class FtManager {
 
     //The first round of calculations get the exact size of the final transaction, and then change again
     //Due to the change, the script needs to be unlocked again in the second round
-    //let the fee to be exact in the second round
+    //let the fee be exact in the second round
     for (let c = 0; c < 2; c++) {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(
@@ -1561,6 +1574,7 @@ export class FtManager {
       let tokenTxHashProofArray = Buffer.alloc(0)
       let tokenSatoshiBytesArray = Buffer.alloc(0)
 
+      // process each ft utxo input, unlock the token utxo
       ftUtxoInputIndexs.forEach((inputIndex, idx) => {
         let ftUtxo = ftUtxos[idx]
         let senderPrivateKey = ftPrivateKeys[idx]
@@ -1594,7 +1608,6 @@ export class FtManager {
           TokenUtil.getTxOutputProof(ftUtxo.prevTokenTx, ftUtxo.prevTokenOutputIndex)
         )
 
-        const tokenTxOutputProof = TokenUtil.getTxOutputProof(tokenTx, ftUtxo.outputIndex)
         const tokenTxInfoHex = TokenUtil.getTxInfoHex(tokenTx, ftUtxo.outputIndex)
 
         tokenTxHeaderArray = Buffer.concat([
@@ -1619,6 +1632,7 @@ export class FtManager {
 
         tokenContract.setDataPart(toHex(dataPart))
 
+        // unlock the token utxo
         const unlockingContract = tokenContract.unlock({
           txPreimage: txComposer.getInputPreimage(inputIndex),
           prevouts: new Bytes(prevouts.toHex()),
@@ -1687,6 +1701,7 @@ export class FtManager {
           )
         )
       )
+      // unlock the token transfer check utxo
       let unlockingContract = tokenTransferCheckContract.unlock({
         // txPreimage: txComposer.getInputPreimage(transferCheckInputIndex),
         txPreimage,
@@ -1737,6 +1752,15 @@ export class FtManager {
     return { transferCheckTxComposer, txComposer }
   }
 
+  /**
+   * calculate transfer fee for ft transfer
+   * @param p2pkhInputNum
+   * @param tokenInputArray
+   * @param tokenOutputArray
+   * @param tokenTransferType
+   * @param opreturnData
+   * @private
+   */
   private _calTransferEstimateFee({
     p2pkhInputNum = 10,
     tokenInputArray,
@@ -1931,7 +1955,7 @@ export class FtManager {
     if (p2pkhInputNum > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in the transfer operation. '
+        'Mvc utxos should be no more than 3 in the transfer operation. '
       )
     }
 

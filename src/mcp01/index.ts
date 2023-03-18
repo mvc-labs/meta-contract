@@ -171,7 +171,7 @@ export class NftManager {
    * Estimate the cost of genesis
    * The minimum cost required in the case of 10 utxo inputs
    * @param opreturnData
-   * @param utxoMaxCount Maximum number of BSV UTXOs supported
+   * @param utxoMaxCount Maximum number of MVC UTXOs supported
    * @returns
    */
   async getGenesisEstimateFee({
@@ -819,7 +819,7 @@ export class NftManager {
     })
     if (balance < estCancelSellFee) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estCancelSellFee}, but only ${balance}.`
       )
     }
@@ -1329,7 +1329,7 @@ export class NftManager {
     })
     if (balance < estBuyFee) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estBuyFee}, but only ${balance}.`
       )
     }
@@ -1688,7 +1688,7 @@ export class NftManager {
     const totalFee = estSellFee + estTransferFee
     if (balance < totalFee) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${totalFee}, but only ${balance}.`
       )
     }
@@ -1902,7 +1902,7 @@ export class NftManager {
     })
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -2029,7 +2029,7 @@ export class NftManager {
 
     if (balance < estimateSatoshis) {
       throw new CodeError(
-        ErrCode.EC_INSUFFICIENT_BSV,
+        ErrCode.EC_INSUFFICIENT_MVC,
         `Insufficient balance.It take more than ${estimateSatoshis}, but only ${balance}.`
       )
     }
@@ -2827,7 +2827,7 @@ export class NftManager {
     if (p2pkhInputNum > 3) {
       throw new CodeError(
         ErrCode.EC_UTXOS_MORE_THAN_3,
-        'Bsv utxos should be no more than 3 in this operation.'
+        'Mvc utxos should be no more than 3 in this operation.'
       )
     }
 

@@ -54,7 +54,7 @@ export async function prepareUtxos(
     utxo.address = new Address(utxo.address, network)
   })
 
-  if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_BSV, 'Insufficient balance.')
+  if (utxos.length == 0) throw new CodeError(ErrCode.EC_INSUFFICIENT_MVC, 'Insufficient balance.')
 
   return { utxos, utxoPrivateKeys }
 }
@@ -138,7 +138,7 @@ export function checkFeeRate(txComposer: TxComposer, feeb) {
   let feeRate = txComposer.getFeeRate()
   if (feeRate < feeb) {
     throw new CodeError(
-      ErrCode.EC_INSUFFICIENT_BSV,
+      ErrCode.EC_INSUFFICIENT_MVC,
       `Insufficient balance.The fee rate should not be less than ${feeb}, but in the end it is ${feeRate}.`
     )
   }
