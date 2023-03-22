@@ -1,5 +1,3 @@
-import { mvc } from 'mvc-scryptlib'
-
 export const FEEB = 1
 
 // export const PROTO_FLAG = Buffer.from('metacontract')
@@ -16,7 +14,7 @@ export const FEEB = 1
 // export const UNIQUE_ID_LEN = 20
 // export const BLOCK_NUM_LEN = 4
 
-// export const BURN_ADDRESS = Buffer.alloc(20, 0)
+export const BURN_ADDRESS = Buffer.alloc(20, 0)
 
 // export const PROTO_HEADER_OFFSET = DATA_VERSION_LEN + HEADER_LEN
 

@@ -1,16 +1,9 @@
-import { Bytes, toHex } from '../scryptlib'
+import {Bytes, toHex} from '../scryptlib'
 import * as mvc from '../mvc'
-import { TokenFactory } from './contract-factory/token'
-import { TokenGenesisFactory } from './contract-factory/tokenGenesis'
-import {
-  TokenTransferCheckFactory,
-  TOKEN_TRANSFER_TYPE,
-} from './contract-factory/tokenTransferCheck'
-import {
-  TokenUnlockContractCheckFactory,
-  TOKEN_UNLOCK_TYPE,
-} from './contract-factory/tokenUnlockContractCheck'
-import BN = require('../bn.js')
+import {TokenFactory} from './contract-factory/token'
+import {TokenGenesisFactory} from './contract-factory/tokenGenesis'
+import {TOKEN_TRANSFER_TYPE, TokenTransferCheckFactory,} from './contract-factory/tokenTransferCheck'
+import {TOKEN_UNLOCK_TYPE, TokenUnlockContractCheckFactory,} from './contract-factory/tokenUnlockContractCheck'
 
 function getTokenTransferCheckCodeHashArray(): string[] {
   let contractArray = [
