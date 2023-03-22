@@ -6,6 +6,7 @@ import {Api, API_NET, API_TARGET} from '..'
 import {BURN_ADDRESS, FEEB} from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
+import {getTxOutputProof} from '../common/tokenUtil'
 import * as $ from '../common/argumentCheck'
 import {Prevouts} from '../common/Prevouts'
 import {TxComposer} from '../tx-composer'
@@ -2028,7 +2029,6 @@ export class FtManager {
             // process each ft utxo input, unlock the token utxo
             ftUtxoInputIndexs.forEach((inputIndex, idx) => {
                 let ftUtxo = ftUtxos[idx]
-                let senderPrivateKey = ftPrivateKeys[idx]
 
                 let dataPartObj = ftProto.parseDataPart(ftUtxo.lockingScript.toBuffer())
                 const dataPart = ftProto.newDataPart(dataPartObj)
@@ -2037,24 +2037,22 @@ export class FtManager {
                     this.transferCheckCodeHashArray,
                     this.unlockContractCodeHashArray
                 )
-                const amountCheckTx = transferCheckTxComposer.getTx()
+                const amountCheckTx = unlockCheckTxComposer.getTx()
                 const amountCheckOutputIndex = 0
                 const amountCheckTxOutputProofInfo = new TxOutputProof(
                     TokenUtil.getTxOutputProof(amountCheckTx, amountCheckOutputIndex)
                 )
                 const amountCheckScriptBuf = amountCheckTx.outputs[amountCheckOutputIndex].script.toBuffer()
 
-                const prevTokenInputIndex = ftUtxo.prevTokenInputIndex // ???
-                const prevTokenAddress = new Bytes(toHex(ftUtxo.preTokenAddress.hashBuffer))
-                // const prevTokenAddress = new Bytes(TokenProto.getTokenAddress(scriptBuf).toString('hex'))
+                // previous tx check
+                const prevTokenInputIndex = ftUtxo.prevTokenInputIndex
                 const prevTokenAmount = BigInt(ftUtxo.preTokenAmount.toString(10))
-                // const prevTokenAmount = TokenProto.getTokenAmount(scriptBuf)
-
                 const tokenTx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
 
                 const inputRes = TokenUtil.getTxInputProof(tokenTx, prevTokenInputIndex)
                 const tokenTxInputProof = new TxInputProof(inputRes[0])
-                const tokenTxHeader = inputRes[1] as Bytes // TODO:
+                // TODO:
+                const tokenTxHeader = inputRes[1] as Bytes
                 const prevTokenTxOutputProof = new TxOutputProof(
                     TokenUtil.getTxOutputProof(ftUtxo.prevTokenTx, ftUtxo.prevTokenOutputIndex)
                 )
@@ -2079,7 +2077,7 @@ export class FtManager {
                 ])
 
                 // unlockFromContract
-                const contractTxOutputProof = new TxOutputProof(TokenUtil.getEmptyTxOutputProof())
+                const contractTxOutputProof = getTxOutputProof(unlockCheckTxComposer.getTx(), unlockCheckOutputIndex)
 
                 tokenContract.setDataPart(toHex(dataPart))
 
@@ -2089,7 +2087,7 @@ export class FtManager {
                     prevouts: new Bytes(prevouts.toHex()),
 
                     tokenInputIndex: inputIndex,
-                    amountCheckHashIndex: tokenTransferType - 1,
+                    amountCheckHashIndex: tokenUnlockType - 1,
                     amountCheckInputIndex: txComposer.getTx().inputs.length - 1,
                     // amountCheckInputIndex: ftUtxo.satotxInfo.txInputsCount - 1,
                     amountCheckTxOutputProofInfo,
@@ -2121,10 +2119,10 @@ export class FtManager {
                     // checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
                     // nReceivers: tokenOutputLen,
 
-                    operation: ftProto.OP_TRANSFER,
+                    operation: ftProto.FT_OP_TYPE.UNLOCK_FROM_CONTRACT,
                 })
 
-                if (this.debug && senderPrivateKey) {
+                if (this.debug) {
                     let txContext = {
                         tx: txComposer.getTx(),
                         inputIndex: inputIndex,
@@ -2139,15 +2137,15 @@ export class FtManager {
 
             const tokenOutputSatoshis = txComposer.getOutput(0).satoshis
 
-            let sub: any = transferCheckUtxo.lockingScript
+            let sub: any = unlockCheckUtxo.lockingScript
             sub = sub.subScript(0)
             const txPreimage = new SigHashPreimage(
                 toHex(
                     getPreimage(
                         txComposer.getTx(),
                         sub,
-                        transferCheckUtxo.satoshis,
-                        transferCheckInputIndex
+                        unlockCheckUtxo.satoshis,
+                        unlockCheckInputIndex
                         // Signature.SIGHASH_ALL
                     )
                 )
@@ -2180,15 +2178,15 @@ export class FtManager {
             if (this.debug) {
                 let txContext = {
                     tx: txComposer.getTx(),
-                    inputIndex: transferCheckInputIndex,
-                    inputSatoshis: txComposer.getInput(transferCheckInputIndex).output.satoshis,
+                    inputIndex: unlockCheckInputIndex,
+                    inputSatoshis: txComposer.getInput(unlockCheckInputIndex).output.satoshis,
                 }
                 let ret = unlockingContract.verify(txContext)
                 if (ret.success == false) throw ret
             }
 
             txComposer
-                .getInput(transferCheckInputIndex)
+                .getInput(unlockCheckInputIndex)
                 .setScript(unlockingContract.toScript() as mvc.Script)
         }
 
@@ -2200,7 +2198,7 @@ export class FtManager {
         }
         checkFeeRate(txComposer, this.feeb)
 
-        return {transferCheckTxComposer, txComposer}
+        return {unlockCheckTxComposer, txComposer}
     }
 
 
