@@ -125,8 +125,8 @@ export class Token extends ContractAdapter {
     operation: ftProto.FT_OP_TYPE
   }) {
     if (operation != ftProto.FT_OP_TYPE.TRANSFER) {
-      senderPubKey = new PubKey('')
-      senderSig = new Sig('')
+      senderPubKey = new PubKey('00')
+      senderSig = new Sig('00')
     }
 
     return this._contract.unlock(

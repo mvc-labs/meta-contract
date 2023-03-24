@@ -196,6 +196,11 @@ export class TokenUnlockContractCheckFactory {
             inputTokenIndexArray: tokenInputArray,
             tokenCodeHash: toHex(dummyCodehash),
             tokenID: toHex(dummyCodehash),
+            receiverTokenAmountArray: [],
+            receiverArray: [],
+            nReceivers: 0,
+            nSender: tokenInputArray.length,
+
         })
         return contract
     }

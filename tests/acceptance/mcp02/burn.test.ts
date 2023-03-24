@@ -25,6 +25,7 @@ beforeAll(async () => {
         apiTarget: API_TARGET.MVC,
         purse: wif,
         feeb: feeb,
+        debug: true
     })
 
     const currentDate = new Date().getHours() + ':' + new Date().getMinutes()

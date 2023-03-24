@@ -236,7 +236,7 @@ export class FtManager {
         // 初始化费率
         this.feeb = feeb
 
-        this.debug = false
+        this.debug = debug
     }
 
     /**
@@ -1978,6 +1978,8 @@ export class FtManager {
             tokenCodeHash: toHex(ftProto.getContractCodeHash(tokenLockingScript.toBuffer())),
             tokenID: toHex(ftProto.getTokenID(tokenLockingScript.toBuffer())),
             nReceivers: 0,
+            receiverTokenAmountArray: [],
+            receiverArray: [],
         })
 
         // create unlock check transaction
@@ -2018,23 +2020,23 @@ export class FtManager {
             unsignSigPlaceHolderSize = unsignSigPlaceHolderSize * ftUtxos.length
         }
 
+        // unlock check utxo in order to unlock the token utxo
+        let unlockCheckUtxo = {
+            txId: unlockCheckTxComposer.getTxId(),
+            outputIndex: unlockCheckOutputIndex,
+            satoshis: unlockCheckTxComposer.getOutput(unlockCheckOutputIndex).satoshis,
+            lockingScript: unlockCheckTxComposer.getOutput(unlockCheckOutputIndex).script,
+        }
+
         // change fee utxo to the output of unlock check transaction
         utxos = [
             {
                 txId: unlockCheckTxComposer.getTxId(),
-                satoshis: unlockCheckTxComposer.getOutput(unlockCheckOutputIndex).satoshis,
-                outputIndex: unlockCheckOutputIndex,
+                satoshis: unlockCheckTxComposer.getOutput(unlockCheckChangeOutputIndex).satoshis,
+                outputIndex: unlockCheckChangeOutputIndex,
                 address: utxos[0].address,
             },
         ]
-
-        // unlock check utxo in order to unlock the token utxo
-        let unlockCheckUtxo = {
-            txId: unlockCheckTxComposer.getTxId(),
-            outputIndex: unlockCheckChangeOutputIndex,
-            satoshis: unlockCheckTxComposer.getOutput(unlockCheckChangeOutputIndex).satoshis,
-            lockingScript: unlockCheckTxComposer.getOutput(unlockCheckChangeOutputIndex).script,
-        }
 
         // build token burn transaction
         const txComposer = new TxComposer()
