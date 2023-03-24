@@ -27,16 +27,12 @@ contract TokenTransferCheck {
         SigHashPreimage txPreimage,
         bytes prevouts,
         bytes tokenScript,
-        
-        // token
         bytes tokenTxHeaderArray,
         bytes tokenTxHashProofArray,
         bytes tokenSatoshiBytesArray,
         bytes inputTokenAddressArray,
         bytes inputTokenAmountArray,
         int tokenOutputSatoshis,
-
-        // same
         int changeSatoshis,
         Ripemd160 changeAddress,
         bytes opReturnScript) {
@@ -122,7 +118,7 @@ contract TokenTransferCheck {
             outputs = outputs + opReturnOutput;
         }
 
-        // bsv change output
+        // mvc change output
         bytes changeOutput = TxUtil.genMvcOutput(changeSatoshis, changeAddress);
         outputs = outputs + changeOutput;
 

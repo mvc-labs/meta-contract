@@ -2,7 +2,7 @@
     "version": 9,
     "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "TxUtil",
-    "md5": "c66a444a465b6393e97d6100739f5908",
+    "md5": "2920f04d42c66cf433d55b6e738ee31e",
     "structs": [
         {
             "name": "LockingScriptParts",
@@ -108,7 +108,7 @@
     ],
     "stateProps": [],
     "buildType": "debug",
-    "file": "file:///Users/ivan/Codes/blockchain/meta-contract/src/mcp02/contract/txUtil.scrypt",
+    "file": "file:///Users/qiming.he/metasv/meta-contract/src/mcp02/contract/txUtil.scrypt",
     "hex": "",
-    "sourceMapFile": ""
+    "sourceMapFile": "file:///Users/qiming.he/metasv/meta-contract/src/mcp02/contract-desc/txUtil.map.json"
 }

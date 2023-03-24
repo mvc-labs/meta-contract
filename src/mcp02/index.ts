@@ -1856,7 +1856,7 @@ export class FtManager {
             }
         })
 
-        // preprocess the ftUtxos, fetch previous tx hex and parse the token amount. decide the token transfer type.
+        // preprocess the ftUtxos, fetch previous tx hex and parse the token amount. decide the token unlock type.
         const {tokenInputArray, tokenUnlockType} = await this._prepareBurnTokens({
             genesis,
             ftUtxos,
@@ -1887,10 +1887,12 @@ export class FtManager {
         //create transferCheck contract
         let tokenUnlockCheckContract = TokenUnlockContractCheckFactory.createContract(tokenUnlockType)
 
+        // todo need token input array?
         tokenUnlockCheckContract.setFormatedDataPart({
             nSender: tokenInputArray.length,
             tokenCodeHash: toHex(ftProto.getContractCodeHash(tokenLockingScript.toBuffer())),
             tokenID: toHex(ftProto.getTokenID(tokenLockingScript.toBuffer())),
+            nReceivers: 0,
         })
 
         const unlockCheckTxComposer = new TxComposer()
