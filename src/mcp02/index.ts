@@ -1697,7 +1697,6 @@ export class FtManager {
                     tokenInputIndex: inputIndex,
                     amountCheckHashIndex: tokenTransferType - 1,
                     amountCheckInputIndex: txComposer.getTx().inputs.length - 1,
-                    // amountCheckInputIndex: ftUtxo.satotxInfo.txInputsCount - 1,
                     amountCheckTxOutputProofInfo,
                     amountCheckScript: new Bytes(amountCheckScriptBuf.toString('hex')),
 
@@ -1709,7 +1708,6 @@ export class FtManager {
                     prevTokenTxOutputProof,
 
                     senderPubKey: new PubKey(
-                        // ftUtxo.publicKey ? toHex(ftUtxo.publicKey.toBuffer()) : PLACE_HOLDER_PUBKEY
                         ftUtxo.publicKey ? ftUtxo.publicKey.toHex() : PLACE_HOLDER_PUBKEY
                     ),
                     senderSig: new Sig(
@@ -1819,6 +1817,7 @@ export class FtManager {
      * @param changeAddress the address to receive the change satoshis
      * @param opreturnData opreturn data
      * @private
+     * @returns {Promise<{transferCheckTxComposer: TxComposer, txComposer: TxComposer}>}
      */
     private async _burn(
         {
@@ -1886,15 +1885,19 @@ export class FtManager {
 
         //create transferCheck contract
         let tokenUnlockCheckContract = TokenUnlockContractCheckFactory.createContract(tokenUnlockType)
-
-        // todo need token input array?
+        const inputTokenIndexArray :number[] = []
+        for (let i = 0; i < tokenInputArray.length; i++) {
+            inputTokenIndexArray.push(i)
+        }
         tokenUnlockCheckContract.setFormatedDataPart({
+            inputTokenIndexArray: inputTokenIndexArray,
             nSender: tokenInputArray.length,
             tokenCodeHash: toHex(ftProto.getContractCodeHash(tokenLockingScript.toBuffer())),
             tokenID: toHex(ftProto.getTokenID(tokenLockingScript.toBuffer())),
             nReceivers: 0,
         })
 
+        // create unlock check transaction
         const unlockCheckTxComposer = new TxComposer()
 
         // add utxo to provide fee for transfer check transaction
@@ -1932,7 +1935,7 @@ export class FtManager {
             unsignSigPlaceHolderSize = unsignSigPlaceHolderSize * ftUtxos.length
         }
 
-        // change utxo to the output of transfer check transaction
+        // change fee utxo to the output of unlock check transaction
         utxos = [
             {
                 txId: unlockCheckTxComposer.getTxId(),
@@ -2027,6 +2030,9 @@ export class FtManager {
             let tokenTxHashProofArray = Buffer.alloc(0)
             let tokenSatoshiBytesArray = Buffer.alloc(0)
 
+            // unlockFromContract
+            const contractTxOutputProof = getTxOutputProof(unlockCheckTxComposer.getTx(), unlockCheckOutputIndex)
+
             // process each ft utxo input, unlock the token utxo
             ftUtxoInputIndexs.forEach((inputIndex, idx) => {
                 let ftUtxo = ftUtxos[idx]
@@ -2047,6 +2053,7 @@ export class FtManager {
 
                 // previous tx check
                 const prevTokenInputIndex = ftUtxo.prevTokenInputIndex
+                const prevTokenAddress = ftUtxo.preTokenAddress;
                 const prevTokenAmount = BigInt(ftUtxo.preTokenAmount.toString(10))
                 const tokenTx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
 
@@ -2077,9 +2084,6 @@ export class FtManager {
                     Buffer.from(tokenTxInfoHex.txSatoshi, 'hex'),
                 ])
 
-                // unlockFromContract
-                const contractTxOutputProof = getTxOutputProof(unlockCheckTxComposer.getTx(), unlockCheckOutputIndex)
-
                 tokenContract.setDataPart(toHex(dataPart))
 
                 // unlock the token utxo
@@ -2090,12 +2094,11 @@ export class FtManager {
                     tokenInputIndex: inputIndex,
                     amountCheckHashIndex: tokenUnlockType - 1,
                     amountCheckInputIndex: txComposer.getTx().inputs.length - 1,
-                    // amountCheckInputIndex: ftUtxo.satotxInfo.txInputsCount - 1,
                     amountCheckTxOutputProofInfo,
                     amountCheckScript: new Bytes(amountCheckScriptBuf.toString('hex')),
 
                     prevTokenInputIndex,
-                    prevTokenAddress: new Bytes(BURN_ADDRESS.toString('hex')),
+                    prevTokenAddress: new Bytes(prevTokenAddress.toBuffer().toString('hex')),
                     prevTokenAmount,
                     tokenTxHeader,
                     tokenTxInputProof,
