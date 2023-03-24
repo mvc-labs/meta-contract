@@ -32,7 +32,7 @@ import {
 import {getGenesisIdentifiers} from '../helpers/contractHelpers'
 import {dummyTxId} from '../common/dummy'
 import {hasProtoFlag} from '../common/protoheader'
-import {TOKEN_UNLOCK_TYPE, TokenUnlockContractCheckFactory} from "@/mcp02/contract-factory/tokenUnlockContractCheck";
+import {TOKEN_UNLOCK_TYPE, TokenUnlockContractCheckFactory} from "../mcp02/contract-factory/tokenUnlockContractCheck";
 import {Buffer} from "buffer";
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')

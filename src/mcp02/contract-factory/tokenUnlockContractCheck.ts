@@ -1,7 +1,7 @@
 import {ContractAdapter} from '../../common/ContractAdapter'
 import {buildContractClass, Bytes, FunctionCall, SigHashPreimage, toHex} from '../../scryptlib'
 import * as proto from '../contract-proto/tokenUnlockContractCheck.proto'
-import {dummyCodehash} from "@/common/dummy";
+import {dummyCodehash} from "../../common/dummy";
 
 export enum TOKEN_UNLOCK_TYPE {
     IN_2_OUT_5 = 1,
