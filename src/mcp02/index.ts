@@ -6,7 +6,7 @@ import {Api, API_NET, API_TARGET} from '..'
 import {BURN_ADDRESS, FEEB} from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
-import {getTxOutputProof} from '../common/tokenUtil'
+import {getTxOutputProof, getUInt64Buf, writeVarint} from '../common/tokenUtil'
 import * as $ from '../common/argumentCheck'
 import {Prevouts} from '../common/Prevouts'
 import {TxComposer} from '../tx-composer'
@@ -33,6 +33,7 @@ import {getGenesisIdentifiers} from '../helpers/contractHelpers'
 import {dummyTxId} from '../common/dummy'
 import {hasProtoFlag} from '../common/protoheader'
 import {TOKEN_UNLOCK_TYPE, TokenUnlockContractCheckFactory} from "@/mcp02/contract-factory/tokenUnlockContractCheck";
+import {Buffer} from "buffer";
 
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
 const {TxInputProof, TxOutputProof} = buildTypeClasses(jsonDescr)
@@ -1998,17 +1999,15 @@ export class FtManager {
         const unlockCheckInputIndex = txComposer.appendInput(unlockCheckUtxo)
         prevouts.addVout(unlockCheckUtxo.txId, unlockCheckUtxo.outputIndex)
 
-        // concat the token addresses and amounts for check
-        // no receiver for token burn
-        let receiverArray = Buffer.alloc(0)
-        let receiverTokenAmountArray = Buffer.alloc(0)
-        let outputSatoshiArray = Buffer.alloc(0)
+        // // concat the token addresses and amounts for check
+        // // no receiver for token burn
+        // let receiverArray = Buffer.alloc(0)
+        // let receiverTokenAmountArray = Buffer.alloc(0)
+        // let outputSatoshiArray = Buffer.alloc(0)
 
         //tx addOutput OpReturn
-        let opreturnScriptHex = ''
         if (opreturnData) {
-            const opreturnOutputIndex = txComposer.appendOpReturnOutput(opreturnData)
-            opreturnScriptHex = txComposer.getOutput(opreturnOutputIndex).script.toHex()
+            txComposer.appendOpReturnOutput(opreturnData);
         }
 
         //The first round of calculations get the exact size of the final transaction, and then change again
@@ -2094,26 +2093,23 @@ export class FtManager {
                     amountCheckScript: new Bytes(amountCheckScriptBuf.toString('hex')),
 
                     prevTokenInputIndex,
-                    prevTokenAddress,
+                    prevTokenAddress: new Bytes(BURN_ADDRESS.toString('hex')),
                     prevTokenAmount,
                     tokenTxHeader,
                     tokenTxInputProof,
                     prevTokenTxOutputProof,
 
                     senderPubKey: new PubKey(
-                        // ftUtxo.publicKey ? toHex(ftUtxo.publicKey.toBuffer()) : PLACE_HOLDER_PUBKEY
-                        ftUtxo.publicKey ? ftUtxo.publicKey.toHex() : PLACE_HOLDER_PUBKEY
+                        PLACE_HOLDER_PUBKEY
                     ),
                     senderSig: new Sig(
-                        senderPrivateKey
-                            ? toHex(txComposer.getTxFormatSig(senderPrivateKey, inputIndex))
-                            : PLACE_HOLDER_SIG
+                        PLACE_HOLDER_SIG
                     ),
 
                     // contractInputIndex: transferCheckInputIndex,
                     // contractTxOutputProof,
-                    contractInputIndex: 0,
-                    contractTxOutputProof,
+                    contractInputIndex: unlockCheckInputIndex,
+                    contractTxOutputProof: new TxOutputProof(contractTxOutputProof),
 
                     // checkInputIndex: transferCheckInputIndex,
                     // checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
@@ -2135,7 +2131,16 @@ export class FtManager {
                 txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
             })
 
-            const tokenOutputSatoshis = txComposer.getOutput(0).satoshis
+            // since the token is burned, the token output satoshi is 0
+            const tokenOutputSatoshis = 0
+            const tokenOutputIndexArray = Buffer.alloc(0)
+            const changeOutput = txComposer.getTx().outputs[changeOutputIndex];
+
+            // prepare change output array for the unlock check utxo
+            const otherOutputArray = Buffer.concat([
+                getUInt64Buf(changeOutput.satoshis),
+                writeVarint(changeOutput.script.toBuffer()),
+            ])
 
             let sub: any = unlockCheckUtxo.lockingScript
             sub = sub.subScript(0)
@@ -2151,29 +2156,24 @@ export class FtManager {
                 )
             )
             // unlock the token transfer check utxo
-            let unlockingContract = tokenUnlockCheckContract.unlock({
-                // txPreimage: txComposer.getInputPreimage(transferCheckInputIndex),
-                txPreimage,
-                prevouts: new Bytes(prevouts.toHex()),
-                tokenScript: new Bytes(inputTokenScript.toHex()),
+            let unlockingContract = tokenUnlockCheckContract.unlock(
+                {
+                    // txPreimage: txComposer.getInputPreimage(transferCheckInputIndex),
+                    txPreimage,
+                    prevouts: new Bytes(prevouts.toHex()),
+                    tokenScript: new Bytes(inputTokenScript.toHex()),
 
-                tokenTxHeaderArray: new Bytes(tokenTxHeaderArray.toString('hex')),
-                tokenTxHashProofArray: new Bytes(tokenTxHashProofArray.toString('hex')),
-                tokenSatoshiBytesArray: new Bytes(tokenSatoshiBytesArray.toString('hex')),
+                    tokenTxHeaderArray: new Bytes(tokenTxHeaderArray.toString('hex')),
+                    tokenTxHashProofArray: new Bytes(tokenTxHashProofArray.toString('hex')),
+                    tokenSatoshiBytesArray: new Bytes(tokenSatoshiBytesArray.toString('hex')),
 
-                inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
-                inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
-                // receiverSatoshiArray: new Bytes(toHex(outputSatoshiArray)),
-
-                tokenOutputSatoshis,
-
-                // same
-                changeSatoshis: new Int(
-                    changeOutputIndex != -1 ? txComposer.getOutput(changeOutputIndex).satoshis : 0
-                ),
-                changeAddress: new Ripemd160(toHex(changeAddress.hashBuffer)),
-                opReturnScript: new Bytes(opreturnScriptHex),
-            })
+                    inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
+                    inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
+                    nOutputs: unlockCheckTxComposer.getTx().outputs.length,
+                    tokenOutputIndexArray: new Bytes(tokenOutputIndexArray.toString(('hex'))),
+                    tokenOutputSatoshis,
+                    otherOutputArray: new Bytes(toHex(otherOutputArray)),
+                })
 
             if (this.debug) {
                 let txContext = {
