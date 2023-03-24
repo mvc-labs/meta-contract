@@ -1010,6 +1010,89 @@ export class FtManager {
         }
     }
 
+    /**
+     * burn token
+     * @param codehash token codehash
+     * @param genesis token genesis
+     * @param ftUtxos ft utxos to burn, must be sent to zero address
+     * @param utxos fee provider utxos
+     * @param utxoPrivateKey fee provider utxo private key
+     * @param changeAddress satoshi change address
+     * @param opreturnData opreturn data
+     * @param noBroadcast if true, will not broadcast tx
+     */
+    public async burn(
+        {
+            codehash,
+            genesis,
+            ftUtxos,
+            utxos,
+            utxoPrivateKey,
+            changeAddress,
+
+            opreturnData,
+            noBroadcast = false,
+        }: {
+            codehash: string
+            genesis: string
+
+            ftUtxos?: ParamFtUtxo[]
+
+            utxos?: ParamUtxo[]
+            utxoPrivateKey?: string | mvc.PrivateKey
+            changeAddress?: string | mvc.Address
+
+            opreturnData?: any
+            noBroadcast?: boolean
+        }): Promise<{
+        tx: mvc.Transaction
+        txHex: string
+        txid: string
+        routeCheckTx: mvc.Transaction
+        routeCheckTxHex: string
+    }> {
+        checkParamGenesis(genesis)
+        checkParamCodehash(codehash)
+
+        let utxoInfo = await this._pretreatUtxos(utxos)
+        if (changeAddress) {
+            changeAddress = new mvc.Address(changeAddress, this.network)
+        } else {
+            changeAddress = utxoInfo.utxos[0].address as mvc.Address
+        }
+
+        let ftUtxoInfo = await this._pretreatFtUtxos(
+            ftUtxos,
+            codehash,
+            genesis
+        )
+
+        let {txComposer, unlockCheckTxComposer} = await this._burn({
+            codehash,
+            genesis,
+            ftUtxos: ftUtxoInfo.ftUtxos,
+            utxos: utxoInfo.utxos,
+            utxoPrivateKeys: [new mvc.PrivateKey(utxoPrivateKey)],
+            changeAddress,
+            opreturnData,
+        })
+        let routeCheckTxHex = unlockCheckTxComposer.getRawHex()
+        let txHex = txComposer.getRawHex()
+
+        if (!noBroadcast) {
+            await this.api.broadcast(routeCheckTxHex)
+            await this.api.broadcast(txHex)
+        }
+
+        return {
+            tx: txComposer.getTx(),
+            txHex,
+            routeCheckTx: unlockCheckTxComposer.getTx(),
+            routeCheckTxHex,
+            txid: txComposer.getTxId(),
+        }
+    }
+
     private async _pretreatFtUtxos(
         paramFtUtxos: ParamFtUtxo[],
         codehash?: string,
