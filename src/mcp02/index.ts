@@ -6,7 +6,7 @@ import {Api, API_NET, API_TARGET} from '..'
 import {BURN_ADDRESS, FEEB} from './constants'
 import * as BN from '../bn.js'
 import * as TokenUtil from '../common/tokenUtil'
-import {getTxOutputProof, getUInt64Buf, writeVarint} from '../common/tokenUtil'
+import {getTxOutputProof, getUInt32Buf, getUInt64Buf, writeVarint} from '../common/tokenUtil'
 import * as $ from '../common/argumentCheck'
 import {Prevouts} from '../common/Prevouts'
 import {TxComposer} from '../tx-composer'
@@ -2215,11 +2215,17 @@ export class FtManager {
             const changeOutput = txComposer.getTx().outputs[changeOutputIndex];
 
             // prepare change output array for the unlock check utxo
-            const otherOutputArray = Buffer.concat([
+            const otherOutputBuff = Buffer.concat([
                 getUInt64Buf(changeOutput.satoshis),
                 writeVarint(changeOutput.script.toBuffer()),
             ])
-
+            // write size and output data
+            let otherOutputArray = Buffer.alloc(0);
+            otherOutputArray = Buffer.concat([
+                otherOutputArray,
+                getUInt32Buf(otherOutputBuff.length),
+                otherOutputBuff
+            ])
             let sub: any = unlockCheckUtxo.lockingScript
             sub = sub.subScript(0)
             const txPreimage = new SigHashPreimage(
@@ -2247,7 +2253,7 @@ export class FtManager {
 
                     inputTokenAddressArray: new Bytes(toHex(inputTokenAddressArray)),
                     inputTokenAmountArray: new Bytes(toHex(inputTokenAmountArray)),
-                    nOutputs: unlockCheckTxComposer.getTx().outputs.length,
+                    nOutputs: txComposer.getTx().outputs.length,
                     tokenOutputIndexArray: new Bytes(tokenOutputIndexArray.toString(('hex'))),
                     tokenOutputSatoshis,
                     otherOutputArray: new Bytes(toHex(otherOutputArray)),
