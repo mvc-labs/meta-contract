@@ -2191,14 +2191,8 @@ export class FtManager {
                         PLACE_HOLDER_SIG
                     ),
 
-                    // contractInputIndex: transferCheckInputIndex,
-                    // contractTxOutputProof,
                     contractInputIndex: unlockCheckInputIndex,
                     contractTxOutputProof: new TxOutputProof(contractTxOutputProof),
-
-                    // checkInputIndex: transferCheckInputIndex,
-                    // checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
-                    // nReceivers: tokenOutputLen,
 
                     operation: ftProto.OP_UNLOCK_FROM_CONTRACT,
                 })

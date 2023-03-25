@@ -1,6 +1,7 @@
 import * as BN from '../../bn.js'
 import * as mvc from '../../mvc'
 import * as TokenUtil from '../../common/tokenUtil'
+
 const NFT_ID_LEN = 36
 const NFT_CODE_HASH_LEN = 20
 const NFT_ID_OFFSET = 0 + NFT_ID_LEN
@@ -26,25 +27,19 @@ export function newDataPart(dataPart: FormatedDataPart): Buffer {
     ])
   })
 
-  let receiverTokenAmountArrayBuf = Buffer.alloc(0)
-  dataPart.receiverTokenAmountArray.forEach((tokenAmount) => {
-    receiverTokenAmountArrayBuf = Buffer.concat([
-      receiverTokenAmountArrayBuf,
-      tokenAmount.toBuffer({ endian: 'little', size: 8 }),
-    ])
-  })
-  let recervierArrayBuf = Buffer.alloc(0)
+  let receiverArrayBuf = Buffer.alloc(0)
   dataPart.receiverArray.map((address) => {
-    recervierArrayBuf = Buffer.concat([recervierArrayBuf, address.hashBuffer])
+    receiverArrayBuf = Buffer.concat([receiverArrayBuf, address.hashBuffer])
   })
+  let nSenderBuf = TokenUtil.getUInt32Buf(dataPart.nSender)
   let nReceiversBuf = TokenUtil.getUInt32Buf(dataPart.nReceivers)
   let tokenCodeHashBuf = Buffer.from(dataPart.tokenCodeHash, 'hex')
   let tokenIDBuf = Buffer.from(dataPart.tokenID, 'hex')
 
   const buf = Buffer.concat([
     inputTokenIndexArrayBuf,
-    receiverTokenAmountArrayBuf,
-    recervierArrayBuf,
+    nSenderBuf,
+    receiverArrayBuf,
     nReceiversBuf,
     tokenCodeHashBuf,
     tokenIDBuf,
