@@ -9,7 +9,6 @@ contract TokenGenesis {
         PubKey pubKey,
         Sig sig,
         bytes tokenScript,
-        
         // genesisTx input proof
         bytes genesisTxHeader,
         int prevInputIndex,
@@ -18,7 +17,6 @@ contract TokenGenesis {
         bytes prevGenesisTxHeader,
         bytes prevTxOutputHashProof,
         bytes prevTxOutputSatoshiBytes,
-
         // output
         int genesisSatoshis,
         int tokenSatoshis,
@@ -80,7 +78,7 @@ contract TokenGenesis {
             opReturnOutput = Utils.buildOutput(opReturnScript, 0);
         }
 
-        // bsv change output
+        // mvc change output
         bytes changeOutput = TxUtil.genMvcOutput(changeSatoshis, changeAddress);
 
         bytes hashOutput = hash256(genesisOutput + tokenOutput + opReturnOutput + changeOutput);
