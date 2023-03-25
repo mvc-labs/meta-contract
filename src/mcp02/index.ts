@@ -2121,11 +2121,12 @@ export class FtManager {
 
                 let dataPartObj = ftProto.parseDataPart(ftUtxo.lockingScript.toBuffer())
                 const dataPart = ftProto.newDataPart(dataPartObj)
-
                 const tokenContract = TokenFactory.createContract(
                     this.transferCheckCodeHashArray,
                     this.unlockContractCodeHashArray
                 )
+                tokenContract.setDataPart(toHex(dataPart))
+
                 const amountCheckTx = unlockCheckTxComposer.getTx()
                 const amountCheckOutputIndex = 0
                 const amountCheckTxOutputProofInfo = new TxOutputProof(
@@ -2135,16 +2136,17 @@ export class FtManager {
 
                 // previous tx check
                 const prevTokenInputIndex = ftUtxo.prevTokenInputIndex
-                const prevTokenAddress = ftUtxo.preTokenAddress;
+                const prevTokenAddress = new Bytes(toHex(ftUtxo.preTokenAddress.hashBuffer))
                 const prevTokenAmount = BigInt(ftUtxo.preTokenAmount.toString(10))
                 const tokenTx = new mvc.Transaction(ftUtxo.satotxInfo.txHex)
 
                 const inputRes = TokenUtil.getTxInputProof(tokenTx, prevTokenInputIndex)
                 const tokenTxInputProof = new TxInputProof(inputRes[0])
+                const tokenTxHeader = inputRes[1] as Bytes
+
                 const prevTokenTxOutputProof = new TxOutputProof(
                     TokenUtil.getTxOutputProof(ftUtxo.prevTokenTx, ftUtxo.prevTokenOutputIndex)
                 )
-
                 const tokenTxInfoHex = TokenUtil.getTxInfoHex(tokenTx, ftUtxo.outputIndex)
 
                 tokenTxHeaderArray = Buffer.concat([
@@ -2164,8 +2166,6 @@ export class FtManager {
                     Buffer.from(tokenTxInfoHex.txSatoshi, 'hex'),
                 ])
 
-                tokenContract.setDataPart(toHex(dataPart))
-
                 // unlock the token utxo
                 const unlockingContract = tokenContract.unlock({
                     txPreimage: txComposer.getInputPreimage(inputIndex),
@@ -2178,14 +2178,14 @@ export class FtManager {
                     amountCheckScript: new Bytes(amountCheckScriptBuf.toString('hex')),
 
                     prevTokenInputIndex,
-                    prevTokenAddress: new Bytes(prevTokenAddress.toBuffer().toString('hex')),
+                    prevTokenAddress,
                     prevTokenAmount,
-                    tokenTxHeader: new Bytes(tokenTxInfoHex.txHeader),
+                    tokenTxHeader,
                     tokenTxInputProof,
                     prevTokenTxOutputProof,
 
                     senderPubKey: new PubKey(
-                        PLACE_HOLDER_PUBKEY
+                         PLACE_HOLDER_PUBKEY
                     ),
                     senderSig: new Sig(
                         PLACE_HOLDER_SIG
@@ -2200,7 +2200,7 @@ export class FtManager {
                     // checkScriptTx: new Bytes(transferCheckTx.serialize(true)),
                     // nReceivers: tokenOutputLen,
 
-                    operation: ftProto.FT_OP_TYPE.UNLOCK_FROM_CONTRACT,
+                    operation: ftProto.OP_UNLOCK_FROM_CONTRACT,
                 })
                 txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
 
