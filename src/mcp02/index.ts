@@ -1068,7 +1068,6 @@ export class FtManager {
         )
 
         let {txComposer, unlockCheckTxComposer} = await this._burn({
-            codehash,
             genesis,
             ftUtxos: ftUtxoInfo.ftUtxos,
             utxos: utxoInfo.utxos,
@@ -1904,7 +1903,6 @@ export class FtManager {
      */
     private async _burn(
         {
-            codehash,
             genesis,
             ftUtxos,
             utxos,
@@ -1912,7 +1910,6 @@ export class FtManager {
             changeAddress,
             opreturnData,
         }: {
-            codehash: string
             genesis: string
             ftUtxos: FtUtxo[]
             utxos: Utxo[]
@@ -2144,8 +2141,6 @@ export class FtManager {
 
                 const inputRes = TokenUtil.getTxInputProof(tokenTx, prevTokenInputIndex)
                 const tokenTxInputProof = new TxInputProof(inputRes[0])
-                // TODO:
-                const tokenTxHeader = inputRes[1] as Bytes
                 const prevTokenTxOutputProof = new TxOutputProof(
                     TokenUtil.getTxOutputProof(ftUtxo.prevTokenTx, ftUtxo.prevTokenOutputIndex)
                 )
@@ -2185,7 +2180,7 @@ export class FtManager {
                     prevTokenInputIndex,
                     prevTokenAddress: new Bytes(prevTokenAddress.toBuffer().toString('hex')),
                     prevTokenAmount,
-                    tokenTxHeader,
+                    tokenTxHeader: new Bytes(tokenTxInfoHex.txHeader),
                     tokenTxInputProof,
                     prevTokenTxOutputProof,
 
@@ -2207,6 +2202,7 @@ export class FtManager {
 
                     operation: ftProto.FT_OP_TYPE.UNLOCK_FROM_CONTRACT,
                 })
+                txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
 
                 if (this.debug) {
                     let txContext = {
@@ -2217,8 +2213,6 @@ export class FtManager {
                     let ret = unlockingContract.verify(txContext)
                     if (!ret.success) throw ret
                 }
-
-                txComposer.getInput(inputIndex).setScript(unlockingContract.toScript() as mvc.Script)
             })
 
             // since the token is burned, the token output satoshi is 0

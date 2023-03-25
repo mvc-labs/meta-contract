@@ -10,6 +10,8 @@ let genesis: string
 let sensibleId: string
 let genesisTxId: string
 
+jest.setTimeout(3000000)
+
 /**
  * test method, provide wif with enough mvc balance, and it will run through all the test and return balance to the wif address
  */
