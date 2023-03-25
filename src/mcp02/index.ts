@@ -1067,11 +1067,11 @@ export class FtManager {
             genesis
         )
 
-        let {txComposer, unlockCheckTxComposer} = await this._burn({
+        let {unlockCheckTxComposer, txComposer} = await this._burn({
             genesis,
             ftUtxos: ftUtxoInfo.ftUtxos,
             utxos: utxoInfo.utxos,
-            utxoPrivateKeys: [new mvc.PrivateKey(utxoPrivateKey)],
+            utxoPrivateKey: utxoInfo.utxoPrivateKeys[0],
             changeAddress,
             opreturnData,
         })
@@ -1906,14 +1906,14 @@ export class FtManager {
             genesis,
             ftUtxos,
             utxos,
-            utxoPrivateKeys,
+            utxoPrivateKey,
             changeAddress,
             opreturnData,
         }: {
             genesis: string
             ftUtxos: FtUtxo[]
             utxos: Utxo[]
-            utxoPrivateKeys: mvc.PrivateKey[]
+            utxoPrivateKey: mvc.PrivateKey
             changeAddress: mvc.Address
             opreturnData?: any
         }) {
@@ -1928,12 +1928,20 @@ export class FtManager {
             );
         }
 
+        if (!utxoPrivateKey) {
+            throw new CodeError(
+                ErrCode.EC_INVALID_ARGUMENT,
+                'No private key detected for the utxos, please provide the private key for the utxos '
+            );
+
+        }
+
         // check the ftUtxos must be sent to the zero address
         ftUtxos.forEach((ftUtxo) => {
             if (!ftUtxo.tokenAddress.hashBuffer.equals(BURN_ADDRESS)) {
                 throw new CodeError(ErrCode.EC_CANNOT_BURN_NON_ZERO_ADDRESS, 'All ftUtxo must be sent to the zero address in order to burn')
             }
-        })
+        });
 
         // preprocess the ftUtxos, fetch previous tx hex and parse the token amount. decide the token unlock type.
         const {tokenInputArray, tokenUnlockType} = await this._prepareBurnTokens({
@@ -2002,20 +2010,10 @@ export class FtManager {
         let unlockCheckChangeOutputIndex = unlockCheckTxComposer.appendChangeOutput(utxos[0].address, this.feeb)
 
         // unlock the fee utxo for unlock check transaction
+        unlockCheckP2pkhInputIndices.forEach((inputIndex) => {
+            unlockCheckTxComposer.unlockP2PKHInput(utxoPrivateKey, inputIndex)
+        })
         let unsignSigPlaceHolderSize = 0
-        if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
-            unlockCheckP2pkhInputIndices.forEach((inputIndex) => {
-                let privateKey = utxoPrivateKeys.splice(0, 1)[0]
-                unlockCheckTxComposer.unlockP2PKHInput(privateKey, inputIndex)
-            })
-        } else {
-            //To supplement the size calculation when unsigned
-            unlockCheckP2pkhInputIndices.forEach((v) => {
-                unsignSigPlaceHolderSize += P2PKH_UNLOCK_SIZE
-            })
-            //Each ftUtxo need to unlock with the size
-            unsignSigPlaceHolderSize = unsignSigPlaceHolderSize * ftUtxos.length
-        }
 
         // unlock check utxo in order to unlock the token utxo
         let unlockCheckUtxo = {
@@ -2274,12 +2272,9 @@ export class FtManager {
                 .setScript(unlockingContract.toScript() as mvc.Script)
         }
 
-        if (utxoPrivateKeys && utxoPrivateKeys.length > 0) {
-            p2pkhInputIndexs.forEach((inputIndex) => {
-                let privateKey = utxoPrivateKeys.splice(0, 1)[0]
-                txComposer.unlockP2PKHInput(privateKey, inputIndex)
-            })
-        }
+        p2pkhInputIndexs.forEach((inputIndex) => {
+            txComposer.unlockP2PKHInput(utxoPrivateKey, inputIndex)
+        })
         checkFeeRate(txComposer, this.feeb)
 
         return {unlockCheckTxComposer, txComposer}
