@@ -1895,7 +1895,7 @@ export class FtManager {
      * @param genesis genesis of the token
      * @param ftUtxos ft utxos to burn(must be transferred to the zero address)
      * @param utxos utxos to pay the fee
-     * @param utxoPrivateKeys private keys of the utxos(fee paying utxos)
+     * @param utxoPrivateKey private keys of the utxos(fee paying utxos)
      * @param changeAddress the address to receive the change satoshis
      * @param opreturnData opreturn data
      * @private
