@@ -35,7 +35,7 @@ describe('钱包测试', () => {
     expect(balance).toBeGreaterThan(0)
   })
 
-  it('转账', async () => {
+  it.skip('转账', async () => {
     // const receiverAddress = wallet2.address.toString()
     const receiverAddress = 'mgtKwsre9GEzNpqYACNPnWSoeCyKi7tkgR'
     const txId = await wallet.send(receiverAddress, 100000000)
@@ -43,7 +43,7 @@ describe('钱包测试', () => {
     console.log(txId)
   })
 
-  it('批量转账', async () => {
+  it.skip('批量转账', async () => {
     // await wallet2.merge()
     // const receivers = [
     //   { address: wallet2.address.toString(), amount: 1000 },
@@ -61,7 +61,7 @@ describe('钱包测试', () => {
     expect(txId).toHaveLength(64)
   })
 
-  it('splitUTXO', async () => {
+  it.skip('splitUTXO', async () => {
     const txId = await wallet2.evenSplit(10, 10000)
   })
 

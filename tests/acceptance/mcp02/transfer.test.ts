@@ -220,6 +220,8 @@ describe('转账', () => {
 
     const timerName = 'transfer'
     console.time(timerName)
+    const wallet = new Wallet(process.env.WIF!, network, 1, API_TARGET.MVC, apiHost)
+    await wallet.merge()
     let { txid: transferTxId } = await proxy.transfer({
       genesis,
       codehash,
