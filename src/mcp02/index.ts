@@ -358,7 +358,7 @@ export class FtManager {
             receiverAddress,
             tokenAmount,
             allowIncreaseMints = true,
-            utxos: utxosInput,
+            utxos,
             changeAddress,
             opreturnData,
             noBroadcast = false,
@@ -370,7 +370,7 @@ export class FtManager {
             receiverAddress: string | mvc.Address
             tokenAmount: string | BN
             allowIncreaseMints?: boolean
-            utxos?: any[]
+            utxos?: ParamUtxo[]
             changeAddress?: string | mvc.Address
             opreturnData?: any
             noBroadcast?: boolean
@@ -382,7 +382,7 @@ export class FtManager {
         $.checkArgument(receiverAddress, 'receiverAddress is required')
         $.checkArgument(tokenAmount, 'tokenAmount is required')
 
-        const utxoInfo = await prepareUtxos(this.purse, this.api, this.network, utxosInput)
+        const utxoInfo = await this._pretreatUtxos(utxos)
         if (changeAddress) {
             changeAddress = new mvc.Address(changeAddress, this.network)
         } else {
