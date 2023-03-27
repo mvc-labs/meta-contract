@@ -81,7 +81,7 @@ describe('转账', () => {
   })
 
   it.skip('铸造后转账', async () => {
-    const { genesis, codehash } = await mintSomeTokens(false)
+    const { genesis, codehash } = await mintSomeTokens(true)
 
     let { txid: transferTxId } = await ftManager.transfer({
       genesis,

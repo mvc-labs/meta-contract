@@ -2,7 +2,7 @@
     "version": 9,
     "compilerVersion": "1.19.0+commit.72eaeba",
     "contract": "TokenTransferCheck",
-    "md5": "2ef4392da035c7eef2a131692c9b281b",
+    "md5": "d28fbc5cf6f3429a7d1aad707c1fbcc7",
     "structs": [
         {
             "name": "LockingScriptParts",
