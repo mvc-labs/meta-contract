@@ -1,3 +1,5 @@
+import { mvc } from 'mvc-scrypt'
+
 export const FEEB = 1
 
 // export const PROTO_FLAG = Buffer.from('metacontract')
