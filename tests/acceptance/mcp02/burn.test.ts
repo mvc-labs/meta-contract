@@ -165,15 +165,15 @@ describe('FT burn test', () => {
         },
       ],
       senderWif: process.env.WIF,
-      // todo if use ftUtxos, it will fail, uncomment it and run the test
-      // ftUtxos: [
-      //   {
-      //     txId: txid,
-      //     outputIndex: 1,
-      //     tokenAddress: wallet.address.toString(),
-      //     tokenAmount: tokenAmount,
-      //   }
-      // ],
+      ftUtxos: [
+        {
+          txId: txid,
+          outputIndex: 1,
+          tokenAddress: wallet.address.toString(),
+          tokenAmount: tokenAmount,
+          wif: wallet.privateKey.toWIF(),
+        }
+      ],
       utxos: [
         {
           txId: feeTxid,
