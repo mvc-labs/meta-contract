@@ -165,7 +165,7 @@ describe('FT burn test', () => {
         },
       ],
       senderWif: process.env.WIF,
-      // todo if use ftUtxos, it will fail
+      // todo if use ftUtxos, it will fail, uncomment it and run the test
       // ftUtxos: [
       //   {
       //     txId: txid,
