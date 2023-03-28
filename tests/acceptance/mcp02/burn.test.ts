@@ -134,12 +134,13 @@ describe('FT burn test', () => {
     const feeTxid = (await wallet.sendArray(receivers)) as string
     console.log('fee txid ', feeTxid)
 
+    const tokenAmount = '10000000000'
     // mint some token to burn
     let { txid } = await ftManager.mint({
       sensibleId,
       genesisWif: process.env.WIF!,
       receiverAddress,
-      tokenAmount: '10000000000',
+      tokenAmount: tokenAmount,
       utxos: [
         {
           txId: feeTxid,
@@ -159,11 +160,20 @@ describe('FT burn test', () => {
       codehash,
       receivers: [
         {
-          amount: burnTokenAmount,
+          amount: tokenAmount,
           address: Address.fromPublicKeyHash(BURN_ADDRESS, API_NET.TEST).toString(),
         },
       ],
       senderWif: process.env.WIF,
+      // todo if use ftUtxos, it will fail
+      // ftUtxos: [
+      //   {
+      //     txId: txid,
+      //     outputIndex: 1,
+      //     tokenAddress: wallet.address.toString(),
+      //     tokenAmount: tokenAmount,
+      //   }
+      // ],
       utxos: [
         {
           txId: feeTxid,
@@ -177,42 +187,13 @@ describe('FT burn test', () => {
 
     console.log('transfer to zero address txid1 ', transfer.txid)
 
-    // transfer to zero address in order to burn
-    let transfer2 = await ftManager.transfer({
-      genesis,
-      codehash,
-      receivers: [
-        {
-          amount: burnTokenAmount,
-          address: Address.fromPublicKeyHash(BURN_ADDRESS, API_NET.TEST).toString(),
-        },
-      ],
-      senderWif: process.env.WIF,
-      utxos: [
-        {
-          txId: feeTxid,
-          outputIndex: 2,
-          wif: wallet.privateKey.toWIF(),
-          satoshis: 20000,
-          address: wallet.address,
-        },
-      ],
-    })
-
-    console.log('transfer to zero address txid2 ', transfer2.txid)
     const ftUtxos = [
       {
         txId: transfer.txid,
         outputIndex: 0,
         tokenAddress: Address.fromPublicKeyHash(BURN_ADDRESS, API_NET.TEST).toString(),
-        tokenAmount: burnTokenAmount,
-      },
-      {
-        txId: transfer2.txid,
-        outputIndex: 0,
-        tokenAddress: Address.fromPublicKeyHash(BURN_ADDRESS, API_NET.TEST).toString(),
-        tokenAmount: burnTokenAmount,
-      },
+        tokenAmount: tokenAmount,
+      }
     ]
 
     // burn
