@@ -1,8 +1,8 @@
-import { Api, API_NET, TxDecoder } from '../../../src'
+import { API_NET, OutputType, TxDecoder } from '../../../src'
 import { MVC } from '../../../src/api/MVC'
 import 'dotenv/config'
 import { Transaction } from '../../../src/mvc'
-import { getFlag, hasProtoFlag, getHeaderLen, getProtoType } from '../../../src/common/protoheader'
+import { getFlag, getHeaderLen, getProtoType, hasProtoFlag } from '../../../src/common/protoheader'
 
 let txDecoder: TxDecoder
 let MVCAPI: MVC
@@ -60,7 +60,36 @@ describe('TxDecoder测试', () => {
 
     MVCAPI = new MVC('testnet' as API_NET)
     MVCAPI.authorize({ authorization: process.env.METASV_BEARER })
-    const res = await MVCAPI.broadcast(hex)
-    console.log({ res })
+    // const res = await MVCAPI.broadcast(hex)
+    // console.log({ res })
+  })
+
+  it('should success for ft',async function() {
+    const ftTransferTxid = '1ac6c5eaa8dffaaf1ea8bb6dfaaabe849c6e7109b476051ceddb3c2c6053dc6a'
+    const txHex = await MVCAPI.getRawTxData(ftTransferTxid)
+    const tx = new Transaction(txHex)
+
+    const vins = await MVCAPI.getVins(ftTransferTxid)
+    let inputs = tx.inputs
+    let i = 0
+    for (let input of inputs) {
+      if (vins[i]) {
+        input.output = new Transaction.Output({
+          script: vins[i].script,
+          satoshis: vins[i].value,
+        })
+      }
+      i++
+    }
+    const decodeTx = TxDecoder.decodeTx(tx, 'testnet' as API_NET)
+    decodeTx.inputs.forEach((v,i) => {
+      console.log("input",i, v.type,v.data)
+    })
+    decodeTx.outputs.forEach((v,i) => {
+      console.log("output", i, v.type,v.data)
+    })
+    console.assert(decodeTx.inputs[0].type == OutputType.SENSIBLE_FT)
+    console.assert(decodeTx.outputs[0].type == OutputType.SENSIBLE_FT)
+
   })
 })
