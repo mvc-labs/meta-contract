@@ -20,6 +20,7 @@ describe('创建地址', () => {
 
     it('mnemonicTest', async () => {
         const seed = process.env.MNEMONIC;
+        console.log(Mnemonic.fromRandom().toString())
         let mnemonic = Mnemonic.fromString(seed);
         console.log(mnemonic.toString())
         let privateKey = mnemonic.toHDPrivateKey("", API_NET.TEST).deriveChild("m/44'/145'/0'");
@@ -32,7 +33,7 @@ describe('创建地址', () => {
         console.log("test address " + testKey.privateKey.toAddress(API_NET.TEST).toString())
         console.log("test privateKey " + testKey.privateKey.toWIF())
         let wallet = new Wallet(reserveKey.privateKey.toWIF(), API_NET.TEST, 0.5);
-        let result = await wallet.send(testKey.privateKey.toAddress(API_NET.TEST).toString(), 1000000000);
+        let result = await wallet.send(reserveKey.privateKey.toAddress(API_NET.TEST).toString(), 1000000000);
         console.log(result)
 
     })
