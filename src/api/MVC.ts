@@ -26,9 +26,9 @@ export class MVC implements ApiBase {
   publicKey: any
   constructor(apiNet: API_NET, serverBase?: string) {
     if (apiNet == API_NET.MAIN) {
-      this.serverBase = 'https://api-mvc.metasv.com'
+      this.serverBase = 'https://mainnet.mvcapi.com'
     } else {
-      this.serverBase = 'https://api-mvc-testnet.metasv.com'
+      this.serverBase = 'https://testnet.mvcapi.com'
     }
     if (serverBase) {
       this.serverBase = serverBase
