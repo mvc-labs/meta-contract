@@ -7,8 +7,8 @@ let wallet2: Wallet
 
 jest.setTimeout(30000)
 beforeAll(async () => {
-  const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
-  const feeb = 0.5
+  const [wif, wif2] = [process.env.RRWIF, process.env.WIF2] as string[]
+  const feeb = 1
 
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
@@ -35,28 +35,29 @@ describe('钱包测试', () => {
     expect(balance).toBeGreaterThan(0)
   })
 
-  it.skip('转账', async () => {
-    // const receiverAddress = wallet2.address.toString()
-    const receiverAddress = 'mgtKwsre9GEzNpqYACNPnWSoeCyKi7tkgR'
-    const txId = await wallet.send(receiverAddress, 100000000)
+  it('转账', async () => {
+    const receiverAddress = wallet2.address.toString()
+    const { txId, txHex } = await wallet.send(receiverAddress, 1000)
     expect(txId).toHaveLength(64)
+    expect(txHex).toBeTruthy()
     console.log(txId)
   })
 
-  it.skip('批量转账', async () => {
-    // await wallet2.merge()
-    // const receivers = [
-    //   { address: wallet2.address.toString(), amount: 1000 },
-    //   { address: wallet2.address.toString(), amount: 2000 },
-    // ]
-    // const txId = (await wallet.sendArray(receivers)) as String
-    // expect(txId).toHaveLength(64)
-    // // 检查wallet2多出两个utxo
-    // const utxos = await wallet2.getUtxos()
-    // expect(utxos.length).toBe(3)
+  it('批量转账', async () => {
+    await wallet2.merge()
+    const receivers = [
+      { address: wallet2.address.toString(), amount: 1000 },
+      { address: wallet2.address.toString(), amount: 2000 },
+    ]
+    const { txHex, txId } = await wallet.sendArray(receivers)
+    expect(txId).toHaveLength(64)
+    expect(txHex).toBeTruthy()
+    // 检查wallet2多出两个utxo
+    const utxos = await wallet2.getUtxos()
+    expect(utxos.length).toBe(3)
   })
 
-  it('合并UTXO', async () => {
+  it.skip('合并UTXO', async () => {
     const txId = await wallet2.merge()
     expect(txId).toHaveLength(64)
   })

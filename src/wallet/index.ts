@@ -152,17 +152,29 @@ export class Wallet {
     return await this.broadcastTxComposer(txComposer, options)
   }
 
-  private async broadcastTxComposer(txComposer: TxComposer, options?: BroadcastOptions) {
+  private async broadcastTxComposer(
+    txComposer: TxComposer,
+    options?: BroadcastOptions
+  ): Promise<{
+    txId: string
+    txHex: string
+  }> {
     const { noBroadcast, dump } = options || {}
     if (dump) {
       dumpTx(txComposer.getTx(), this.network)
     }
     if (noBroadcast) {
-      return txComposer
+      return {
+        txId: txComposer.getTx().id,
+        txHex: txComposer.getRawHex(),
+      }
     }
+    const txId = await this.blockChainApi.broadcast(txComposer.getRawHex())
 
-    return await this.blockChainApi.broadcast(txComposer.getRawHex())
-    // return txComposer
+    return {
+      txId,
+      txHex: txComposer.getRawHex(),
+    }
   }
 
   public async sendOpReturn(opreturnData: any, options?: BroadcastOptions) {
