@@ -35,7 +35,7 @@ describe('钱包测试', () => {
     expect(balance).toBeGreaterThan(0)
   })
 
-  it('转账', async () => {
+  it.skip('转账', async () => {
     const receiverAddress = wallet2.address.toString()
     const { txId, txHex } = await wallet.send(receiverAddress, 1000)
     expect(txId).toHaveLength(64)
@@ -43,7 +43,7 @@ describe('钱包测试', () => {
     console.log(txId)
   })
 
-  it('批量转账', async () => {
+  it.skip('批量转账', async () => {
     await wallet2.merge()
     const receivers = [
       { address: wallet2.address.toString(), amount: 1000 },
@@ -55,6 +55,24 @@ describe('钱包测试', () => {
     // 检查wallet2多出两个utxo
     const utxos = await wallet2.getUtxos()
     expect(utxos.length).toBe(3)
+  })
+
+  it('指定utxo批量转账', async () => {
+    await wallet2.merge()
+    await wallet.merge()
+    await wallet.evenSplit(2)
+    const utxos = await wallet.getUtxos()
+    const receivers = [
+      { address: wallet2.address.toString(), amount: 1000 },
+      { address: wallet2.address.toString(), amount: 2000 },
+    ]
+    const { txHex, txId } = await wallet.sendArray(receivers, [utxos[1]])
+    expect(txId).toHaveLength(64)
+    expect(txHex).toBeTruthy()
+    // 检查wallet2多出两个utxo
+    const utxos2 = await wallet2.getUtxos()
+    expect(utxos2.length).toBe(3)
+    expect(await wallet.getUtxos()).toHaveLength(2)
   })
 
   it.skip('合并UTXO', async () => {

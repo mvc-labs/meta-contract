@@ -41,7 +41,7 @@ export class Wallet {
     return this.blockChainApi
   }
 
-  public async getUnspents(): Promise<any[]> {
+  public async getUnspents(): Promise<SA_utxo[]> {
     return await this.blockChainApi.getUnspents(this.address.toString())
   }
 
@@ -78,9 +78,11 @@ export class Wallet {
     return await this.broadcastTxComposer(txComposer, options)
   }
 
-  public async sendArray(receivers: Receiver[], options?: BroadcastOptions) {
+  public async sendArray(receivers: Receiver[], utxos?: SA_utxo[], options?: BroadcastOptions) {
     const txComposer = new TxComposer()
-    let utxos = await this.blockChainApi.getUnspents(this.address.toString())
+    if (!utxos) {
+      utxos = await this.blockChainApi.getUnspents(this.address.toString())
+    }
     utxos.forEach((v) => {
       txComposer.appendP2PKHInput({
         address: new mvc.Address(v.address, this.network),
