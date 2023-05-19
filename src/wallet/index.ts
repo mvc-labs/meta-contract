@@ -2,6 +2,7 @@ import * as mvc from '../mvc'
 import { dumpTx, P2PKH_UNLOCK_SIZE } from '../common/utils'
 import { Api, API_NET, API_TARGET, ApiBase, SA_utxo } from '../api'
 import { TxComposer } from '../tx-composer'
+import { checkFeeRate } from '../helpers/transactionHelpers'
 
 type Receiver = {
   amount: number
@@ -75,6 +76,8 @@ export class Wallet {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
 
+    checkFeeRate(txComposer, this.feeb)
+
     return await this.broadcastTxComposer(txComposer, options)
   }
 
@@ -102,6 +105,8 @@ export class Wallet {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
 
+    checkFeeRate(txComposer, this.feeb)
+
     return await this.broadcastTxComposer(txComposer, options)
   }
 
@@ -121,6 +126,8 @@ export class Wallet {
     utxos.forEach((v, index) => {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
+
+    checkFeeRate(txComposer, this.feeb)
 
     return await this.broadcastTxComposer(txComposer, options)
   }
@@ -151,6 +158,9 @@ export class Wallet {
     utxos.forEach((v, index) => {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
+
+    checkFeeRate(txComposer, this.feeb)
+
     return await this.broadcastTxComposer(txComposer, options)
   }
 

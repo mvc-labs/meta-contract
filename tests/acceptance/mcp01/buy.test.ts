@@ -240,7 +240,7 @@ describe('NFT 购买', () => {
     // 拿回来
     const utxos = await wallet2.getUnspents()
     console.log({ utxos })
-    const theUtxo = utxos.find((u) => u.satoshis === estimate)
+    const theUtxo: any = utxos.find((u) => u.satoshis === estimate)
     theUtxo.wif = process.env.WIF2
 
     // 等待15秒

@@ -4,7 +4,6 @@ import 'dotenv/config'
 import { Transaction } from '../../../src/mvc'
 import { getFlag, hasProtoFlag, getHeaderLen, getProtoType } from '../../../src/common/protoheader'
 import * as ftProto from '../../../src/mcp02/contract-proto/token.proto'
-import { toHex } from 'mvc-scryptlib/dist'
 
 let txDecoder: TxDecoder
 let MVCAPI: MVC
