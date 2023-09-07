@@ -72,3 +72,5 @@ glob(contractScryptPath + '/**/*.scrypt', (err, files) => {
     compile_for(f)
   })
 })
+
+// renew 
