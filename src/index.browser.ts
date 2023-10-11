@@ -17,6 +17,7 @@ export * as mvc from './mvc'
 export { Net } from './net'
 export { API_NET, API_TARGET, Api } from './api'
 export { OutputType, TxDecoder } from './tx-decoder'
+export { TxComposer } from './tx-composer'
 export { Wallet } from './wallet'
 
 // // 兼容
