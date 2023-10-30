@@ -10,9 +10,9 @@ if (typeof globalThis.window !== 'undefined') {
   }
 }
 
-// export { SensibleNFT } from './bcp01'
-// export { SensibleFT } from './bcp02'
-export { BN } from './bn.js'
+import BN from 'bn.js'
+export { BN }
+
 export * as mvc from './mvc'
 export { Net } from './net'
 export { API_NET, API_TARGET, Api } from './api'
@@ -20,7 +20,6 @@ export { OutputType, TxDecoder } from './tx-decoder'
 export { TxComposer } from './tx-composer'
 export { Wallet } from './wallet'
 
-// // 兼容
 import { NftManager } from './mcp01'
 import { FtManager } from './mcp02'
 const SensibleNFT = NftManager
