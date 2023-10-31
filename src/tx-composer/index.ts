@@ -1,6 +1,6 @@
 import * as mvc from '../mvc'
-import {CONTRACT_TYPE, dumpTx, SigHashInfo} from '../common/utils'
-import {getPreimage, Sig, signTx, toHex} from 'mvc-scrypt'
+import { CONTRACT_TYPE, dumpTx, SigHashInfo } from '../common/utils'
+import { getPreimage, Sig, signTx, toHex } from 'mvc-scrypt'
 
 const Signature = mvc.crypto.Signature
 export const sighashType = Signature.SIGHASH_ALL | Signature.SIGHASH_FORKID
@@ -20,10 +20,42 @@ export class TxComposer {
   toObject() {
     let composer = {
       tx: this.tx.toObject(),
+      txPrevOutputs: this.tx.inputs.map((v) => {
+        return v.output ? v.output.toObject() : null
+      }),
       sigHashList: this.sigHashList,
       changeOutputIndex: this.changeOutputIndex,
     }
     return composer
+  }
+
+  serialize() {
+    return JSON.stringify(this.toObject())
+  }
+
+  static deserialize(composerStr: string) {
+    let composerObj = JSON.parse(composerStr)
+    let txObj = composerObj.tx
+    let tx = new mvc.Transaction()
+    txObj.inputs.forEach((v, index) => {
+      const input = new mvc.Transaction.Input(v)
+      if (composerObj.txPrevOutputs[index]) {
+        input.output = new mvc.Transaction.Output(composerObj.txPrevOutputs[index])
+      }
+
+      tx.addInput(new mvc.Transaction.Input(v))
+    })
+    txObj.outputs.forEach((v) => {
+      tx.addOutput(new mvc.Transaction.Output(v))
+    })
+    tx.nLockTime = txObj.nLockTime
+    tx.version = txObj.version
+
+    let txComposer = new TxComposer(tx)
+    txComposer.sigHashList = composerObj.sigHashList
+    txComposer.changeOutputIndex = composerObj.changeOutputIndex
+
+    return txComposer
   }
 
   static fromObject(composerObj: any) {
@@ -63,12 +95,7 @@ export class TxComposer {
     return this.tx.outputs[outputIndex]
   }
 
-  appendP2PKHInput(utxo: {
-    address: mvc.Address
-    satoshis: number
-    txId: string
-    outputIndex: number
-  }) {
+  appendP2PKHInput(utxo: { address: mvc.Address; satoshis: number; txId: string; outputIndex: number }) {
     this.tx.addInput(
       new mvc.Transaction.Input.PublicKeyHash({
         output: new mvc.Transaction.Output({
@@ -84,12 +111,7 @@ export class TxComposer {
     return inputIndex
   }
 
-  appendInput(input: {
-    txId: string
-    outputIndex: number
-    lockingScript?: mvc.Script
-    satoshis?: number
-  }) {
+  appendInput(input: { txId: string; outputIndex: number; lockingScript?: mvc.Script; satoshis?: number }) {
     this.tx.addInput(
       new mvc.Transaction.Input({
         output: new mvc.Transaction.Output({
@@ -150,11 +172,7 @@ export class TxComposer {
     const unlockSize =
       this.tx.inputs.filter((v) => v.output.script.isPublicKeyHashOut()).length * P2PKH_UNLOCK_SIZE
     let fee = Math.ceil(
-      (this.tx.toBuffer().length +
-        unlockSize +
-        extraSize +
-        mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) *
-        feeb
+      (this.tx.toBuffer().length + unlockSize + extraSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) * feeb
     )
 
     let changeAmount = this.getUnspentValue() - fee
