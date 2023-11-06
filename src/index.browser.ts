@@ -10,10 +10,12 @@ if (typeof globalThis.window !== 'undefined') {
   }
 }
 
-import BN from 'bn.js'
+import * as mvc from './mvc'
+export { mvc }
+
+const BN = mvc.crypto.BN
 export { BN }
 
-export * as mvc from './mvc'
 export { Net } from './net'
 export { API_NET, API_TARGET, Api } from './api'
 export { OutputType, TxDecoder } from './tx-decoder'
