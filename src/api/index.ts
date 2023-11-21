@@ -1,3 +1,4 @@
+import { CYBER3 } from './CYBER3'
 import { MVC } from './MVC'
 
 export enum API_NET {
@@ -6,7 +7,8 @@ export enum API_NET {
 }
 
 export enum API_TARGET {
-  MVC = 'mvc',
+  MVC = 'mvcapi',
+  CYBER3 = 'cyber3',
 }
 
 export type NonFungibleTokenUnspent = {
@@ -156,6 +158,11 @@ export class Api implements ApiBase {
         this.apiHandler = new MVC(apiNet, serverBase)
         break
       }
+      case API_TARGET.CYBER3: {
+        this.apiHandler = new CYBER3(apiNet)
+        break
+      }
+     
       default: {
         // this.apiHandler = new Sensible(apiTarget, apiNet, serverBase)
         this.apiHandler = new MVC(apiNet, serverBase)
