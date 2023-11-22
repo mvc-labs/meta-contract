@@ -25,7 +25,7 @@ export class CYBER3 implements ApiBase {
   privateKey: any
   publicKey: any
   constructor(apiNet: API_NET, serverBase?: string) {
-    this.serverBase = 'https://mvcapi.cyber3.space/'
+    this.serverBase = 'https://mvcapi.cyber3.space'
     if (serverBase) {
       this.serverBase = serverBase
     }
@@ -78,7 +78,7 @@ export class CYBER3 implements ApiBase {
   }
 
   /**
-   * @param {string} address 
+   * @param {string} address
    * @note finished
    */
   public async getUnspents(address: string): Promise<SA_utxo[]> {
@@ -140,10 +140,10 @@ export class CYBER3 implements ApiBase {
     return _res.txid
   }
 
-/**
- * @param address 
- * @note finished
- */
+  /**
+   * @param address
+   * @note finished
+   */
   public async getBalance(address: string) {
     let path = `/address/${address}/balance`
     let url = this.serverBase + path
@@ -260,6 +260,7 @@ export class CYBER3 implements ApiBase {
 
   /**
    * 查询某人持有的FT Token列表。获得每个token的余额
+   * @note finished
    */
   public async getFungibleTokenSummary(address: string): Promise<FungibleTokenSummary[]> {
     let path = `/contract/ft/address/${address}/balance`
@@ -314,11 +315,7 @@ export class CYBER3 implements ApiBase {
   /**
    * 查询某人持有的某NFT的UTXO
    */
-  public async getNonFungibleTokenUnspentDetail(
-    codehash: string,
-    genesis: string,
-    tokenIndex: string
-  ) {
+  public async getNonFungibleTokenUnspentDetail(codehash: string, genesis: string, tokenIndex: string) {
     let path = `/contract/nft/genesis/${codehash}/${genesis}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, { tokenIndex }, { headers: this._getHeaders(path) })
@@ -344,10 +341,7 @@ export class CYBER3 implements ApiBase {
     let _res = await Net.httpGet(url, {})
     const { code, data, msg } = _res as ResData
     if (code != 0) {
-      throw new CodeError(
-        ErrCode.EC_SENSIBLE_API_ERROR,
-        `request api failed. [url]:${url} [msg]:${msg}`
-      )
+      throw new CodeError(ErrCode.EC_SENSIBLE_API_ERROR, `request api failed. [url]:${url} [msg]:${msg}`)
     }
 
     let ret: NonFungibleTokenSummary[] = []
@@ -365,8 +359,6 @@ export class CYBER3 implements ApiBase {
     })
     return ret
   }
-
-
 
   public async getNftSellUtxo(
     codehash: string,
@@ -396,12 +388,7 @@ export class CYBER3 implements ApiBase {
     return ret
   }
 
-  public async getNftSellList(
-    codehash: string,
-    genesis: string,
-    cursor: number = 0,
-    size: number = 20
-  ) {
+  public async getNftSellList(codehash: string, genesis: string, cursor: number = 0, size: number = 20) {
     let path = `/contract/nft/sell/genesis/${codehash}/${genesis}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, {}, { headers: this._getHeaders(path) })
