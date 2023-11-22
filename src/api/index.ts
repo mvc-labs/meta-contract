@@ -133,12 +133,7 @@ export interface ApiBase {
     includesNotReady?: boolean
   ): Promise<NftSellUtxo>
 
-  getNftSellList(
-    codehash: string,
-    genesis: string,
-    cursor?: number,
-    size?: number
-  ): Promise<NftSellUtxo[]>
+  getNftSellList(codehash: string, genesis: string, cursor?: number, size?: number): Promise<NftSellUtxo[]>
 
   getNftSellListByAddress(address: string, cursor?: number, size?: number): Promise<NftSellUtxo[]>
 
@@ -159,10 +154,10 @@ export class Api implements ApiBase {
         break
       }
       case API_TARGET.CYBER3: {
-        this.apiHandler = new CYBER3(apiNet)
+        this.apiHandler = new CYBER3(apiNet, serverBase)
         break
       }
-     
+
       default: {
         // this.apiHandler = new Sensible(apiTarget, apiNet, serverBase)
         this.apiHandler = new MVC(apiNet, serverBase)
@@ -201,12 +196,7 @@ export class Api implements ApiBase {
     return this.apiHandler.broadcast(hex)
   }
 
-  async getFungibleTokenUnspents(
-    codehash: string,
-    genesis: string,
-    address: string,
-    size?: number
-  ) {
+  async getFungibleTokenUnspents(codehash: string, genesis: string, address: string, size?: number) {
     return this.apiHandler.getFungibleTokenUnspents(codehash, genesis, address, size)
   }
   async getFungibleTokenBalance(codehash: string, genesis: string, address: string) {
@@ -233,12 +223,7 @@ export class Api implements ApiBase {
     return this.apiHandler.getNonFungibleTokenSummary(address)
   }
 
-  async getNftSellUtxo(
-    codehash: string,
-    genesis: string,
-    tokenIndex: string,
-    includesNotReady?: boolean
-  ) {
+  async getNftSellUtxo(codehash: string, genesis: string, tokenIndex: string, includesNotReady?: boolean) {
     return this.apiHandler.getNftSellUtxo(codehash, genesis, tokenIndex, includesNotReady)
   }
 
