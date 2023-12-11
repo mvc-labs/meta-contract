@@ -15,7 +15,6 @@ npm install meta-contract --save
 ```js
 const { FT } = require('meta-contract')
 
-const { signers, signerSelecteds } = await FT.selectSigners()
 const ft = new FT({
   network: 'testnet',
   apiTarget: API_TARGET.MVC,
