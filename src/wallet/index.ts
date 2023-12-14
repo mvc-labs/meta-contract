@@ -13,6 +13,7 @@ type BroadcastOptions = {
   noBroadcast: boolean
   dump?: boolean
 }
+
 export class Wallet {
   privateKey: mvc.PrivateKey
   address: mvc.Address
@@ -25,7 +26,7 @@ export class Wallet {
     network: API_NET = API_NET.MAIN,
     feeb: number,
     apiTarget: API_TARGET = API_TARGET.MVC,
-    apiUrl?: string
+    apiUrl?: string,
   ) {
     if (wif) {
       this.privateKey = mvc.PrivateKey.fromWIF(wif)
@@ -166,7 +167,7 @@ export class Wallet {
 
   private async broadcastTxComposer(
     txComposer: TxComposer,
-    options?: BroadcastOptions
+    options?: BroadcastOptions,
   ): Promise<{
     txId: string
     txHex: string
@@ -191,8 +192,12 @@ export class Wallet {
 
   public async sendOpReturn(opreturnData: any, options?: BroadcastOptions) {
     const txComposer = new TxComposer()
+    // pick enough amount for writing opreturn
+    const amountRequired = this.feeb * mvc.Script.buildSafeDataOut(opreturnData).getData().length + 100
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
-    utxos.forEach((v) => {
+    // pick enough utxo instead of all utxo
+    const pickedUtxo = this.pickUtxo(utxos, amountRequired)
+    pickedUtxo.forEach((v) => {
       txComposer.appendP2PKHInput({
         address: new mvc.Address(v.address, this.network),
         txId: v.txId,
@@ -202,7 +207,7 @@ export class Wallet {
     })
     txComposer.appendOpReturnOutput(opreturnData)
     txComposer.appendChangeOutput(this.address, this.feeb)
-    utxos.forEach((v, index) => {
+    pickedUtxo.forEach((v, index) => {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
 

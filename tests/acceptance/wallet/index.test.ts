@@ -1,6 +1,5 @@
 import { API_NET, API_TARGET, Wallet } from '../../../src'
 import 'dotenv/config'
-import * as mvc from '../../../src/mvc'
 
 let wallet: Wallet
 let wallet2: Wallet
@@ -85,5 +84,10 @@ describe('钱包测试', () => {
   })
 
   it.todo('广播')
-  it.todo('发送OpReturn')
+
+  it('发送OpReturn', async () => {
+    const result = await wallet2.sendOpReturn('this is a test')
+    expect(result.txId).toHaveLength(64)
+    console.log(result)
+  } )
 })
