@@ -36,7 +36,21 @@ describe('NFT 创世测试', () => {
     expect(nftManager).toBeInstanceOf(NftManager)
   })
 
-  it('正常创世', async () => {
+  it('v1', async () => {
+    const totalSupply = '2'
+    const res = await nftManager.genesis({
+      version: 1,
+      totalSupply,
+    })
+
+    console.log(res)
+
+    expect(res.txid).toHaveLength(64)
+
+    expect(res.codehash).toBe('e205939ad9956673ce7da9fbd40514b30f66dc35')
+  })
+
+  it('v2', async () => {
     const totalSupply = '2'
     const res = await nftManager.genesis({
       totalSupply,
@@ -45,10 +59,12 @@ describe('NFT 创世测试', () => {
     console.log(res)
 
     expect(res.txid).toHaveLength(64)
+
+    expect(res.codehash).toBe('e114e9652b0a3e4a911e6fb183461ae6e16d7729')
   })
 
   it.skip('测试genesis正确生成', async () => {
-    const privateKey = mvc.PrivateKey.fromWIF(process.env.WIF)
+    const privateKey = mvc.PrivateKey.fromWIF(process.env.WIF!)
     const address = privateKey.toAddress(API_NET.TEST)
 
     const mvcApi = new MVC(API_NET.TEST)

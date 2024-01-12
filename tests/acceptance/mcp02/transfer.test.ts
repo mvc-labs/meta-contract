@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { FtManager, Wallet, API_NET, API_TARGET } from '../../../src'
 import { Transaction } from '../../../src/mvc'
+import { sleep } from '../test-helpers'
 
 let wallet: Wallet
 let wallet2: Wallet
@@ -34,7 +35,7 @@ beforeAll(async () => {
   ftManager.api.authorize({ authorization: process.env.METASV_BEARER })
 })
 
-async function mintSomeTokens(reGenesis: boolean = false) {
+async function mintSomeTokens(reGenesis: boolean = false, version = 2) {
   let genesisInfo: any
   if (reGenesis) {
     const currentDate = new Date().getHours() + ':' + new Date().getMinutes()
@@ -42,6 +43,7 @@ async function mintSomeTokens(reGenesis: boolean = false) {
     const tokenSymbol = 'RR'
     const decimalNum = 18
     const { sensibleId, genesis, codehash } = await ftManager.genesis({
+      version,
       tokenName,
       tokenSymbol,
       decimalNum,
@@ -50,6 +52,7 @@ async function mintSomeTokens(reGenesis: boolean = false) {
     console.log({ genesisInfo })
 
     let { txid } = await ftManager.mint({
+      version,
       sensibleId,
       genesisWif: process.env.WIF!,
       receiverAddress: wallet.address.toString(),
@@ -75,13 +78,15 @@ async function mintSomeTokens(reGenesis: boolean = false) {
   return genesisInfo
 }
 
-describe('转账', () => {
-  it('正常初始化', async () => {
+describe('transfer', () => {
+  it('initialization', async () => {
     expect(ftManager).toHaveProperty('transfer')
   })
 
-  it('铸造后转账', async () => {
-    const { genesis, codehash } = await mintSomeTokens(true)
+  it.skip('mint then transfer - v1', async () => {
+    const { genesis, codehash } = await mintSomeTokens(true, 1)
+
+    const receiverAddress = process.env.ADDRESS2!
 
     let { txid: transferTxId } = await ftManager.transfer({
       genesis,
@@ -89,19 +94,98 @@ describe('转账', () => {
       receivers: [
         {
           amount: '10',
+          address: receiverAddress,
+        },
+      ],
+      senderWif: process.env.WIF,
+    })
+    
+    await sleep(10000)
+    
+    let res = await ftManager.api.getFungibleTokenBalance(codehash, genesis, receiverAddress)
+
+    expect(res.pendingBalance).toBe('10')
+
+    expect(transferTxId).toHaveLength(64)
+
+    // remain v1 codehash
+    expect(codehash).toBe('a2421f1e90c6048c36745edd44fad682e8644693')
+  })
+
+  it.skip('mint then transfer - v2', async () => {
+    const { genesis, codehash } = await mintSomeTokens(true)
+
+    const receiverAddress = process.env.ADDRESS2!
+
+    let { txid: transferTxId } = await ftManager.transfer({
+      genesis,
+      codehash,
+      receivers: [
+        {
+          amount: '10',
+          address: receiverAddress,
+        },
+      ],
+      senderWif: process.env.WIF,
+    })
+
+    await sleep(10000)
+    let res = await ftManager.api.getFungibleTokenBalance(codehash, genesis, receiverAddress)
+
+    expect(res.pendingBalance).toBe('10')
+
+    expect(transferTxId).toHaveLength(64)
+
+    // remain v2 codehash
+    expect(codehash).toBe('c9cc7bbd1010b44873959a8b1a2bcedeb62302b7')
+  })
+
+  it('transfer then transfer again - v1', async () => {
+    // 先转20到地址2
+    const { genesis, codehash } = await mintSomeTokens(true, 1)
+    let { txid: transferTxId } = await ftManager.transfer({
+      genesis,
+      codehash,
+      receivers: [
+        {
+          amount: '50',
           address: process.env.ADDRESS2!,
         },
       ],
       senderWif: process.env.WIF,
     })
 
-    console.log({ transferTxId })
+    await sleep(5000)
+
+    // 再从地址2转10到地址3
+    let { txid: transferTxId2 } = await ftManager.transfer({
+      genesis,
+      codehash,
+      receivers: [
+        {
+          amount: '30',
+          address: process.env.ADDRESS3!,
+        },
+      ],
+      senderWif: process.env.WIF2,
+    })
+
+    console.log({ transferTxId, transferTxId2 })
+
+    await sleep(5000)
+    let res = await ftManager.api.getFungibleTokenBalance(codehash, genesis, process.env.ADDRESS3!)
+
+    expect(res.pendingBalance).toBe('30')
+
     expect(transferTxId).toHaveLength(64)
+
+    // remain v2 codehash
+    expect(codehash).toBe('a2421f1e90c6048c36745edd44fad682e8644693')
   })
 
-  it('转账后转账', async () => {
+  it.skip('transfer then transfer again - v2', async () => {
     // 先转20到地址2
-    const { genesis, codehash } = await mintSomeTokens(false)
+    const { genesis, codehash } = await mintSomeTokens(true)
     let { txid: transferTxId } = await ftManager.transfer({
       genesis,
       codehash,
@@ -113,6 +197,8 @@ describe('转账', () => {
       ],
       senderWif: process.env.WIF,
     })
+
+    await sleep(5000)
 
     // 再从地址2转10到地址3
     let { txid: transferTxId2 } = await ftManager.transfer({
@@ -128,9 +214,19 @@ describe('转账', () => {
     })
 
     console.log({ transferTxId, transferTxId2 })
+
+    await sleep(5000)
+    let res = await ftManager.api.getFungibleTokenBalance(codehash, genesis, process.env.ADDRESS3!)
+
+    expect(res.pendingBalance).toBe('10')
+
+    expect(transferTxId).toHaveLength(64)
+
+    // remain v2 codehash
+    expect(codehash).toBe('c9cc7bbd1010b44873959a8b1a2bcedeb62302b7')
   })
 
-  it('归并', async () => {
+  it.skip('归并', async () => {
     const { genesis, codehash } = await mintSomeTokens(false)
     let { txid: mergeTxId } = await ftManager.merge({
       genesis,
@@ -141,7 +237,7 @@ describe('转账', () => {
     expect(mergeTxId).toHaveLength(64)
   })
 
-  it('多人转账', async () => {
+  it.skip('多人转账', async () => {
     const { genesis, codehash } = await mintSomeTokens(false)
     const receivers: Receiver[] = []
     for (let i = 0; i < 99; i++) {

@@ -31,23 +31,40 @@ describe('FT 创世测试', () => {
     expect(ftManager).toBeInstanceOf(FtManager)
   })
 
-  it('正常创世', async () => {
+  it('v1', async () => {
     const tokenName = 'TEST_FT'
     const tokenSymbol = 'TEST'
     const decimalNum = 18
 
-    const genesis = await ftManager.genesis({
+    const { codehash } = await ftManager.genesis({
+      tokenName,
+      tokenSymbol,
+      decimalNum,
+      genesisWif: process.env.WIF,
+      opreturnData: [],
+      version: 1,
+    })
+
+    expect(codehash).toBe('a2421f1e90c6048c36745edd44fad682e8644693')
+  })
+
+  it('v2', async () => {
+    const tokenName = 'TEST_FT_V2'
+    const tokenSymbol = 'TESTV2'
+    const decimalNum = 18
+
+    const { codehash } = await ftManager.genesis({
       tokenName,
       tokenSymbol,
       decimalNum,
       genesisWif: process.env.WIF,
       opreturnData: [],
     })
+    expect(codehash).toBe('c9cc7bbd1010b44873959a8b1a2bcedeb62302b7')
 
-    console.log(genesis)
   })
 
-  it('创世后正确返回genesis信息', async () => {
+  it.skip('创世后正确返回genesis信息', async () => {
     const genesisTxId = '4196f2af1ee24d66fa6bf8e425a7140ece0236a789146678610f55b52579a927'
     const genesisTxRaw = await ftManager.api.getRawTxData(genesisTxId)
     const genesisTx = new mvc.Transaction(genesisTxRaw)

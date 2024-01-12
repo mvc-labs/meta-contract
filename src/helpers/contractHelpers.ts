@@ -35,6 +35,7 @@ export function createNftGenesisContract({
 }
 
 export function createNftMintContract({
+  version = 2,
   genesisHash,
   genesisContract,
   metaTxId,
@@ -43,6 +44,7 @@ export function createNftMintContract({
   receiverAddress,
   unlockContractCodeHashArray,
 }: {
+  version?: number
   genesisHash: string
   genesisContract: NftGenesis
   metaTxId: string
@@ -52,7 +54,7 @@ export function createNftMintContract({
   unlockContractCodeHashArray: Bytes[]
 }) {
   const nftAddress = receiverAddress.hashBuffer.toString('hex')
-  const mintContract = NftFactory.createContract(unlockContractCodeHashArray)
+  const mintContract = NftFactory.createContract(unlockContractCodeHashArray, version)
 
   mintContract.setFormatedDataPart({
     metaidOutpoint: {
@@ -81,12 +83,14 @@ export function rebuildNftLockingScript(nftUtxo: any, receiverAddress: Address) 
 }
 
 export function getGenesisIdentifiers({
+  version = 2,
   genesisTx,
   purse,
   transferCheckCodeHashArray,
   unlockContractCodeHashArray,
   type,
 }: {
+  version?: number
   genesisTx: Transaction
   purse: Purse
   transferCheckCodeHashArray?: Bytes[]
@@ -104,7 +108,7 @@ export function getGenesisIdentifiers({
   let genesisHash: string
 
   if (type === 'nft') {
-    artifactContract = NftFactory.createContract(unlockContractCodeHashArray)
+    artifactContract = NftFactory.createContract(unlockContractCodeHashArray, version)
     const genesisContract = NftGenesisFactory.createContract()
     genesisContract.setFormatedDataPartFromLockingScript(genesisLockingScript)
     genesisContract.setFormatedDataPart({
@@ -127,7 +131,8 @@ export function getGenesisIdentifiers({
   } else {
     artifactContract = TokenFactory.createContract(
       transferCheckCodeHashArray,
-      unlockContractCodeHashArray
+      unlockContractCodeHashArray,
+      version,
     )
     let newGenesisContract = TokenGenesisFactory.createContract()
     newGenesisContract.setFormatedDataPartFromLockingScript(genesisLockingScript)

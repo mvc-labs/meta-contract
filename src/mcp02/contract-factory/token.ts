@@ -36,8 +36,8 @@ export class Token extends ContractAdapter {
   }
   private _formatedDataPart: ftProto.FormatedDataPart
 
-  constructor(constuctParams: { transferCheckCodeHashArray: Bytes[]; unlockContractCodeHashArray: Bytes[] }) {
-    let desc = require('../contract-desc/token-v2_desc.json')
+  constructor(constuctParams: { transferCheckCodeHashArray: Bytes[]; unlockContractCodeHashArray: Bytes[] }, version: number = 2) {
+    let desc = version === 2 ? require('../contract-desc/token-v2_desc.json') : require('../contract-desc/token_desc.json')
     let ClassObj = buildContractClass(desc)
     let contract = new ClassObj(
       constuctParams.transferCheckCodeHashArray,
@@ -242,12 +242,13 @@ export class TokenFactory {
 
   public static createContract(
     transferCheckCodeHashArray: Bytes[],
-    unlockContractCodeHashArray: Bytes[]
+    unlockContractCodeHashArray: Bytes[],
+    version: number = 2
   ): Token {
     return new Token({
       transferCheckCodeHashArray,
       unlockContractCodeHashArray,
-    })
+    }, version)
   }
 
   public static getDummyInstance() {

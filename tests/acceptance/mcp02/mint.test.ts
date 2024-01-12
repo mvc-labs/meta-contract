@@ -9,7 +9,7 @@ let genesis: string
 let sensibleId: string
 let genesisTxId: string
 
-beforeAll(async () => {
+beforeEach(async () => {
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
   const feeb = 1
@@ -32,18 +32,35 @@ beforeAll(async () => {
   const tokenSymbol = 'HelloWorld'
   const decimalNum = 8
 
-  const genesisResult = await ftManager.genesis({
+  // const genesisResult = await ftManager.genesis({
+  //   tokenName,
+  //   tokenSymbol,
+  //   decimalNum,
+  //   genesisWif: wif,
+  // })
+  // codehash = genesisResult.codehash
+  // genesis = genesisResult.genesis
+  // genesisTxId = genesisResult.txid
+  // sensibleId = genesisResult.sensibleId
+})
+
+async function genesisSomeTokens(version = 2) {
+  let genesisInfo: any
+  const currentDate = new Date().getHours() + ':' + new Date().getMinutes()
+  const tokenName = 'Test Token - ' + currentDate
+  const tokenSymbol = 'RR'
+  const decimalNum = 18
+  const { sensibleId, genesis, codehash } = await ftManager.genesis({
     tokenName,
     tokenSymbol,
     decimalNum,
-    genesisWif: wif,
+    version,
   })
-  codehash = genesisResult.codehash
-  genesis = genesisResult.genesis
-  genesisTxId = genesisResult.txid
-  sensibleId = genesisResult.sensibleId
-  // sensibleId = '46c29cbdb9d44ebf35cfca98e769652fb930cf995f838409ec4eb2ca9b33b6f600000000'
-})
+  genesisInfo = { sensibleId, genesis, codehash }
+  console.log({ genesisInfo })
+
+  return genesisInfo
+}
 
 jest.setTimeout(60000)
 describe('FT 铸造测试', () => {
@@ -51,12 +68,12 @@ describe('FT 铸造测试', () => {
     expect(ftManager).toBeInstanceOf(FtManager)
   })
 
-  const receiverAddress = process.env.ADDRESS
+  const receiverAddress = process.env.ADDRESS!
 
-  it('正常铸造', async () => {
+  it.skip('正常铸造', async () => {
     let { txid } = await ftManager.mint({
       sensibleId,
-      genesisWif: process.env.WIF,
+      genesisWif: process.env.WIF!,
       receiverAddress,
       tokenAmount: '10000000000',
     })
@@ -66,10 +83,55 @@ describe('FT 铸造测试', () => {
     console.log({ txid })
   })
 
+    it('v1', async () => {
+      const { sensibleId, genesis, codehash } = await genesisSomeTokens(1)
+
+      let { txid } = await ftManager.mint({
+        version: 1,
+        sensibleId,
+        genesisWif: process.env.WIF!,
+        receiverAddress,
+        tokenAmount: '1000',
+      })
+
+      expect(txid).toHaveLength(64)
+
+      // ask api to return the balance
+      let res = await ftManager.api.getFungibleTokenBalance(codehash, genesis, receiverAddress)
+      expect(res.pendingBalance).toBe('1000')
+      expect(codehash).toBe('a2421f1e90c6048c36745edd44fad682e8644693')
+
+      console.log({ txid })
+    })
+
+  it('v2', async () => {
+    const { sensibleId, genesis, codehash } = await genesisSomeTokens()
+
+    let { txid } = await ftManager.mint({
+      sensibleId,
+      genesisWif: process.env.WIF!,
+      receiverAddress,
+      tokenAmount: '1000',
+    })
+
+    expect(txid).toHaveLength(64)
+
+    // ask api to return the balance
+    let res = await ftManager.api.getFungibleTokenBalance(
+      codehash,
+      genesis,
+      receiverAddress
+    )
+    expect(res.pendingBalance).toBe('1000')
+    expect(codehash).toBe('c9cc7bbd1010b44873959a8b1a2bcedeb62302b7')
+
+    console.log({ txid })
+  })
+
   it.skip('连续铸造，拥有同样的sensibleId、Genesis、CodeHash', async () => {
     let { txid: firstTxId } = await ftManager.mint({
       sensibleId,
-      genesisWif: process.env.WIF2,
+      genesisWif: process.env.WIF2!,
       receiverAddress,
       tokenAmount: '100000',
     })

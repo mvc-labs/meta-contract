@@ -71,6 +71,14 @@ ContractUtil.init()
 const jsonDescr = require('./contract-desc/txUtil_desc.json')
 const { TxInputProof, TxOutputProof } = buildTypeClasses(jsonDescr)
 
+function determineCodehashVersion(codehash: string) {
+  if (codehash == ContractUtil.tokenCodeHash) {
+    return 2
+  }
+
+  return 1
+}
+
 type Purse = {
   privateKey: mvc.PrivateKey
   address: mvc.Address
@@ -255,6 +263,7 @@ export class NftManager {
   }
 
   public async genesis({
+    version = 2,
     genesisWif,
     totalSupply,
     opreturnData,
@@ -263,6 +272,7 @@ export class NftManager {
     noBroadcast = false,
     calcFee = false,
   }: {
+    version?: number
     genesisWif?: string
     totalSupply: string
     changeAddress?: string | mvc.Address
@@ -318,6 +328,7 @@ export class NftManager {
     }
 
     let { codehash, genesis, sensibleId } = getGenesisIdentifiers({
+      version,
       genesisTx: txComposer.getTx(),
       purse: this.purse,
       unlockContractCodeHashArray: this.unlockContractCodeHashArray,
@@ -381,6 +392,7 @@ export class NftManager {
   }
 
   public async mint({
+    version = 2,
     sensibleId,
     metaTxId,
     metaOutputIndex,
@@ -391,6 +403,7 @@ export class NftManager {
     noBroadcast = false,
     calcFee = false,
   }: {
+    version?: number
     sensibleId: string
     metaTxId: string
     metaOutputIndex: number
@@ -430,6 +443,7 @@ export class NftManager {
 
     if (calcFee) {
       return await this.createMintTx({
+        version,
         utxos,
         utxoPrivateKeys,
         sensibleId,
@@ -443,6 +457,7 @@ export class NftManager {
     }
 
     const { txComposer, tokenIndex } = await this.createMintTx({
+      version,
       utxos,
       utxoPrivateKeys,
       sensibleId,
@@ -769,6 +784,7 @@ export class NftManager {
     middlePrivateKey?: mvc.PrivateKey
     middleChangeAddress: mvc.Address
   }) {
+    const version = determineCodehashVersion(codehash)
     // 第一步：找回并准备NFT Utxo
     // 1.1 找回nft Utxo
     let { nftUtxo } = await getNftInfo({
@@ -937,7 +953,7 @@ export class NftManager {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
 
-      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, codehash)
+      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, version)
       let dataPartObj = nftProto.parseDataPart(nftUtxo.lockingScript.toBuffer())
       nftContract.setFormatedDataPart(dataPartObj)
 
@@ -1289,6 +1305,8 @@ export class NftManager {
     creatorFee?: number
     creatorFeeRate?: number
   }): Promise<{ unlockCheckTxComposer: TxComposer; txComposer: TxComposer }> {
+    const version = determineCodehashVersion(codehash)
+    
     // 第一步：找回并准备NFT Utxo
     // 1.1 找回nft Utxo
     let { nftUtxo } = await getNftInfo({
@@ -1475,7 +1493,7 @@ export class NftManager {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
 
-      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, codehash)
+      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, version)
       let dataPartObj = nftProto.parseDataPart(nftUtxo.lockingScript.toBuffer())
       nftContract.setFormatedDataPart(dataPartObj)
 
@@ -1970,6 +1988,7 @@ export class NftManager {
   }
 
   private async createMintTx({
+    version,
     utxos,
     utxoPrivateKeys,
     sensibleId,
@@ -1980,6 +1999,7 @@ export class NftManager {
     changeAddress,
     calcFee = false,
   }: {
+    version: number
     utxos: Utxo[]
     utxoPrivateKeys: mvc.PrivateKey[]
     sensibleId: string
@@ -2068,6 +2088,7 @@ export class NftManager {
     // 第四步：创建铸造合约，添加铸造输出
     const genesisHash = this.getGenesisHash(genesisContract, sensibleID)
     const mintContract = createNftMintContract({
+      version,
       genesisHash,
       genesisContract,
       metaTxId,
@@ -2241,6 +2262,8 @@ export class NftManager {
     changeAddress: Address
     opreturnScriptHex: string
   }) {
+    const version = determineCodehashVersion(codehash)
+    
     const nftPrivateKey = this.purse.privateKey
     const senderPubkey = nftPrivateKey.toPublicKey()
 
@@ -2248,7 +2271,7 @@ export class NftManager {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
 
-      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, codehash)
+      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, version)
       let dataPartObj = nftProto.parseDataPart(nftUtxo.lockingScript.toBuffer())
       nftContract.setFormatedDataPart(dataPartObj)
 
@@ -2350,6 +2373,8 @@ export class NftManager {
     changeAddress: Address
     opreturnScriptHex: string
   }) {
+    const version = determineCodehashVersion(codehash)
+    
     const nftPrivateKey = this.purse.privateKey
     const senderPubkey = nftPrivateKey.toPublicKey()
 
@@ -2357,7 +2382,7 @@ export class NftManager {
       txComposer.clearChangeOutput()
       const changeOutputIndex = txComposer.appendChangeOutput(changeAddress, this.feeb)
 
-      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, codehash)
+      const nftContract = NftFactory.createContract(this.unlockContractCodeHashArray, version)
       let dataPartObj = nftProto.parseDataPart(nftUtxo.lockingScript.toBuffer())
       nftContract.setFormatedDataPart(dataPartObj)
 

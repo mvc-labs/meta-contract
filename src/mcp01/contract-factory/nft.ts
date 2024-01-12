@@ -39,8 +39,10 @@ export class Nft extends ContractAdapter {
   }
   private _formatedDataPart: nftProto.FormatedDataPart
 
-  constructor(constuctParams: { unlockContractCodeHashArray: Bytes[] }) {
-    let desc = require('../contract-desc/nft_desc.json')
+  constructor(constuctParams: { unlockContractCodeHashArray: Bytes[] }, version: number = 2) {
+    let desc = version === 2 
+    ? require('../contract-desc/nft-v2_desc.json')
+    : require('../contract-desc/nft_desc.json')
     let ClassObj = buildContractClass(desc)
     let contract = new ClassObj(constuctParams.unlockContractCodeHashArray)
     super(contract)
@@ -212,10 +214,10 @@ export class NftFactory {
     return this.lockingScriptSize
   }
 
-  public static createContract(unlockContractCodeHashArray: Bytes[], codehash?: string): Nft {
+  public static createContract(unlockContractCodeHashArray: Bytes[], version: number = 2): Nft {
     return new Nft({
       unlockContractCodeHashArray,
-    })
+    }, version)
   }
 
   public static getDummyInstance() {

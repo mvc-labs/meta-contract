@@ -31,6 +31,7 @@ You should save the returned values.(genesis、codehash、sensibleId)
 
 ```js
 let { txHex, txid, tx, genesis, codehash, sensibleId } = await ft.genesis({
+  version: 2,
   tokenName: 'COFFEE COIN',
   tokenSymbol: 'CC',
   decimalNum: 3,
@@ -44,6 +45,7 @@ Mint 1000000000000 tokens
 
 ```js
 let { txid, txHex, tx } = await ft.mint({
+  version: 2,
   sensibleId: sensibleId,
   genesisWif: CoffeeShop.wif,
   receiverAddress: CoffeeShop.address,
@@ -119,7 +121,7 @@ Define the NFT with totalSupply
 You should save the returned values.(genesis、codehash、sensibleId)
 
 ```ts
-const result = await nftManager.genesis({ totalSupply: '10' })
+const result = await nftManager.genesis({ totalSupply: '10', version: 2 })
 console.log(result)
 ```
 
@@ -131,6 +133,7 @@ metaTxId is created by metaid which stands for NFT State
 ```js
 // todo generate metaId tx before mint
 const mintResult = await nftManager.mint({
+  version: 2,
   metaTxId: '0000000000000000000000000000000000000000000000000000000000000000',
   sensibleId: result.sensibleID,
   metaOutputIndex: 0,

@@ -82,6 +82,14 @@ function checkParamCodehash(codehash) {
   )
 }
 
+function determineCodehashVersion(codehash: string) {
+  if (codehash == ContractUtil.tokenCodeHash) {
+    return 2
+  } 
+
+  return 1
+}
+
 function checkParamReceivers(receivers: TokenReceiver[]) {
   const ErrorName = 'ReceiversFormatError'
   if (isNull(receivers)) {
@@ -272,6 +280,7 @@ export class FtManager {
    * @returns
    */
   public async genesis({
+    version = 2,
     tokenName,
     tokenSymbol,
     decimalNum,
@@ -281,6 +290,7 @@ export class FtManager {
     genesisWif,
     noBroadcast = false,
   }: {
+    version?: number
     tokenName: string
     tokenSymbol: string
     decimalNum: number
@@ -290,7 +300,6 @@ export class FtManager {
     genesisWif?: string
     noBroadcast?: boolean
   }) {
-    // TODO 检查必要参数
     // validate params
     $.checkArgument(
       _.isString(tokenName) && Buffer.from(tokenName).length <= 40,
@@ -305,6 +314,11 @@ export class FtManager {
     $.checkArgument(
       _.isNumber(decimalNum) && decimalNum >= 0 && decimalNum <= 255,
       'decimalNum should be a number and must be between 0 and 255'
+    )
+
+    $.checkArgument(
+      _.isNumber(version) && version >= 1 && version <= 2,
+      'version should be a number and must be between 1 and 2'
     )
 
     const utxoInfo = await prepareUtxos(this.purse, this.api, this.network, utxosInput)
@@ -335,6 +349,7 @@ export class FtManager {
     }
 
     let { codehash, genesis, sensibleId } = getGenesisIdentifiers({
+      version,
       genesisTx: txComposer.getTx(),
       purse: { address: tokenAddress, privateKey: this.purse.privateKey },
       transferCheckCodeHashArray: this.transferCheckCodeHashArray,
@@ -369,8 +384,7 @@ export class FtManager {
   }
 
   public async mint({
-    // genesis,
-    // codehash,
+    version = 2,
     sensibleId,
     genesisWif,
     receiverAddress,
@@ -381,8 +395,7 @@ export class FtManager {
     opreturnData,
     noBroadcast = false,
   }: {
-    // genesis: string
-    // codehash: string
+    version?: number
     sensibleId: string
     genesisWif: string
     receiverAddress: string | mvc.Address
@@ -393,8 +406,6 @@ export class FtManager {
     opreturnData?: any
     noBroadcast?: boolean
   }) {
-    // checkParamGenesis(genesis)
-    // checkParamCodehash(codehash)
     $.checkArgument(sensibleId, 'sensibleId is required')
     $.checkArgument(genesisWif, 'genesisWif is required')
     $.checkArgument(receiverAddress, 'receiverAddress is required')
@@ -412,8 +423,7 @@ export class FtManager {
     tokenAmount = new BN(tokenAmount.toString())
 
     let { txComposer } = await this._mint({
-      // genesis,
-      // codehash,
+      version,
       sensibleId,
       receiverAddress,
       tokenAmount,
@@ -435,8 +445,7 @@ export class FtManager {
   }
 
   private async _mint({
-    // genesis,
-    // codehash,
+    version,
     sensibleId,
     receiverAddress,
     tokenAmount,
@@ -448,8 +457,7 @@ export class FtManager {
     genesisPrivateKey,
     genesisPublicKey,
   }: {
-    // genesis: string
-    // codehash: string
+    version: number
     sensibleId: string
     receiverAddress: mvc.Address
     tokenAmount: BN
@@ -492,7 +500,8 @@ export class FtManager {
 
     let tokenContract = TokenFactory.createContract(
       this.transferCheckCodeHashArray,
-      this.unlockContractCodeHashArray
+      this.unlockContractCodeHashArray,
+      version
     )
     tokenContract.setFormatedDataPart(
       Object.assign({}, newGenesisContract.getFormatedDataPart(), {
@@ -946,6 +955,8 @@ export class FtManager {
     checkParamCodehash(codehash)
     checkParamReceivers(receivers)
 
+    const version = determineCodehashVersion(codehash)
+
     let senderPrivateKey: mvc.PrivateKey
     let senderPublicKey: mvc.PublicKey
     if (senderWif) {
@@ -981,6 +992,7 @@ export class FtManager {
     }
 
     let { txComposer, transferCheckTxComposer } = await this._transfer({
+      version,
       codehash,
       genesis,
       receivers,
@@ -1056,6 +1068,8 @@ export class FtManager {
     checkParamGenesis(genesis)
     checkParamCodehash(codehash)
 
+    const version = determineCodehashVersion(codehash)
+
     let utxoInfo = await this._pretreatUtxos(utxos)
     if (changeAddress) {
       changeAddress = new mvc.Address(changeAddress, this.network)
@@ -1066,6 +1080,7 @@ export class FtManager {
     let ftUtxoInfo = await this._pretreatFtUtxos(ftUtxos, codehash, genesis)
 
     let { unlockCheckTxComposer, txComposer } = await this._burn({
+      version,
       genesis,
       ftUtxos: ftUtxoInfo.ftUtxos,
       utxos: utxoInfo.utxos,
@@ -1425,6 +1440,7 @@ export class FtManager {
    * @private
    */
   private async _transfer({
+    version,
     codehash,
     genesis,
 
@@ -1445,6 +1461,7 @@ export class FtManager {
     opreturnData,
     minUtxoSet,
   }: {
+    version: number
     codehash: string
     genesis: string
 
@@ -1694,7 +1711,8 @@ export class FtManager {
 
         const tokenContract = TokenFactory.createContract(
           this.transferCheckCodeHashArray,
-          this.unlockContractCodeHashArray
+          this.unlockContractCodeHashArray,
+          version,
         )
         const amountCheckTx = transferCheckTxComposer.getTx()
         const amountCheckOutputIndex = 0
@@ -1866,6 +1884,7 @@ export class FtManager {
    * @returns {Promise<{transferCheckTxComposer: TxComposer, txComposer: TxComposer}>}
    */
   private async _burn({
+    version,
     genesis,
     ftUtxos,
     utxos,
@@ -1873,6 +1892,7 @@ export class FtManager {
     changeAddress,
     opreturnData,
   }: {
+    version: number
     genesis: string
     ftUtxos: FtUtxo[]
     utxos: Utxo[]
@@ -2083,7 +2103,8 @@ export class FtManager {
         const dataPart = ftProto.newDataPart(dataPartObj)
         const tokenContract = TokenFactory.createContract(
           this.transferCheckCodeHashArray,
-          this.unlockContractCodeHashArray
+          this.unlockContractCodeHashArray,
+          version,
         )
         tokenContract.setDataPart(toHex(dataPart))
 
