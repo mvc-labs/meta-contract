@@ -36,11 +36,8 @@ export class Token extends ContractAdapter {
   }
   private _formatedDataPart: ftProto.FormatedDataPart
 
-  constructor(constuctParams: {
-    transferCheckCodeHashArray: Bytes[]
-    unlockContractCodeHashArray: Bytes[]
-  }) {
-    let desc = require('../contract-desc/token_desc.json')
+  constructor(constuctParams: { transferCheckCodeHashArray: Bytes[]; unlockContractCodeHashArray: Bytes[] }) {
+    let desc = require('../contract-desc/token-v2_desc.json')
     let ClassObj = buildContractClass(desc)
     let contract = new ClassObj(
       constuctParams.transferCheckCodeHashArray,
@@ -53,7 +50,7 @@ export class Token extends ContractAdapter {
   }
 
   static fromASM(asm: string) {
-    let desc = require('../contract-desc/token_desc.json')
+    let desc = require('../contract-desc/token-v2_desc.json')
     let ClassObj = buildContractClass(desc)
     let contract = ClassObj.fromASM(asm)
     return contract

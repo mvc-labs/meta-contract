@@ -10,7 +10,7 @@ let genesisContract: any
 beforeAll(async () => {
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
-  const feeb = 0.5
+  const feeb = 1
 
   wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
   wallet.api.authorize({ authorization: process.env.METASV_BEARER })
@@ -30,7 +30,6 @@ beforeAll(async () => {
 
   // sensibleId = '4874dff763ec1ec6849ce0ae935eaedc67e6802d7e645ce6a088b8a270175def00000000'
 })
-
 
 // 创世准备
 async function genesis() {

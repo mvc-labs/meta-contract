@@ -18,7 +18,7 @@ jest.setTimeout(3000000)
 beforeAll(async () => {
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif] = [process.env.WIF] as string[]
-  const feeb = 0.5
+  const feeb = 1
 
   wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
 
@@ -172,7 +172,7 @@ describe('FT burn test', () => {
           tokenAddress: wallet.address.toString(),
           tokenAmount: tokenAmount,
           wif: wallet.privateKey.toWIF(),
-        }
+        },
       ],
       utxos: [
         {
@@ -193,7 +193,7 @@ describe('FT burn test', () => {
         outputIndex: 0,
         tokenAddress: Address.fromPublicKeyHash(BURN_ADDRESS, API_NET.TEST).toString(),
         tokenAmount: tokenAmount,
-      }
+      },
     ]
 
     // burn

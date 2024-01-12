@@ -75,7 +75,9 @@ function checkParamCodehash(codehash) {
     codehash == ContractUtil.tokenCodeHash ||
       codehash == ContractUtil.tokenGenesisCodeHash ||
       codehash === '57344f46cc0d0c8dfea7af3300b1b3a0f4216c04' ||
-      codehash === 'a2421f1e90c6048c36745edd44fad682e8644693',
+      codehash === 'a2421f1e90c6048c36745edd44fad682e8644693' ||
+      codehash === 'e205939ad9956673ce7da9fbd40514b30f66dc35' ||
+      codehash === 'c9cc7bbd1010b44873959a8b1a2bcedeb62302b7',
     `a valid codehash should be ${ContractUtil.tokenCodeHash}, but the provided is ${codehash} `
   )
 }

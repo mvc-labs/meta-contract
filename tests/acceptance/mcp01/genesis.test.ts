@@ -15,7 +15,7 @@ jest.setTimeout(30000)
 beforeAll(async () => {
   const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
   const [wif, wif2] = [process.env.WIF, process.env.WIF2] as string[]
-  const feeb = 0.5
+  const feeb = 1
 
   wallet = new Wallet(wif, network, feeb, API_TARGET.MVC)
   wallet2 = new Wallet(wif2, network, feeb, API_TARGET.MVC)

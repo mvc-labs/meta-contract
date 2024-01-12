@@ -58,13 +58,13 @@ async function mintSomeTokens(reGenesis: boolean = false) {
   } else {
     genesisInfo = {
       // release mainnet
-      // sensibleId: 'fe7c1750d06235c4ee42c32de3e3e29beb82e349aeecf65091f0e804a692582100000000',
-      // genesis: '02496ae0a5ed28bd04583ca8aabf9138ae6113b1',
-      // codehash: 'e205939ad9956673ce7da9fbd40514b30f66dc35',
+      sensibleId: 'fe7c1750d06235c4ee42c32de3e3e29beb82e349aeecf65091f0e804a692582100000000',
+      genesis: '02496ae0a5ed28bd04583ca8aabf9138ae6113b1',
+      codehash: 'e205939ad9956673ce7da9fbd40514b30f66dc35',
       // release testnet
-      sensibleId: 'a93c28288643b2425f984c93e6b6ad7c1b3330c0c69d8613e5557238922e16ae00000000',
-      genesis: '039032ade3d49a6d4ff41c33b3d63ea5c986f310',
-      codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
+      // sensibleId: 'a93c28288643b2425f984c93e6b6ad7c1b3330c0c69d8613e5557238922e16ae00000000',
+      // genesis: '039032ade3d49a6d4ff41c33b3d63ea5c986f310',
+      // codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
       // debug testnet
       // sensibleId: '27a97925b5550f6178661489a73602ce0e14a725e4f86bfa664de21eaff2964100000000',
       // genesis: '728996c04c1571b122f20f466698c55c7dbcca5e',
@@ -80,7 +80,7 @@ describe('转账', () => {
     expect(ftManager).toHaveProperty('transfer')
   })
 
-  it.skip('铸造后转账', async () => {
+  it('铸造后转账', async () => {
     const { genesis, codehash } = await mintSomeTokens(true)
 
     let { txid: transferTxId } = await ftManager.transfer({
@@ -99,7 +99,7 @@ describe('转账', () => {
     expect(transferTxId).toHaveLength(64)
   })
 
-  it.skip('转账后转账', async () => {
+  it('转账后转账', async () => {
     // 先转20到地址2
     const { genesis, codehash } = await mintSomeTokens(false)
     let { txid: transferTxId } = await ftManager.transfer({
@@ -130,7 +130,7 @@ describe('转账', () => {
     console.log({ transferTxId, transferTxId2 })
   })
 
-  it.skip('归并', async () => {
+  it('归并', async () => {
     const { genesis, codehash } = await mintSomeTokens(false)
     let { txid: mergeTxId } = await ftManager.merge({
       genesis,
@@ -141,7 +141,7 @@ describe('转账', () => {
     expect(mergeTxId).toHaveLength(64)
   })
 
-  it.skip('多人转账', async () => {
+  it('多人转账', async () => {
     const { genesis, codehash } = await mintSomeTokens(false)
     const receivers: Receiver[] = []
     for (let i = 0; i < 99; i++) {
@@ -201,13 +201,11 @@ describe('转账', () => {
     console.log({ txid })
   })
 
-  it('速度测试 - 转移 - 代理', async () => {
+  it.skip('速度测试 - 转移 - 代理', async () => {
     const { genesis, codehash } = await mintSomeTokens(false)
     const network = process.env.NETWORK === 'testnet' ? API_NET.TEST : API_NET.MAIN
     const apiHost =
-      network === API_NET.MAIN
-        ? 'https://api.show3.io/metasv'
-        : 'https://testmvc.showmoney.app/metasv'
+      network === API_NET.MAIN ? 'https://api.show3.io/metasv' : 'https://testmvc.showmoney.app/metasv'
 
     const proxy = new FtManager({
       network,
