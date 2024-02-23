@@ -13,9 +13,9 @@ npm install meta-contract --save
 ### Init
 
 ```js
-import { FT, API_TARGET } from 'meta-contract'
+import { FtManager, API_TARGET } from 'meta-contract'
 
-const ft = new FT({
+const ft = new FtManager({
   network: 'testnet',
   apiTarget: API_TARGET.MVC,
   purse: '', //the wif of a mvc address to offer transaction fees
