@@ -13,7 +13,7 @@ npm install meta-contract --save
 ### Init
 
 ```js
-const { FT } = require('meta-contract')
+import { FT, API_TARGET } from 'meta-contract'
 
 const ft = new FT({
   network: 'testnet',
