@@ -2,7 +2,7 @@
 
 This sdk helps you to interact with [MVC meta contracts][mvc]
 
-Please read the [documentation][docs] for more.
+Please read the [documentation][[docs](https://meta-contract-doc.vercel.app/)] for more.
 
 ## How to install
 
