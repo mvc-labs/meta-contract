@@ -26,7 +26,7 @@ export class Wallet {
     network: API_NET = API_NET.MAIN,
     feeb: number,
     apiTarget: API_TARGET = API_TARGET.MVC,
-    apiUrl?: string,
+    apiUrl?: string
   ) {
     if (wif) {
       this.privateKey = mvc.PrivateKey.fromWIF(wif)
@@ -114,6 +114,14 @@ export class Wallet {
   public async merge(options?: BroadcastOptions) {
     const txComposer = new TxComposer()
     let utxos = await this.blockChainApi.getUnspents(this.address.toString())
+    let currentUtxos = utxos
+    while (utxos.length) {
+      currentUtxos = await this.blockChainApi.getUnspents(
+        this.address.toString(),
+        currentUtxos[currentUtxos.length - 1].flag
+      )
+      utxos = [...utxos, ...currentUtxos]
+    }
     utxos.forEach((v) => {
       txComposer.appendP2PKHInput({
         address: new mvc.Address(v.address, this.network),
@@ -167,7 +175,7 @@ export class Wallet {
 
   private async broadcastTxComposer(
     txComposer: TxComposer,
-    options?: BroadcastOptions,
+    options?: BroadcastOptions
   ): Promise<{
     txId: string
     txHex: string

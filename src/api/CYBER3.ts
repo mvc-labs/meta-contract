@@ -79,10 +79,14 @@ export class CYBER3 implements ApiBase {
 
   /**
    * @param {string} address
+   * @param {?string} [flag]
    * @note finished
    */
-  public async getUnspents(address: string): Promise<SA_utxo[]> {
+  public async getUnspents(address: string, flag: string): Promise<SA_utxo[]> {
     let path = `/address/${address}/utxo`
+    if (flag) {
+      path += `?flag=${flag}`
+    }
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(
       url,
@@ -98,6 +102,7 @@ export class CYBER3 implements ApiBase {
       satoshis: v.value,
       address: address,
       height: v.height,
+      flag: v.flag,
     }))
     return ret
   }

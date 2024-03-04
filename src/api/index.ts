@@ -33,6 +33,7 @@ export type SA_utxo = {
   satoshis: number
   address: string
   height: number
+  flag: string
 }
 export type FungibleTokenSummary = {
   codehash: string
@@ -90,7 +91,7 @@ export type OutpointSpent = {
 }
 export interface ApiBase {
   authorize: (options: AuthorizationOption) => void
-  getUnspents: (address: string) => Promise<SA_utxo[]>
+  getUnspents: (address: string, flag?: string) => Promise<SA_utxo[]>
   getRawTxData: (txid: string) => Promise<string>
   checkTxSeen: (txid: string) => Promise<boolean>
   broadcast: (hex: string) => Promise<string>
