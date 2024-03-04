@@ -176,8 +176,8 @@ export class Api implements ApiBase {
     return this.apiHandler.authorize(options)
   }
 
-  async getUnspents(address: string) {
-    return this.apiHandler.getUnspents(address)
+  async getUnspents(address: string, flag?: string) {
+    return this.apiHandler.getUnspents(address, flag)
   }
 
   async getBalance(address: string) {

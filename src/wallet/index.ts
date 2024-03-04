@@ -113,14 +113,12 @@ export class Wallet {
 
   public async merge(options?: BroadcastOptions) {
     const txComposer = new TxComposer()
-    let utxos = await this.blockChainApi.getUnspents(this.address.toString())
-    let currentUtxos = utxos
-    while (utxos.length) {
-      currentUtxos = await this.blockChainApi.getUnspents(
-        this.address.toString(),
-        currentUtxos[currentUtxos.length - 1].flag
-      )
+    let utxos = []
+    let currentUtxos = await this.blockChainApi.getUnspents(this.address.toString())
+    while (currentUtxos.length) {
       utxos = [...utxos, ...currentUtxos]
+      const flag = currentUtxos[currentUtxos.length - 1].flag
+      currentUtxos = await this.blockChainApi.getUnspents(this.address.toString(), flag)
     }
     utxos.forEach((v) => {
       txComposer.appendP2PKHInput({

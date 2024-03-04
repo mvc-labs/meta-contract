@@ -83,9 +83,13 @@ export class MVC implements ApiBase {
 
   /**
    * @param {string} address
+   * @param {?string} [flag]
    */
-  public async getUnspents(address: string): Promise<SA_utxo[]> {
+  public async getUnspents(address: string, flag?: string): Promise<SA_utxo[]> {
     let path = `/address/${address}/utxo`
+    if (flag) {
+      path += `?flag=${flag}`
+    }
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(
       url,
@@ -101,6 +105,7 @@ export class MVC implements ApiBase {
       satoshis: v.value,
       address: address,
       height: v.height,
+      flag: v.flag,
     }))
     return ret
   }
@@ -295,11 +300,7 @@ export class MVC implements ApiBase {
   /**
    * 查询某人持有的某NFT的UTXO
    */
-  public async getNonFungibleTokenUnspentDetail(
-    codehash: string,
-    genesis: string,
-    tokenIndex: string
-  ) {
+  public async getNonFungibleTokenUnspentDetail(codehash: string, genesis: string, tokenIndex: string) {
     let path = `/contract/nft/genesis/${codehash}/${genesis}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, { tokenIndex }, { headers: this._getHeaders(path) })
@@ -325,10 +326,7 @@ export class MVC implements ApiBase {
     let _res = await Net.httpGet(url, {})
     const { code, data, msg } = _res as ResData
     if (code != 0) {
-      throw new CodeError(
-        ErrCode.EC_SENSIBLE_API_ERROR,
-        `request api failed. [url]:${url} [msg]:${msg}`
-      )
+      throw new CodeError(ErrCode.EC_SENSIBLE_API_ERROR, `request api failed. [url]:${url} [msg]:${msg}`)
     }
 
     let ret: NonFungibleTokenSummary[] = []
@@ -391,12 +389,7 @@ export class MVC implements ApiBase {
     return ret
   }
 
-  public async getNftSellList(
-    codehash: string,
-    genesis: string,
-    cursor: number = 0,
-    size: number = 20
-  ) {
+  public async getNftSellList(codehash: string, genesis: string, cursor: number = 0, size: number = 20) {
     let path = `/contract/nft/sell/genesis/${codehash}/${genesis}/utxo`
     let url = this.serverBase + path
     let _res: any = await Net.httpGet(url, {}, { headers: this._getHeaders(path) })
