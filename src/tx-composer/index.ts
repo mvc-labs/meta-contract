@@ -171,9 +171,12 @@ export class TxComposer {
     //If there is change, it will be output in the last item
     const unlockSize =
       this.tx.inputs.filter((v) => v.output.script.isPublicKeyHashOut()).length * P2PKH_UNLOCK_SIZE
-    let fee = Math.ceil(
-      (this.tx.toBuffer().length + unlockSize + extraSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) * feeb
-    )
+
+    // plus 1 to avoid weird fee calculation mismatch
+    let fee =
+      Math.ceil(
+        (this.tx.toBuffer().length + unlockSize + extraSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) * feeb
+      ) + 1
 
     let changeAmount = this.getUnspentValue() - fee
     if (changeAmount >= P2PKH_DUST_AMOUNT) {
