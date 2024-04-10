@@ -77,7 +77,10 @@ describe('n对n转账测试', () => {
     console.log({ tokenInfo })
 
     // 给1号拆10个面值为1的token
-    let dividing = []
+    let dividing: {
+      address: string
+      amount: string
+    }[] = []
     for (let i = 0; i < 10; i++) {
       dividing.push({
         address: wallet.address.toString(),

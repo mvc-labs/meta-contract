@@ -76,6 +76,7 @@ export class Wallet {
     pickedUtxos.forEach((v, index) => {
       txComposer.unlockP2PKHInput(this.privateKey, index)
     })
+    console.log('unlocked', txComposer.tx.toBuffer().length)
 
     checkFeeRate(txComposer, this.feeb)
 

@@ -173,17 +173,25 @@ export class TxComposer {
       this.tx.inputs.filter((v) => v.output.script.isPublicKeyHashOut()).length * P2PKH_UNLOCK_SIZE
 
     // plus 1 to avoid weird fee calculation mismatch
-    let fee =
-      Math.ceil(
-        (this.tx.toBuffer().length + unlockSize + extraSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) * feeb
-      ) + 1
+    let fee = Math.ceil(
+      (this.tx.toBuffer().length + unlockSize + extraSize + mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE) * feeb
+    )
 
     let changeAmount = this.getUnspentValue() - fee
+    console.log({
+      size1: this.tx.toBuffer().length,
+      size2: unlockSize,
+      size3: extraSize,
+      size4: mvc.Transaction.CHANGE_OUTPUT_MAX_SIZE,
+    })
     if (changeAmount >= P2PKH_DUST_AMOUNT) {
       this.changeOutputIndex = this.appendP2PKHOutput({
         address: changeAddress,
         satoshis: changeAmount,
       })
+
+      console.log({ added: this.tx.toBuffer().length })
+      console.log({ isPk: this.tx.inputs[0].output.script.isPublicKeyHashOut() })
     } else {
       this.changeOutputIndex = -1
     }
@@ -207,6 +215,11 @@ export class TxComposer {
       ),
       sigtype,
     })
+    console.log({
+      sigSize: mvc.Script.buildPublicKeyHashIn(sig.publicKey, sig.signature.toDER(), sig.sigtype).toBuffer()
+        .length,
+    })
+    console.log({ sigtype: sig.sigtype })
 
     tx.inputs[inputIndex].setScript(
       mvc.Script.buildPublicKeyHashIn(sig.publicKey, sig.signature.toDER(), sig.sigtype)
@@ -246,6 +259,7 @@ export class TxComposer {
   getFeeRate() {
     let unspent = this.getUnspentValue()
     let txSize = this.tx.toBuffer().length
+    console.log({ amountLater: unspent, txSize })
     return unspent / txSize
   }
 

@@ -50,7 +50,7 @@ describe('FT 创世测试', () => {
 
   it('v2', async () => {
     const tokenName = 'TEST_FT_V2'
-    const tokenSymbol = 'TESTV2'
+    const tokenSymbol = 'TEST_V2'
     const decimalNum = 18
 
     const { codehash } = await ftManager.genesis({
@@ -61,7 +61,6 @@ describe('FT 创世测试', () => {
       opreturnData: [],
     })
     expect(codehash).toBe('c9cc7bbd1010b44873959a8b1a2bcedeb62302b7')
-
   })
 
   it.skip('创世后正确返回genesis信息', async () => {
