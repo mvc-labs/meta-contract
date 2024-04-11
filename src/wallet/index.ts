@@ -24,7 +24,7 @@ export class Wallet {
   constructor(
     wif: string,
     network: API_NET = API_NET.MAIN,
-    feeb: number,
+    feeb: number = 1,
     apiTarget: API_TARGET = API_TARGET.MVC,
     apiUrl?: string
   ) {

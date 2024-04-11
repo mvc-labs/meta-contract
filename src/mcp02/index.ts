@@ -85,7 +85,7 @@ function checkParamCodehash(codehash) {
 function determineCodehashVersion(codehash: string) {
   if (codehash == ContractUtil.tokenCodeHash) {
     return 2
-  } 
+  }
 
   return 1
 }
@@ -762,7 +762,7 @@ export class FtManager {
   }: {
     codehash: string
     genesis: string
-    ownerWif: string
+    ownerWif?: string
     utxos?: ParamUtxo[]
     changeAddress?: string | mvc.Address
     noBroadcast?: boolean
@@ -780,6 +780,64 @@ export class FtManager {
       receivers: [],
       opreturnData,
     })
+  }
+
+  public async totalMerge({
+    codehash,
+    genesis,
+    ownerWif,
+    changeAddress,
+    opreturnData,
+  }: {
+    codehash: string
+    genesis: string
+    ownerWif?: string
+    changeAddress?: string | mvc.Address
+    opreturnData?: any
+  }) {
+    $.checkArgument(ownerWif, 'ownerWif is required')
+    const ownerPublicKey = mvc.PrivateKey.fromWIF(ownerWif).toPublicKey()
+
+    const txids: string[] = []
+    while (true) {
+      const ftUtxos = await this.api.getFungibleTokenUnspents(
+        codehash,
+        genesis,
+        ownerPublicKey.toAddress(this.network).toString(),
+        20
+      )
+
+      if (ftUtxos.length <= 1) {
+        break
+      }
+
+      const paramFtUtxos = ftUtxos.map((v) => {
+        return {
+          txId: v.txId,
+          outputIndex: v.outputIndex,
+          tokenAddress: v.tokenAddress,
+          tokenAmount: v.tokenAmount,
+          wif: ownerWif,
+        }
+      })
+
+      const { txid } = await this.transfer({
+        codehash,
+        genesis,
+        senderWif: ownerWif,
+        ftUtxos: paramFtUtxos,
+        changeAddress,
+        isMerge: true,
+        receivers: [],
+        opreturnData,
+      })
+      txids.push(txid)
+
+      // sleep 1s
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+
+    return { txids }
   }
 
   private async _pretreatUtxos(
@@ -1647,7 +1705,7 @@ export class FtManager {
     prevouts.addVout(transferCheckUtxo.txId, transferCheckUtxo.outputIndex)
 
     // concat the token addresses and amounts for check
-    let recervierArray = Buffer.alloc(0)
+    let receiverArray = Buffer.alloc(0)
     let receiverTokenAmountArray = Buffer.alloc(0)
     let outputSatoshiArray = Buffer.alloc(0)
     const tokenOutputLen = tokenOutputArray.length
@@ -1666,7 +1724,7 @@ export class FtManager {
         lockingScript: mvc.Script.fromBuffer(lockingScriptBuf),
         satoshis: this.getDustThreshold(lockingScriptBuf.length),
       })
-      recervierArray = Buffer.concat([recervierArray, address.hashBuffer])
+      receiverArray = Buffer.concat([receiverArray, address.hashBuffer])
       const tokenBuf = outputTokenAmount.toBuffer({
         endian: 'little',
         size: 8,
@@ -1712,7 +1770,7 @@ export class FtManager {
         const tokenContract = TokenFactory.createContract(
           this.transferCheckCodeHashArray,
           this.unlockContractCodeHashArray,
-          version,
+          version
         )
         const amountCheckTx = transferCheckTxComposer.getTx()
         const amountCheckOutputIndex = 0
@@ -2104,7 +2162,7 @@ export class FtManager {
         const tokenContract = TokenFactory.createContract(
           this.transferCheckCodeHashArray,
           this.unlockContractCodeHashArray,
-          version,
+          version
         )
         tokenContract.setDataPart(toHex(dataPart))
 
