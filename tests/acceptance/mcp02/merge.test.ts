@@ -138,10 +138,11 @@ describe('transfer', () => {
     expect(utxos.length).toBe(tokenUtxoCount)
     expect(utxos[0].txId).toBe(splitTxId)
 
-    let { txids } = await ftManager.totalMerge({
+    const ownerWif = process.env.WIF2
+    const { txids } = await ftManager.totalMerge({
       genesis,
       codehash,
-      ownerWif: process.env.WIF2,
+      ownerWif,
     })
     console.log({ txids })
     expect(txids[0]).toHaveLength(64)
