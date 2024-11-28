@@ -25,7 +25,11 @@ export class CYBER3 implements ApiBase {
   privateKey: any
   publicKey: any
   constructor(apiNet: API_NET, serverBase?: string) {
-    this.serverBase = 'https://mvcapi.cyber3.space'
+    if (apiNet == API_NET.MAIN) {
+      this.serverBase = 'https://mvcapi.cyber3.space'
+    } else {
+      this.serverBase = 'https://mvcapi-testnet.cyber3.space'
+    }
     if (serverBase) {
       this.serverBase = serverBase
     }
