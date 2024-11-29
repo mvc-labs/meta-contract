@@ -234,14 +234,14 @@ export class Wallet {
       .sort(() => Math.random() - 0.5)
     const unconfirmedUtxos = utxos
       .filter((utxo) => {
-        return utxo.height < 0
+        return utxo.height < 0 || utxo.height === null || utxo.height === undefined
       })
       .sort(() => Math.random() - 0.5)
 
     let current = 0
     // use confirmed first
     for (let utxo of confirmedUtxos) {
-      current += utxo.satoshis
+      current += Number(utxo.satoshis)
       // add input fee
       requiredAmount += this.feeb * P2PKH_UNLOCK_SIZE
       candidateUtxos.push(utxo)
@@ -250,7 +250,7 @@ export class Wallet {
       }
     }
     for (let utxo of unconfirmedUtxos) {
-      current += utxo.satoshis
+      current += Number(utxo.satoshis)
       // add input fee
       requiredAmount += this.feeb * P2PKH_UNLOCK_SIZE
       candidateUtxos.push(utxo)

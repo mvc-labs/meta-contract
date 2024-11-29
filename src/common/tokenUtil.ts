@@ -61,6 +61,9 @@ export let writeVarint = function (buf: Buffer) {
 }
 
 export let getLockingScriptFromPreimage = function (buf: Buffer) {
+  if (!buf) {
+    return
+  }
   const offset = 4 + 32 + 32 + 32 + 4
   buf = buf.slice(offset, buf.length)
   const n = buf[0]
@@ -103,9 +106,7 @@ export let getRabinPubKeyHashArray = function (rabinPubKeys: BN[]) {
   for (let i = 0; i < rabinPubKeys.length; i++) {
     buf = Buffer.concat([
       buf,
-      mvc.crypto.Hash.sha256ripemd160(
-        this.toBufferLE(rabinPubKeys[i].toString(16), this.RABIN_SIG_LEN)
-      ),
+      mvc.crypto.Hash.sha256ripemd160(this.toBufferLE(rabinPubKeys[i].toString(16), this.RABIN_SIG_LEN)),
     ])
   }
   return buf
