@@ -102,14 +102,16 @@ export class CYBER3 implements ApiBase {
       }
     )
 
-    let ret: SA_utxo[] = _res.map((v: any) => ({
-      txId: v.txid,
-      outputIndex: v.outIndex,
-      satoshis: v.value,
-      address: address,
-      height: v.height,
-      flag: v.flag,
-    }))
+    let ret: SA_utxo[] = _res
+      .map((v: any) => ({
+        txId: v.txid,
+        outputIndex: v.outIndex,
+        satoshis: v.value,
+        address: address,
+        height: v.height,
+        flag: v.flag,
+      }))
+      .filter((v) => Number(v.satoshis) > 1)
     return ret
   }
 
