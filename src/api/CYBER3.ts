@@ -24,7 +24,9 @@ export class CYBER3 implements ApiBase {
   authorization: string
   privateKey: any
   publicKey: any
+  network: API_NET
   constructor(apiNet: API_NET, serverBase?: string) {
+    this.network = apiNet
     if (apiNet == API_NET.MAIN) {
       this.serverBase = 'https://mvcapi.cyber3.space'
     } else {
@@ -172,16 +174,19 @@ export class CYBER3 implements ApiBase {
    * @param {string} txid
    */
   public async getRawTxData(txid: string): Promise<string> {
-    let path = `/tx/${txid}/raw`
-    let url = this.serverBase + path
+    // let path = `/tx/${txid}/raw`
+    let url = `https://www.metalet.space/wallet-api/v4/mvc/tx/raw`
+
     let _res: any = await Net.httpGet(
       url,
-      {},
       {
-        headers: this._getHeaders(path),
-      }
+        net: this.network,
+        txId: txid,
+      },
+      {}
     )
-    return _res.hex
+
+    return _res.data.hex
   }
 
   /**

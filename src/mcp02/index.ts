@@ -233,7 +233,7 @@ export class FtManager {
 
   constructor({
     network = API_NET.MAIN,
-    apiTarget = API_TARGET.MVC,
+    apiTarget = API_TARGET.CYBER3,
     purse,
     feeb = FEEB,
     apiHost,
@@ -243,7 +243,7 @@ export class FtManager {
   }: Mcp02Options) {
     // 初始化API
     this.network = network
-    this._api = new Api(network, apiTarget, apiHost)
+    this._api = new Api(network, apiTarget)
 
     // 初始化钱包
     if (purse) {
