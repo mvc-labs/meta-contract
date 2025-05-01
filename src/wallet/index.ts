@@ -234,7 +234,7 @@ export class Wallet {
       .sort(() => Math.random() - 0.5)
     const unconfirmedUtxos = utxos
       .filter((utxo) => {
-        return utxo.height < 0 || utxo.height === null || utxo.height === undefined
+        return utxo.height <= 0 || utxo.height === null || utxo.height === undefined
       })
       .sort(() => Math.random() - 0.5)
 
