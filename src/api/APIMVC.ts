@@ -28,9 +28,9 @@ export class APIMVC implements ApiBase {
   constructor(apiNet: API_NET, serverBase?: string) {
     this.network = apiNet
     if (apiNet == API_NET.MAIN) {
-      this.serverBase = 'https://mvcapi.cyber3.space'
-    } else {
       this.serverBase = 'https://api.microvisionchain.com/open-api-mvc'
+    } else {
+      this.serverBase = 'https://mvcapi-testnet.cyber3.space'
     }
     if (serverBase) {
       this.serverBase = serverBase
