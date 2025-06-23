@@ -243,7 +243,7 @@ export class FtManager {
   }: Mcp02Options) {
     // 初始化API
     this.network = network
-    this._api = new Api(network, apiTarget)
+    this._api = new Api(network, apiTarget,apiHost)
 
     // 初始化钱包
     if (purse) {

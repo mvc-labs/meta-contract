@@ -1,6 +1,7 @@
 import { CYBER3 } from './CYBER3'
 import { METALET } from './METALET'
 import { MVC } from './MVC'
+import { APIMVC } from './APIMVC'
 
 export enum API_NET {
   MAIN = 'mainnet',
@@ -11,6 +12,7 @@ export enum API_TARGET {
   MVC = 'mvcapi',
   CYBER3 = 'cyber3',
   METALET = 'metalet',
+  APIMVC = 'microvisionchain',
 }
 
 export type NonFungibleTokenUnspent = {
@@ -162,6 +164,10 @@ export class Api implements ApiBase {
       }
       case API_TARGET.METALET: {
         this.apiHandler = new METALET(apiNet, serverBase)
+        break
+      }
+      case API_TARGET.APIMVC: {
+        this.apiHandler = new APIMVC(apiNet, serverBase)
         break
       }
 
